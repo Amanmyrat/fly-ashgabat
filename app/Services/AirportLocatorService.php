@@ -167,11 +167,20 @@ class AirportLocatorService
             foreach ($cities as $cityKey => $airports) {
                 $parent = $cityKey . ', ' . $country;
                 foreach ($airports as $airport) {
-                    if ($airport['area'] != null) {
+                    if (!empty($airport['area'])) {
                         $results[$parent]['citycode'] = $airport['area']['code'];
                     }
-                    $results[$parent]['cities'][] = $airport;
+
+                    $airport['name'] = $airport['airportName'] ?? $airport['cityName'];
+
+                    $fieldsToUnset = ['timezone', 'lat', 'lng', 'city', 'area', 'country', 'airportName', 'cityName'];
+                    foreach ($fieldsToUnset as $field) {
+                        unset($airport[$field]);
+                    }
+
+                    $results[$parent]['airports'][] = $airport;
                 }
+
             }
         }
 
