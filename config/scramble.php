@@ -1,5 +1,6 @@
 <?php
 
+use App\Extensions\AddLocalizationHeaderExtension;
 use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 
 return [
@@ -83,5 +84,7 @@ return [
         RestrictedDocsAccess::class,
     ],
 
-    'extensions' => [],
+    'extensions' => [
+        AddLocalizationHeaderExtension::class
+    ],
 ];
