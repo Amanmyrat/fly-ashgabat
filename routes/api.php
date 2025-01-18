@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FlightSearchController;
 use App\Http\Controllers\GeoDataController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\VisaController;
@@ -14,3 +15,6 @@ Route::get('/tours/{tour}/details', [TourController::class, 'getTourDetails']);
 Route::get('/visas/all', [VisaController::class, 'getAllVisas']);
 Route::get('/visas', [VisaController::class, 'getVisas']);
 Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
+
+
+Route::get('search/flights', [FlightSearchController::class, 'search']);

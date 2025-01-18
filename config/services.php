@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'travelfusion' => [
+        'base_url' => env('TRAVELFUSION_BASE_URL', 'https://api.travelfusion.com'),
+        'username' => env('TRAVELFUSION_USERNAME'),
+        'password' => env('TRAVELFUSION_PASSWORD'),
+    ],
+
 ];
