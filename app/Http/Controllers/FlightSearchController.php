@@ -15,7 +15,7 @@ class FlightSearchController extends Controller
     }
 
     /**
-     * Search flights
+     * Search tfusion flights
      *
      * @param FlightSearchRequest $request
      * @return JsonResponse
@@ -26,9 +26,14 @@ class FlightSearchController extends Controller
 
         try {
             $response = $this->flightSearchService->search($validatedData);
-            return response()->json($response);
+            return new JsonResponse([
+                'data' => [
+                    'flights' => $response,
+                    'requested_values' => $request->all(),
+                ]
+            ]);
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return new JsonResponse(['error' => $e->getMessage()], 500);
         }
     }
 }

@@ -17,4 +17,4 @@ Route::get('/visas', [VisaController::class, 'getVisas']);
 Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
 
-Route::get('search/flights', [FlightSearchController::class, 'search']);
+Route::get('search/tfusion/flights', [FlightSearchController::class, 'search']);

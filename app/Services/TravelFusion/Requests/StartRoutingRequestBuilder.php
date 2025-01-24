@@ -36,6 +36,14 @@ class StartRoutingRequestBuilder
                 ],
                 'Timeout' => 40,
                 'IncrementalResults' => 'true',
+                'BookingProfile' => [
+                    'CustomSupplierParameterList' => [
+                        'CustomSupplierParameter' => [
+                            'Name' => 'IncludeStructuredFeatures',
+                            'Value' => 'y',
+                        ]
+                    ]
+                ]
             ],
         ];
 
