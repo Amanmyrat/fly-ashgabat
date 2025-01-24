@@ -56,7 +56,7 @@ class FlightSearchService
                 $destination = $requestedLocations['Destination'] ?? [];
 
                 $groupList = $router['GroupList']['Group'] ?? [];
-//                $features = $router['Features'];
+                $features = $router['Features'] ?? [];
                 $outwardList = $groupList['OutwardList']['Outward'] ?? [];
                 $returnList = $groupList['ReturnList']['Return'] ?? [];
 
@@ -69,7 +69,8 @@ class FlightSearchService
                             $supplier,
                             $vendor,
                             $outward,
-                            null
+                            null,
+                            $features
                         );
                     }
                 } else {
@@ -82,7 +83,8 @@ class FlightSearchService
                                 $supplier,
                                 $vendor,
                                 $outward,
-                                $return
+                                $return,
+                                $features
                             );
                         }
                     }
@@ -100,7 +102,8 @@ class FlightSearchService
         string $supplier,
         array  $vendor,
         array  $outward,
-        ?array $return
+        ?array $return,
+        array  $features
     ): array
     {
         $totalSum = $outward['Price']['Amount'] ?? 0;
@@ -126,19 +129,20 @@ class FlightSearchService
                 'Amount' => $totalSum,
                 'Currency' => $currency,
             ],
-            'Outward' => $this->formatSegmentDetails($outward),
-            'Return' => $return ? $this->formatSegmentDetails($return) : null,
+            'Outward' => $this->formatSegmentDetails($outward, $features, 'Outbound'),
+            'Return' => $return ? $this->formatSegmentDetails($return, $features, 'Inbound') : null,
         ];
     }
 
-    private function formatSegmentDetails(array $segmentData): array
+    private function formatSegmentDetails(array $segmentData, array $features, string $direction): array
     {
-
         $segments = [];
         foreach ($segmentData['SegmentList']['Segment'] ?? [] as $segment) {
-
             $operatorCode = strtolower($segment['Operator']['Code']);
+            $supplierClass = $segment['TravelClass']['SupplierClass'] ?? '';
 
+//            dd($supplierClass, $features, $direction);
+            $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction);
 
             $segments[] = [
                 'Origin' => [
@@ -161,6 +165,7 @@ class FlightSearchService
                 ],
                 'FlightNumber' => ($segment['FlightId']['Code'] ?? ''),
                 'TravelClass' => $segment['TravelClass'] ?? [],
+                'Features' => $relevantFeatures,
             ];
         }
 
@@ -173,6 +178,79 @@ class FlightSearchService
             'Duration' => $segmentData['Duration'] ?? '',
             'Segments' => $segments,
         ];
+    }
+
+    private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
+    {
+        $relevantFeatures = [];
+
+        foreach ($features['Feature'] as $feature) {
+            // Extract Feature Type and Options
+
+            $featureType = $feature['@attributes']['Type'] ?? '';
+            $options = $feature['Option'] ?? [];
+            foreach ($options as $option) {
+                $conditions = $option['Condition'] ?? [];
+
+                $isMatch = true;
+
+                foreach ($conditions as $condition) {
+                    $conditionType = $condition['@attributes']['Type'] ?? '';
+                    $conditionValue = $condition['@attributes']['Value'] ?? '';
+
+                    // Match SupplierClass, TravellerType, and Direction
+                    if ($conditionType === 'SupplierClass') {
+                        // Handle multiple SupplierClass values by taking only the first part
+                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
+                        if ($conditionValueFirstPart !== $supplierClass) {
+                            $isMatch = false;
+                            break;
+                        }
+                    }
+
+                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
+                        $isMatch = false;
+                        break;
+                    }
+                }
+
+                if ($isMatch) {
+                    $filteredConditions = $this->formatConditions($conditions);
+                    $relevantFeatures[] = [
+                        'Type' => $featureType,
+                        'Details' => [
+                            'Currency' => $option['@attributes']['Currency'] ?? '',
+                            'Value' => $option['@attributes']['Value'] ?? '',
+                            'Conditions' => $filteredConditions,
+                        ],
+                    ];
+                }
+            }
+        }
+
+        return $relevantFeatures;
+    }
+
+    private function formatConditions(array $conditions): array
+    {
+        $filteredConditions = [];
+
+        foreach ($conditions as $condition) {
+            $type = $condition['@attributes']['Type'] ?? '';
+            $value = $condition['@attributes']['Value'] ?? '';
+
+            // Skip unnecessary condition types
+            if (in_array($type, ['Provision', 'ChargeModel', 'Phase', 'TravellerType', 'OperatorCode'])) {
+                continue;
+            }
+
+            $filteredConditions[] = [
+                'Type' => $type,
+                'Value' => $value,
+            ];
+        }
+
+        return $filteredConditions;
     }
 
 
