@@ -6,6 +6,7 @@ use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
 use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
+
 use Illuminate\Http\Client\ConnectionException;
 
 class FlightSearchService
@@ -49,8 +50,6 @@ class FlightSearchService
 
         if (isset($flightsResponse['CheckRouting']['RouterList']['Router'])) {
             foreach ($flightsResponse['CheckRouting']['RouterList']['Router'] as $router) {
-                $supplier = $router['Supplier'] ?? '';
-                $vendor = $router['Vendor'] ?? '';
                 $requestedLocations = $router['RequestedLocations'] ?? [];
                 $origin = $requestedLocations['Origin'] ?? [];
                 $destination = $requestedLocations['Destination'] ?? [];
@@ -66,8 +65,6 @@ class FlightSearchService
                         $formattedFlights[] = $this->formatFlightItem(
                             $origin,
                             $destination,
-                            $supplier,
-                            $vendor,
                             $outward,
                             null,
                             $features
@@ -80,8 +77,6 @@ class FlightSearchService
                             $formattedFlights[] = $this->formatFlightItem(
                                 $origin,
                                 $destination,
-                                $supplier,
-                                $vendor,
                                 $outward,
                                 $return,
                                 $features
@@ -99,8 +94,6 @@ class FlightSearchService
     private function formatFlightItem(
         array  $origin,
         array  $destination,
-        string $supplier,
-        array  $vendor,
         array  $outward,
         ?array $return,
         array  $features
@@ -123,8 +116,6 @@ class FlightSearchService
                 'Airport' => $this->airports[$destination['Code']]['airportName'] ?? $this->airports[$destination['Code']]['cityName'],
                 'Country' => $this->countries[$this->airports[$destination['Code']]['country']]['name'],
             ],
-//            'Supplier' => $supplier,
-//            'Vendor' => $vendor,
             'TotalSum' => [
                 'Amount' => $totalSum,
                 'Currency' => $currency,
@@ -137,13 +128,23 @@ class FlightSearchService
     private function formatSegmentDetails(array $segmentData, array $features, string $direction): array
     {
         $segments = [];
-        foreach ($segmentData['SegmentList']['Segment'] ?? [] as $segment) {
+        $stopDurations = []; // To calculate stop durations between segments
+        $firstSegment = null;
+        $lastSegment = null;
+
+        foreach ($segmentData['SegmentList']['Segment'] ?? [] as $index => $segment) {
             $operatorCode = strtolower($segment['Operator']['Code']);
             $supplierClass = $segment['TravelClass']['SupplierClass'] ?? '';
 
-//            dd($supplierClass, $features, $direction);
             $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction);
 
+            // Store the first and last segment for date extraction
+            if ($index === 0) {
+                $firstSegment = $segment;
+            }
+            $lastSegment = $segment;
+
+            // Add current segment details
             $segments[] = [
                 'Origin' => [
                     'Code' => $segment['Origin']['Code'],
@@ -155,8 +156,6 @@ class FlightSearchService
                     'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'] ?? $this->airports[$segment['Destination']['Code']]['cityName'],
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
                 ],
-                'DepartDate' => $segment['DepartDate'] ?? '',
-                'ArriveDate' => $segment['ArriveDate'] ?? '',
                 'Duration' => $segment['Duration'] ?? '',
                 'Operator' => [
                     'Name' => $segment['Operator']['Name'] ?? '',
@@ -167,7 +166,26 @@ class FlightSearchService
                 'TravelClass' => $segment['TravelClass'] ?? [],
                 'Features' => $relevantFeatures,
             ];
+
+            // Calculate stop duration if it's not the first segment
+            if ($index > 0) {
+                $previousArrival = \DateTime::createFromFormat('d/m/Y-H:i', $segmentData['SegmentList']['Segment'][$index - 1]['ArriveDate']);
+                $currentDeparture = \DateTime::createFromFormat('d/m/Y-H:i', $segment['DepartDate']);
+
+                if ($previousArrival && $currentDeparture) {
+                    $stopDurations[] = $currentDeparture->getTimestamp() - $previousArrival->getTimestamp();
+                }
+            }
         }
+
+        // Extract DepartDate and ArriveDate from first and last segments
+        $departDateTime = \DateTime::createFromFormat('d/m/Y-H:i', $firstSegment['DepartDate'] ?? '');
+        $arrivalDateTime = \DateTime::createFromFormat('d/m/Y-H:i', $lastSegment['ArriveDate'] ?? '');
+
+        $departDate = $departDateTime ? $departDateTime->format('d/m/Y') : null;
+        $departTime = $departDateTime ? $departDateTime->format('H:i') : null;
+        $arrivalDate = $arrivalDateTime ? $arrivalDateTime->format('d/m/Y') : null;
+        $arrivalTime = $arrivalDateTime ? $arrivalDateTime->format('H:i') : null;
 
         return [
             'Id' => $segmentData['Id'] ?? '',
@@ -176,8 +194,43 @@ class FlightSearchService
                 'Currency' => $segmentData['Price']['Currency'] ?? '',
             ],
             'Duration' => $segmentData['Duration'] ?? '',
+            'DepartDate' => [
+                'Date' => $departDate,
+                'Time' => $departTime,
+            ],
+            'ArriveDate' => [
+                'Date' => $arrivalDate,
+                'Time' => $arrivalTime,
+            ],
+            'Stops' => count($segments) > 1 ? $this->formatStops($stopDurations, $segments) : null,
             'Segments' => $segments,
         ];
+    }
+
+
+    private function formatStops(array $stopDurations, array $segments): array
+    {
+        $stops = [];
+        foreach ($stopDurations as $index => $duration) {
+            $destinationCode = $segments[$index]['Destination']['Code'] ?? '';
+
+            $hours = intdiv($duration, 3600);
+            $minutes = ($duration % 3600) / 60;
+
+            $stops[] = [
+                'Location' => [
+                    'Code' => $destinationCode,
+                    'Airport' => $this->airports[$destinationCode]['airportName'] ?? $this->airports[$destinationCode]['cityName'],
+                    'Country' => $this->countries[$this->airports[$destinationCode]['country']]['name'],
+                ],
+                'Duration' => [
+                    'Hours' => $hours,
+                    'Minutes' => $minutes,
+                ],
+            ];
+        }
+
+        return $stops;
     }
 
     private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
@@ -240,7 +293,7 @@ class FlightSearchService
             $value = $condition['@attributes']['Value'] ?? '';
 
             // Skip unnecessary condition types
-            if (in_array($type, ['Provision', 'ChargeModel', 'Phase', 'TravellerType', 'OperatorCode'])) {
+            if (in_array($type, ['Provision', 'ChargeModel', 'Phase', 'OperatorCode', 'SupplierClass', 'Direction', 'NumberOfSegments'])) {
                 continue;
             }
 
