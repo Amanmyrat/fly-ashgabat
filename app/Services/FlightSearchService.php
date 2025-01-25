@@ -7,6 +7,7 @@ use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
 use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 
+use DateTime;
 use Illuminate\Http\Client\ConnectionException;
 
 class FlightSearchService
@@ -15,7 +16,7 @@ class FlightSearchService
     private array $countries;
 
     public function __construct(
-        protected TravelFusionService $travelFusionService,
+        protected TravelFusionService            $travelFusionService,
         protected AirportDataRepositoryInterface $airportDataRepository
     )
     {
@@ -156,7 +157,6 @@ class FlightSearchService
                     'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'] ?? $this->airports[$segment['Destination']['Code']]['cityName'],
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
                 ],
-                'Duration' => $segment['Duration'] ?? '',
                 'Operator' => [
                     'Name' => $segment['Operator']['Name'] ?? '',
                     'Code' => $segment['Operator']['Code'] ?? '',
@@ -169,8 +169,8 @@ class FlightSearchService
 
             // Calculate stop duration if it's not the first segment
             if ($index > 0) {
-                $previousArrival = \DateTime::createFromFormat('d/m/Y-H:i', $segmentData['SegmentList']['Segment'][$index - 1]['ArriveDate']);
-                $currentDeparture = \DateTime::createFromFormat('d/m/Y-H:i', $segment['DepartDate']);
+                $previousArrival = DateTime::createFromFormat('d/m/Y-H:i', $segmentData['SegmentList']['Segment'][$index - 1]['ArriveDate']);
+                $currentDeparture = DateTime::createFromFormat('d/m/Y-H:i', $segment['DepartDate']);
 
                 if ($previousArrival && $currentDeparture) {
                     $stopDurations[] = $currentDeparture->getTimestamp() - $previousArrival->getTimestamp();
@@ -179,13 +179,18 @@ class FlightSearchService
         }
 
         // Extract DepartDate and ArriveDate from first and last segments
-        $departDateTime = \DateTime::createFromFormat('d/m/Y-H:i', $firstSegment['DepartDate'] ?? '');
-        $arrivalDateTime = \DateTime::createFromFormat('d/m/Y-H:i', $lastSegment['ArriveDate'] ?? '');
+        $departDateTime = DateTime::createFromFormat('d/m/Y-H:i', $firstSegment['DepartDate'] ?? '');
+        $arrivalDateTime = DateTime::createFromFormat('d/m/Y-H:i', $lastSegment['ArriveDate'] ?? '');
 
-        $departDate = $departDateTime ? $departDateTime->format('d/m/Y') : null;
-        $departTime = $departDateTime ? $departDateTime->format('H:i') : null;
-        $arrivalDate = $arrivalDateTime ? $arrivalDateTime->format('d/m/Y') : null;
-        $arrivalTime = $arrivalDateTime ? $arrivalDateTime->format('H:i') : null;
+        $departDate = $departDateTime?->format('d/m/Y');
+        $departTime = $departDateTime?->format('H:i');
+        $arrivalDate = $arrivalDateTime?->format('d/m/Y');
+        $arrivalTime = $arrivalDateTime?->format('H:i');
+
+        $totalMinutes = (int)($segmentData['Duration'] ?? 0);
+
+        $hours = floor($totalMinutes / 60);
+        $minutes = $totalMinutes % 60;
 
         return [
             'Id' => $segmentData['Id'] ?? '',
@@ -193,7 +198,10 @@ class FlightSearchService
                 'Amount' => $segmentData['Price']['Amount'] ?? '',
                 'Currency' => $segmentData['Price']['Currency'] ?? '',
             ],
-            'Duration' => $segmentData['Duration'] ?? '',
+            'Duration' => [
+                'Hours' => $hours,
+                'Minutes' => $minutes,
+            ],
             'DepartDate' => [
                 'Date' => $departDate,
                 'Time' => $departTime,
@@ -206,7 +214,6 @@ class FlightSearchService
             'Segments' => $segments,
         ];
     }
-
 
     private function formatStops(array $stopDurations, array $segments): array
     {
