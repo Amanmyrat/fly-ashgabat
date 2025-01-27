@@ -133,8 +133,13 @@ class FlightSearchService
         $firstSegment = null;
         $lastSegment = null;
 
-        foreach ($segmentData['SegmentList']['Segment'] ?? [] as $index => $segment) {
-            $operatorCode = strtolower($segment['Operator']['Code']);
+        $segmentsList = $segmentData['SegmentList']['Segment'] ?? [];
+
+        $segmentsList = isset($segmentsList[0]) ? $segmentsList : [$segmentsList];
+
+        foreach ($segmentsList as $index => $segment) {
+
+            $operatorCode = strtolower($segment['TfOperator']['Code']);
             $supplierClass = $segment['TravelClass']['SupplierClass'] ?? '';
 
             $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction);
@@ -158,8 +163,8 @@ class FlightSearchService
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
                 ],
                 'Operator' => [
-                    'Name' => $segment['Operator']['Name'] ?? '',
-                    'Code' => $segment['Operator']['Code'] ?? '',
+                    'Name' => $segment['TfOperator']['Name'] ?? '',
+                    'Code' => $segment['TfOperator']['Code'] ?? '',
                     'Logo' => "https://www.travelfusion.com/images/operators/p{$operatorCode}.gif",
                 ],
                 'FlightNumber' => ($segment['FlightId']['Code'] ?? ''),
