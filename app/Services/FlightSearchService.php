@@ -150,6 +150,15 @@ class FlightSearchService
             }
             $lastSegment = $segment;
 
+
+            $departDateTime = DateTime::createFromFormat('d/m/Y-H:i', $segment['DepartDate'] ?? '');
+            $arrivalDateTime = DateTime::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'] ?? '');
+
+            $departDate = $departDateTime?->format('d/m/Y');
+            $departTime = $departDateTime?->format('H:i');
+            $arrivalDate = $arrivalDateTime?->format('d/m/Y');
+            $arrivalTime = $arrivalDateTime?->format('H:i');
+
             // Add current segment details
             $segments[] = [
                 'Origin' => [
@@ -161,6 +170,14 @@ class FlightSearchService
                     'Code' => $segment['Destination']['Code'],
                     'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'] ?? $this->airports[$segment['Destination']['Code']]['cityName'],
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
+                ],
+                'DepartDate' => [
+                    'Date' => $departDate,
+                    'Time' => $departTime,
+                ],
+                'ArriveDate' => [
+                    'Date' => $arrivalDate,
+                    'Time' => $arrivalTime,
                 ],
                 'Operator' => [
                     'Name' => $segment['TfOperator']['Name'] ?? '',
