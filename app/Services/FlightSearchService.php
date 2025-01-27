@@ -159,6 +159,11 @@ class FlightSearchService
             $arrivalDate = $arrivalDateTime?->format('d/m/Y');
             $arrivalTime = $arrivalDateTime?->format('H:i');
 
+            $totalMinutes = (int)($segment['Duration'] ?? 0);
+
+            $hours = floor($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+
             // Add current segment details
             $segments[] = [
                 'Origin' => [
@@ -170,6 +175,11 @@ class FlightSearchService
                     'Code' => $segment['Destination']['Code'],
                     'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'] ?? $this->airports[$segment['Destination']['Code']]['cityName'],
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
+                ],
+
+                'Duration' => [
+                    'Hours' => $hours,
+                    'Minutes' => $minutes,
                 ],
                 'DepartDate' => [
                     'Date' => $departDate,
@@ -262,17 +272,82 @@ class FlightSearchService
         return $stops;
     }
 
+//    private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
+//    {
+//        $relevantFeatures = [];
+//
+//        foreach ($features['Feature'] as $feature) {
+//            // Extract Feature Type and Options
+//
+//            $featureType = $feature['@attributes']['Type'] ?? '';
+//            $options = $feature['Option'] ?? [];
+//            foreach ($options as $option) {
+//                $conditions = $option['Condition'] ?? [];
+//
+//                $isMatch = true;
+//
+//                foreach ($conditions as $condition) {
+//                    $conditionType = $condition['@attributes']['Type'] ?? '';
+//                    $conditionValue = $condition['@attributes']['Value'] ?? '';
+//
+//                    // Match SupplierClass, TravellerType, and Direction
+//                    if ($conditionType === 'SupplierClass') {
+//                        // Handle multiple SupplierClass values by taking only the first part
+//                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
+//                        if ($conditionValueFirstPart !== $supplierClass) {
+//                            $isMatch = false;
+//                            break;
+//                        }
+//                    }
+//
+//                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
+//                        $isMatch = false;
+//                        break;
+//                    }
+//                }
+//
+//                if ($isMatch) {
+//                    $filteredConditions = $this->formatConditions($conditions);
+//                    $relevantFeatures[] = [
+//                        'Type' => $featureType,
+//                        'Details' => [
+//                            'Currency' => $option['@attributes']['Currency'] ?? '',
+//                            'Value' => $option['@attributes']['Value'] ?? '',
+//                            'Conditions' => $filteredConditions,
+//                        ],
+//                    ];
+//                }
+//            }
+//        }
+//
+//        return $relevantFeatures;
+//    }
+
     private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
     {
-        $relevantFeatures = [];
+        $relevantFeatures = [
+            'HoldBag' => false,
+            'SmallCabinBag' => false,
+            'LargeCabinBag' => false,
+        ];
 
         foreach ($features['Feature'] as $feature) {
-            // Extract Feature Type and Options
-
             $featureType = $feature['@attributes']['Type'] ?? '';
             $options = $feature['Option'] ?? [];
+
+            // Skip if the feature type is not in the required list
+            if (!in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])) {
+                continue;
+            }
+
             foreach ($options as $option) {
                 $conditions = $option['Condition'] ?? [];
+                $value = $option['@attributes']['Value'] ?? '';
+
+                // Only consider features where value is 0.00
+                if ($value !== '0.00') {
+                    continue;
+                }
 
                 $isMatch = true;
 
@@ -280,9 +355,8 @@ class FlightSearchService
                     $conditionType = $condition['@attributes']['Type'] ?? '';
                     $conditionValue = $condition['@attributes']['Value'] ?? '';
 
-                    // Match SupplierClass, TravellerType, and Direction
+                    // Match SupplierClass and Direction
                     if ($conditionType === 'SupplierClass') {
-                        // Handle multiple SupplierClass values by taking only the first part
                         $conditionValueFirstPart = explode(',', $conditionValue)[0];
                         if ($conditionValueFirstPart !== $supplierClass) {
                             $isMatch = false;
@@ -297,21 +371,31 @@ class FlightSearchService
                 }
 
                 if ($isMatch) {
-                    $filteredConditions = $this->formatConditions($conditions);
-                    $relevantFeatures[] = [
-                        'Type' => $featureType,
-                        'Details' => [
-                            'Currency' => $option['@attributes']['Currency'] ?? '',
-                            'Value' => $option['@attributes']['Value'] ?? '',
-                            'Conditions' => $filteredConditions,
-                        ],
-                    ];
+                    // Format the feature based on conditions
+                    $maxQuantity = null;
+                    $maxWeight = null;
+
+                    foreach ($conditions as $condition) {
+                        if ($condition['@attributes']['Type'] === 'MaxQuantity') {
+                            $maxQuantity = (int) $condition['@attributes']['Value'];
+                        }
+                        if ($condition['@attributes']['Type'] === 'MaxWeight') {
+                            $maxWeight = $condition['@attributes']['Value'];
+                        }
+                    }
+
+                    $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
+
+                    $relevantFeatures[$featureType] = $formattedValue ? [
+                        'value' => $formattedValue,
+                    ] : false;
                 }
             }
         }
 
         return $relevantFeatures;
     }
+
 
     private function formatConditions(array $conditions): array
     {
