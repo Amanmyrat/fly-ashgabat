@@ -47,7 +47,7 @@ class TravelFusionService
     /**
      * @throws ConnectionException
      */
-    public function sendRequest(array $requestData): array
+    public function sendRequest(array $requestData, string $type = 'default'): array
     {
         $loginId = Cache::remember('travelfusion_login_id', now()->addDay(), function () {
             return $this->login();
@@ -57,7 +57,15 @@ class TravelFusionService
         $this->injectLoginIds($requestData, $loginId);
 
         $xmlRoot = new SimpleXMLElement('<CommandList/>');
-        $this->arrayToXml($requestData, $xmlRoot);
+        switch ($type){
+            case 'processTerms':
+                $this->arrayToXmlProcessTerms($requestData, $xmlRoot);
+                break;
+            default:
+                $this->arrayToXml($requestData, $xmlRoot);
+                break;
+        }
+
         $xmlContent = $xmlRoot->asXML();
 
         return $this->makeRequest($this->baseUrl, $xmlContent);
@@ -112,4 +120,65 @@ class TravelFusionService
         }
     }
 
+    private function arrayToXmlProcessTerms(array $data, \SimpleXMLElement $xmlData): void
+    {
+        foreach ($data as $key => $value) {
+            // Skip numeric keys (they are used for array indexing, not XML tags)
+            if (is_numeric($key)) {
+                continue;
+            }
+
+            // Handle nested arrays
+            if (is_array($value)) {
+                // Special handling for TravellerList
+                if ($key === 'TravellerList') {
+                    $subNode = $xmlData->addChild($key);
+                    foreach ($value['Traveller'] as $traveller) {
+                        $travellerNode = $subNode->addChild('Traveller');
+                        $this->arrayToXmlProcessTerms($traveller, $travellerNode);
+                    }
+                }
+                // Special handling for NamePartList
+                elseif ($key === 'NamePartList') {
+                    $subNode = $xmlData->addChild($key);
+                    foreach ($value['NamePart'] as $namePart) {
+                        $subNode->addChild('NamePart', htmlspecialchars($namePart));
+                    }
+                }
+                // Special handling for CustomSupplierParameterList
+                elseif ($key === 'CustomSupplierParameterList') {
+                    $subNode = $xmlData->addChild($key);
+                    // Check if CustomSupplierParameter is a single associative array
+                    if (isset($value['CustomSupplierParameter']['Name'])) {
+                        $param = $value['CustomSupplierParameter'];
+                        $paramNode = $subNode->addChild('CustomSupplierParameter');
+                        $paramNode->addChild('Name', htmlspecialchars($param['Name']));
+                        $paramNode->addChild('Value', htmlspecialchars($param['Value']));
+                    } else {
+                        // Handle multiple CustomSupplierParameter entries
+                        foreach ($value['CustomSupplierParameter'] as $param) {
+                            $paramNode = $subNode->addChild('CustomSupplierParameter');
+                            $paramNode->addChild('Name', htmlspecialchars($param['Name']));
+                            $paramNode->addChild('Value', htmlspecialchars($param['Value']));
+                        }
+                    }
+                }
+                // Recursively handle other nested arrays
+                else {
+                    $subNode = $xmlData->addChild($key);
+                    $this->arrayToXmlProcessTerms($value, $subNode);
+                }
+            } else {
+                // Handle simple key-value pairs
+                if ($value === '') {
+                    // Use <key></key> instead of <key/>
+                    $xmlData->addChild($key, '');
+                } else {
+                    $xmlData->addChild($key, htmlspecialchars($value));
+                }
+            }
+        }
+    }
+
 }
+

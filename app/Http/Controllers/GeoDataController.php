@@ -3,13 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Services\AirportLocatorService;
+use App\Services\GeoDataService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 
 class GeoDataController extends Controller
 {
     public function __construct(
-        protected AirportLocatorService       $airportLocatorService,
+        protected AirportLocatorService $airportLocatorService,
+        protected GeoDataService $geoDataService,
     )
     {
     }
@@ -30,6 +33,18 @@ class GeoDataController extends Controller
 
         return response()->json([
             'data' => $result
+        ]);
+    }
+
+    /**
+     * Get nationality information.
+     *
+     * @return JsonResponse JSON response containing information about the Nationalities.
+     */
+    public function getNationality(): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->geoDataService->getNationality()
         ]);
     }
 }

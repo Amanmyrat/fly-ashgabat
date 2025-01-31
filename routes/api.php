@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\FlightBookController;
 use App\Http\Controllers\FlightSearchController;
 use App\Http\Controllers\GeoDataController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\VisaController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('nationalities', [GeoDataController::class, 'getNationality']);
 Route::get('search/airports', [GeoDataController::class, 'getAirports']);
 
 Route::get('/tours/all', [TourController::class, 'getAllTours']);
@@ -18,3 +20,4 @@ Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
 
 Route::get('search/tfusion/flights', [FlightSearchController::class, 'search']);
+Route::post('book/tfusion', [FlightBookController::class, 'book']);
