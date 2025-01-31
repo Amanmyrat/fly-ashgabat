@@ -9,6 +9,7 @@ use App\Services\TravelFusion\TravelFusionService;
 
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 
 class FlightSearchService
 {
@@ -42,7 +43,14 @@ class FlightSearchService
         $checkRoutingRequest = (new CheckRoutingRequestBuilder($routingId))->build();
         $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
 
-        return $this->formatFlights($checkRoutingResponse);
+        $flightType = $validatedData['flight_type'];
+
+        Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(20));
+
+        return [
+            'routing_id' => $routingId,
+            'flights' => $this->formatFlights($checkRoutingResponse),
+        ];
     }
 
     private function formatFlights(array $flightsResponse): array
@@ -272,63 +280,14 @@ class FlightSearchService
         return $stops;
     }
 
-//    private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
-//    {
-//        $relevantFeatures = [];
-//
-//        foreach ($features['Feature'] as $feature) {
-//            // Extract Feature Type and Options
-//
-//            $featureType = $feature['@attributes']['Type'] ?? '';
-//            $options = $feature['Option'] ?? [];
-//            foreach ($options as $option) {
-//                $conditions = $option['Condition'] ?? [];
-//
-//                $isMatch = true;
-//
-//                foreach ($conditions as $condition) {
-//                    $conditionType = $condition['@attributes']['Type'] ?? '';
-//                    $conditionValue = $condition['@attributes']['Value'] ?? '';
-//
-//                    // Match SupplierClass, TravellerType, and Direction
-//                    if ($conditionType === 'SupplierClass') {
-//                        // Handle multiple SupplierClass values by taking only the first part
-//                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
-//                        if ($conditionValueFirstPart !== $supplierClass) {
-//                            $isMatch = false;
-//                            break;
-//                        }
-//                    }
-//
-//                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
-//                        $isMatch = false;
-//                        break;
-//                    }
-//                }
-//
-//                if ($isMatch) {
-//                    $filteredConditions = $this->formatConditions($conditions);
-//                    $relevantFeatures[] = [
-//                        'Type' => $featureType,
-//                        'Details' => [
-//                            'Currency' => $option['@attributes']['Currency'] ?? '',
-//                            'Value' => $option['@attributes']['Value'] ?? '',
-//                            'Conditions' => $filteredConditions,
-//                        ],
-//                    ];
-//                }
-//            }
-//        }
-//
-//        return $relevantFeatures;
-//    }
-
     private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
     {
         $relevantFeatures = [
             'HoldBag' => false,
             'SmallCabinBag' => false,
             'LargeCabinBag' => false,
+            'FlightChange' => false,
+            'Cancellation' => false,
         ];
 
         foreach ($features['Feature'] as $feature) {
@@ -336,7 +295,7 @@ class FlightSearchService
             $options = $feature['Option'] ?? [];
 
             // Skip if the feature type is not in the required list
-            if (!in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])) {
+            if (!in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag', 'FlightChange', 'Cancellation'])) {
                 continue;
             }
 
@@ -344,8 +303,7 @@ class FlightSearchService
                 $conditions = $option['Condition'] ?? [];
                 $value = $option['@attributes']['Value'] ?? '';
 
-                // Only consider features where value is 0.00
-                if ($value !== '0.00') {
+                if (!isset($option['@attributes']['Value'])) {
                     continue;
                 }
 
@@ -374,20 +332,29 @@ class FlightSearchService
                     // Format the feature based on conditions
                     $maxQuantity = null;
                     $maxWeight = null;
+                    $isBundled = false;
 
                     foreach ($conditions as $condition) {
                         if ($condition['@attributes']['Type'] === 'MaxQuantity') {
-                            $maxQuantity = (int) $condition['@attributes']['Value'];
+                            $maxQuantity = (int)$condition['@attributes']['Value'];
                         }
                         if ($condition['@attributes']['Type'] === 'MaxWeight') {
                             $maxWeight = $condition['@attributes']['Value'];
                         }
+                        if ($condition['@attributes']['Type'] === 'Provision') {
+                            $isBundled = $condition['@attributes']['Value'] == 'Bundled';
+                        }
                     }
 
-                    $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
+                    if(in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])){
+                        $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
+                    }else{
+                        $formattedValue = $value;
+                    }
 
-                    $relevantFeatures[$featureType] = $formattedValue ? [
-                        'value' => $formattedValue,
+                    $relevantFeatures[$featureType] = $formattedValue ?[
+                        'Bundled' => $isBundled,
+                        'Value' => $formattedValue,
                     ] : false;
                 }
             }
@@ -395,7 +362,6 @@ class FlightSearchService
 
         return $relevantFeatures;
     }
-
 
     private function formatConditions(array $conditions): array
     {

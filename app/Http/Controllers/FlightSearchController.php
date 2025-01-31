@@ -27,11 +27,10 @@ class FlightSearchController extends Controller
         try {
             $response = $this->flightSearchService->search($validatedData);
             return new JsonResponse([
-                'data' => [
-                    'flights' => $response,
-                    'requested_values' => $request->all(),
-                ]
+                'data' => $response,
+                'requested_values' => $request->all(),
             ]);
+
         } catch (Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], 500);
         }
