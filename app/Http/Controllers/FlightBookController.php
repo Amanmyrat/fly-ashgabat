@@ -26,6 +26,9 @@ class FlightBookController extends Controller
 
         try {
             $response = $this->flightBookService->book($validatedData);
+            if (!$response['success']) {
+                return new JsonResponse($response, 400);
+            }
             return new JsonResponse([
                 'data' => $response,
             ]);

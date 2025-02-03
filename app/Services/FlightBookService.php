@@ -30,7 +30,10 @@ class FlightBookService
         $processDetailsResponse = $this->travelFusionService->sendRequest($processDetailsRequest);
 
         if (!isset($processDetailsResponse['ProcessDetails']['Router']['GroupList']['Group'])) {
-            return ['message' => 'No result(ProcessDetails) found'];
+            return [
+                'success' => false,
+                'message' => 'No result(ProcessDetails) found'
+            ];
         }
 
         // Step 2: ProcessTerms
@@ -38,7 +41,10 @@ class FlightBookService
         $processTermsResponse = $this->travelFusionService->sendRequest($processTermsRequest, 'processTerms');
 
         if (!isset($processTermsResponse['ProcessTerms']['Router']['GroupList']['Group'])) {
-            return ['message' => 'No result(ProcessTerms) found'];
+            return [
+                'success' => false,
+                'message' => 'No result(ProcessTerms) found'
+            ];
         }
 
         $data = [
@@ -50,8 +56,13 @@ class FlightBookService
         $startBookingRequest = (new StartBookingRequestBuilder($data))->build();
         $startBookingResponse = $this->travelFusionService->sendRequest($startBookingRequest);
 
+        if (!isset($startBookingResponse['StartBooking'])) {
+            return ['message' => 'No result(StartBooking) found'];
+        }
+
         return [
-            true
+            'success' => true,
+            'message' => 'Booking successful',
         ];
     }
 
