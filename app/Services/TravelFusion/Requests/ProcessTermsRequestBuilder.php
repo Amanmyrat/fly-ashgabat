@@ -108,9 +108,9 @@ class ProcessTermsRequestBuilder
             ],
             'Address' => [
                 'Company' => '',
-                'Flat' => $contactDetails['address']['flat'] ?? '',
+                'Flat' => '',
                 'BuildingName' => '',
-                'BuildingNumber' => $contactDetails['address']['building_number'] ?? '',
+                'BuildingNumber' =>  '',
                 'Street' => $contactDetails['address']['street'],
                 'Locality' => '',
                 'City' => $contactDetails['address']['city'],

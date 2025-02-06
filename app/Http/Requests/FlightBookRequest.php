@@ -99,16 +99,16 @@ class FlightBookRequest extends FormRequest
                 'string',
                 'max:100',
             ],
-            'contact_details.address.flat' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
-            'contact_details.address.building_number' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
+//            'contact_details.address.flat' => [
+//                'nullable',
+//                'string',
+//                'max:50',
+//            ],
+//            'contact_details.address.building_number' => [
+//                'nullable',
+//                'string',
+//                'max:50',
+//            ],
             'contact_details.address.street' => [
                 'required',
                 'string',
@@ -126,13 +126,9 @@ class FlightBookRequest extends FormRequest
             ],
             'contact_details.phone.code' => [
                 'required',
-                'string',
-                'max:3',
             ],
             'contact_details.phone.number' => [
                 'required',
-                'string',
-                'max:20',
             ],
             'contact_details.email' => [
                 'required',

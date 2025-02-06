@@ -302,6 +302,7 @@ class FlightSearchService
             foreach ($options as $option) {
                 $conditions = $option['Condition'] ?? [];
                 $value = $option['@attributes']['Value'] ?? '';
+                $currency = $option['@attributes']['Currency'] ?? '';
 
                 if (!isset($option['@attributes']['Value'])) {
                     continue;
@@ -349,7 +350,7 @@ class FlightSearchService
                     if(in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])){
                         $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
                     }else{
-                        $formattedValue = $value;
+                        $formattedValue = $value . ' ' . $currency;
                     }
 
                     $relevantFeatures[$featureType] = $formattedValue ?[
