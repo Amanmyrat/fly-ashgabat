@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
+use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
+use App\Services\TravelFusion\Requests\GetBookingRequestBuilder;
 use App\Services\TravelFusion\Requests\ProcessDetailsRequestBuilder;
 use App\Services\TravelFusion\Requests\ProcessTermsRequestBuilder;
 use App\Services\TravelFusion\Requests\StartBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class FlightBookService
 {
@@ -56,14 +62,111 @@ class FlightBookService
         $startBookingRequest = (new StartBookingRequestBuilder($data))->build();
         $startBookingResponse = $this->travelFusionService->sendRequest($startBookingRequest);
 
-        if (!isset($startBookingResponse['StartBooking'])) {
-            return ['message' => 'No result(StartBooking) found'];
+        if (!isset($startBookingResponse['StartBooking']['TFBookingReference'])) {
+            return [
+                'success' => false,
+                'message' => 'No result(StartBooking) found'
+            ];
         }
 
         return [
             'success' => true,
+            'book_id' => $startBookingResponse['StartBooking']['TFBookingReference'],
             'message' => 'Booking successful',
         ];
     }
+
+    /**
+     * @throws ConnectionException
+     * @throws Exception
+     */
+    public function checkBooking(string $bookId): array
+    {
+        $checkBookingRequest = (new CheckBookingRequestBuilder($bookId))->build();
+        $checkBookingResponse = $this->travelFusionService->sendRequest($checkBookingRequest);
+
+        if (!isset($checkBookingResponse['CheckBooking'])) {
+            return [
+                'success' => false,
+                'message' => 'No result(CheckBooking) found'
+            ];
+        }
+        return [
+            'success' => true,
+            'status' => $checkBookingResponse['CheckBooking']['Status'],
+        ];
+
+    }
+
+    /**
+     * @throws ConnectionException
+     * @throws Exception
+     */
+    public function bookingDetails(string $bookId): array
+    {
+        $getBookingRequest = (new GetBookingRequestBuilder($bookId))->build();
+        $getBookingResponse = $this->travelFusionService->sendRequest($getBookingRequest);
+
+        if (!isset($getBookingResponse['GetBookingDetails'])) {
+            return [
+                'success' => false,
+                'message' => 'No result(GetBookingDetails) found'
+            ];
+        }
+
+        $travelersList = $getBookingResponse['GetBookingDetails']['BookingProfile']['TravellerList']['Traveller'] ?? [];
+
+        $travelers = is_array($travelersList) && array_keys($travelersList) !== range(0, count($travelersList) - 1)
+            ? [$travelersList]
+            : $travelersList;
+
+        // Process travelers and generate tickets
+        $tickets = array_map([$this, 'processTraveler'], $travelers);
+
+        return [
+            'success' => true,
+            'tickets' => $tickets
+        ];
+
+    }
+
+    private function processTraveler(array $traveler): array
+    {
+        $nameParts = $traveler['Name']['NamePartList']['NamePart'] ?? [];
+        $fullName = implode(' ', $nameParts);
+
+        // Generate PDF and store it
+        $ticketUrl = $this->generateTicketPdf($fullName);
+
+        return [
+            'name' => $fullName,
+            'ticket_url' => $ticketUrl
+        ];
+    }
+
+    private function generateTicketPdf(string $fullName): string
+    {
+        // Define the ticket path inside 'storage/app/public/tickets/'
+        $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
+
+        // Prepare data for the PDF
+        $data = ['name' => $fullName];
+
+        // Generate the PDF using DomPDF
+        $pdf = App::make('dompdf.wrapper');
+        $pdf->loadView('pdf.ticket', $data)->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true
+        ]);
+
+        // Get the PDF content and store it in the public disk
+        Storage::disk('public')->put($ticketPath, $pdf->download()->getOriginalContent());
+
+        // Return the full URL to the stored PDF
+        return Storage::disk('public')->url($ticketPath);
+    }
+
+
 
 }

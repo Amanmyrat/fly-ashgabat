@@ -21,3 +21,5 @@ Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
 Route::get('search/tfusion/flights', [FlightSearchController::class, 'search']);
 Route::post('book/tfusion', [FlightBookController::class, 'book']);
+Route::get('book/{book_id}/check', [FlightBookController::class, 'check']);
+Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);
