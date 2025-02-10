@@ -27,7 +27,7 @@
     }
 
     body {
-        font-family: "DejaVu Sans", sans-serif;
+        font-family: "Montserrat", sans-serif;
         font-size: 14px;
         color: #000;
         line-height: 1.7em;
@@ -368,6 +368,37 @@
                             <p>OK</p>
                         </td>
                     </tr>
+
+{{--                    <tr>--}}
+{{--                        <td colspan="2">--}}
+{{--                            <div class="flex items-center gap-10">--}}
+{{--                                <h6>--}}
+{{--                                    Ручная кладь / Hand baggage:--}}
+{{--                                </h6>--}}
+{{--                                <p>--}}
+{{--                                    1 место(а) / place(s) 8kg--}}
+{{--                                </p>--}}
+{{--                            </div>--}}
+{{--                            <div class="flex items-center gap-10">--}}
+{{--                                <h6>--}}
+{{--                                    Багаж / Baggage:--}}
+{{--                                </h6>--}}
+{{--                                <p>--}}
+{{--                                    1PC--}}
+{{--                                </p>--}}
+{{--                            </div>--}}
+{{--                        </td>--}}
+{{--                        <td colspan="2">--}}
+{{--                            <div class="flex items-center gap-5">--}}
+{{--                                <h6>--}}
+{{--                                    Время в пути / Flight time:--}}
+{{--                                </h6>--}}
+{{--                                <p>--}}
+{{--                                    1 ч 0 мин / 1 h 0 min--}}
+{{--                                </p>--}}
+{{--                            </div>--}}
+{{--                        </td>--}}
+{{--                    </tr>--}}
                 @endforeach
                 <tr>
                     <td colspan="5">

@@ -157,20 +157,8 @@ class FlightBookService
         $data = compact('traveler', 'bookingData', 'supplierReference', 'contactData');
 
         // Generate the PDF using DomPDF
-//        $pdf = App::make('dompdf.wrapper');
-//        $pdf->loadView('pdf.ticket', $data)->setOptions([
-//            'isHtml5ParserEnabled' => true,
-//            'isRemoteEnabled' => true
-//        ]);
-
         $pdf = SnappyPdf::loadView('pdf.ticket', $data)
-//            ->setOption('page-size', 'A4')
-//            ->setOption('margin-top', '10mm')
-//            ->setOption('margin-right', '10mm')
-//            ->setOption('margin-bottom', '10mm')
-//            ->setOption('margin-left', '10mm')
             ->setOption('encoding', 'UTF-8');
-
 
         // Get the PDF content and store it in the public disk
         Storage::disk('public')->put($ticketPath, $pdf->download()->getOriginalContent());
