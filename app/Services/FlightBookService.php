@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\BookingTicketMail;
 use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
 use App\Services\TravelFusion\Requests\GetBookingRequestBuilder;
 use App\Services\TravelFusion\Requests\ProcessDetailsRequestBuilder;
@@ -13,6 +14,7 @@ use Barryvdh\Snappy\Facades\SnappyPdf;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -129,7 +131,8 @@ class FlightBookService
 
         $contactDetails = $bookingDetails['BookingProfile']['ContactDetails'];
         $contactData = [
-           'email' => $contactDetails['Email'],
+//           'email' => $contactDetails['Email'],
+           'email' => 'tekemuradov@gmail.com',
            'phone' => $contactDetails['MobilePhone']['InternationalCode'].$contactDetails['MobilePhone']['Number'],
         ];
 
@@ -137,6 +140,8 @@ class FlightBookService
         $tickets = array_map(function ($traveler) use ($bookingData, $supplierReference, $contactData) {
             return $this->processTraveler($traveler, $bookingData, $supplierReference, $contactData);
         }, $travelers);
+
+        Mail::to($contactData['email'])->send(new BookingTicketMail($tickets,  $bookingData));
 
         return [
             'success' => true,
@@ -171,7 +176,6 @@ class FlightBookService
             'ticket_url' => $ticketUrl
         ];
     }
-
 
 
 }
