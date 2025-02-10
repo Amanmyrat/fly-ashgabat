@@ -25,7 +25,7 @@
             <!-- Logo -->
             <!-- <img src="logo.png" alt="kupi.uz logo" width="100" style="display: block;"> -->
 
-            <img src="https://flyashgabat.com:4443/assets/images/email-logo.png" alt="Logo"  width="100"
+            <img src="https://flyashgabat.com:4443/assets/images/logo-white.png" alt="Logo"  width="100"
                  style="display: block;">
         </td>
     </tr>
