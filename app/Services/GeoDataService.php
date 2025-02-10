@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Repositories\AirportDataRepositoryInterface;
 use Illuminate\Support\Facades\File;
 
 class GeoDataService
 {
+    public function __construct(protected AirportDataRepositoryInterface $airportDataRepository)
+    {
+    }
+
     public function getNationality(): array
     {
         $nationalities = [];
@@ -62,5 +67,21 @@ class GeoDataService
         );
 
         return strtr($value, $converter);
+    }
+
+    /**
+     * Get information about airports for booking purposes.
+     *
+     * @param string $code Code.
+     * @return array An array of information.
+     */
+    public function getAirportInfo(string $code): array
+    {
+        $airports = $this->airportDataRepository->getAllAirports();
+
+        return [
+            'cityName' =>  $airports[$code]['cityName']['en'],
+            'airportName' => $airports[$code]['airportName']['en'] ?? '',
+        ];
     }
 }

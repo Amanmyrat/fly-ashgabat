@@ -9,6 +9,7 @@ use App\Services\TravelFusion\Requests\ProcessTermsRequestBuilder;
 use App\Services\TravelFusion\Requests\StartBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\App;
@@ -114,14 +115,28 @@ class FlightBookService
             ];
         }
 
-        $travelersList = $getBookingResponse['GetBookingDetails']['BookingProfile']['TravellerList']['Traveller'] ?? [];
+        $bookingDetails = $getBookingResponse['GetBookingDetails'];
+
+        $travelersList = $bookingDetails['BookingProfile']['TravellerList']['Traveller'] ?? [];
 
         $travelers = is_array($travelersList) && array_keys($travelersList) !== range(0, count($travelersList) - 1)
             ? [$travelersList]
             : $travelersList;
 
+        unset($bookingDetails['RouterHistory']['BookingRouter']['RequiredParameterList']);
+        $bookingData = $bookingDetails['RouterHistory']['BookingRouter'];
+        $supplierReference = $bookingDetails['SupplierReference'];
+
+        $contactDetails = $bookingDetails['BookingProfile']['ContactDetails'];
+        $contactData = [
+           'email' => $contactDetails['Email'],
+           'phone' => $contactDetails['MobilePhone']['InternationalCode'].$contactDetails['MobilePhone']['Number'],
+        ];
+
         // Process travelers and generate tickets
-        $tickets = array_map([$this, 'processTraveler'], $travelers);
+        $tickets = array_map(function ($traveler) use ($bookingData, $supplierReference, $contactData) {
+            return $this->processTraveler($traveler, $bookingData, $supplierReference, $contactData);
+        }, $travelers);
 
         return [
             'success' => true,
@@ -130,41 +145,43 @@ class FlightBookService
 
     }
 
-    private function processTraveler(array $traveler): array
+    private function processTraveler(array $traveler, array $bookingData, string $supplierReference, array $contactData): array
     {
         $nameParts = $traveler['Name']['NamePartList']['NamePart'] ?? [];
         $fullName = implode(' ', $nameParts);
 
-        // Generate PDF and store it
-        $ticketUrl = $this->generateTicketPdf($fullName);
-
-        return [
-            'name' => $fullName,
-            'ticket_url' => $ticketUrl
-        ];
-    }
-
-    private function generateTicketPdf(string $fullName): string
-    {
         // Define the ticket path inside 'storage/app/public/tickets/'
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
         // Prepare data for the PDF
-        $data = ['name' => $fullName];
+        $data = compact('traveler', 'bookingData', 'supplierReference', 'contactData');
 
         // Generate the PDF using DomPDF
-        $pdf = App::make('dompdf.wrapper');
-        $pdf->loadView('pdf.ticket', $data)->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true
-        ]);
+//        $pdf = App::make('dompdf.wrapper');
+//        $pdf->loadView('pdf.ticket', $data)->setOptions([
+//            'isHtml5ParserEnabled' => true,
+//            'isRemoteEnabled' => true
+//        ]);
+
+        $pdf = SnappyPdf::loadView('pdf.ticket', $data)
+//            ->setOption('page-size', 'A4')
+//            ->setOption('margin-top', '10mm')
+//            ->setOption('margin-right', '10mm')
+//            ->setOption('margin-bottom', '10mm')
+//            ->setOption('margin-left', '10mm')
+            ->setOption('encoding', 'UTF-8');
+
 
         // Get the PDF content and store it in the public disk
         Storage::disk('public')->put($ticketPath, $pdf->download()->getOriginalContent());
 
         // Return the full URL to the stored PDF
-        return Storage::disk('public')->url($ticketPath);
+        $ticketUrl =  Storage::disk('public')->url($ticketPath);
+
+        return [
+            'name' => $fullName,
+            'ticket_url' => $ticketUrl
+        ];
     }
 
 
