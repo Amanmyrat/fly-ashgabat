@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\FlightBookController;
 use App\Http\Controllers\FlightSearchController;
 use App\Http\Controllers\GeoDataController;
@@ -23,3 +25,12 @@ Route::get('search/tfusion/flights', [FlightSearchController::class, 'search']);
 Route::post('book/tfusion', [FlightBookController::class, 'book']);
 Route::get('book/{book_id}/check', [FlightBookController::class, 'check']);
 Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);
+
+Route::group(['prefix' => 'user'], function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::post('/password/request-reset', [PasswordResetController::class, 'requestReset']);
+    Route::post('/password/verify-code', [PasswordResetController::class, 'verifyCode']);
+    Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
+});
