@@ -18,7 +18,7 @@ class PasswordResetService
 
         Mail::send('emails.reset', ['code' => $code], function ($message) use ($email) {
             $message->to($email);
-            $message->subject('Your Kupi Password Reset Code');
+            $message->subject('Your Fly-Ashgabat Password Reset Code');
         });
     }
 

@@ -10,12 +10,12 @@
 <body style="font-family: 'Roboto', sans-serif; margin: 0; padding: 0; width: 100%; height: 100%;">
 
 <!-- Main Wrapper Table -->
-<table role="presentation" width="600" height="600" cellspacing="0" cellpadding="0" style="margin: 0 auto; background-color: #77D2F1; text-align: left; border-spacing: 0;">
+<table role="presentation" width="600" height="600" cellspacing="0" cellpadding="0" style="margin: 0 auto; background-color: #223A60; text-align: left; border-spacing: 0;">
     <thead>
     <tr>
-        <td style="padding: 20px 40px; text-align: center; background-color: #77D2F1;">
+        <td style="padding: 20px 40px; text-align: center; background-color: #223A60;">
             <!-- Logo -->
-            <img src="https://kupi.abflow.uz:3456/images/logo.png" alt="kupi.uz logo" width="100" style="display: block;">
+            <img src="https://flyashgabat.com:4443/assets/images/logo-white.png" alt="kupi.uz logo" width="100" style="display: block;">
         </td>
     </tr>
     </thead>
@@ -28,7 +28,7 @@
                 <tr>
                     <td>
                         <h1 style="font-size: 26px; font-weight: 700; margin-top: 0; color: #1E2133;">Сброс пароля</h1>
-                        <p style="font-size: 16px; font-weight: 400; color: #1E2133;">Вы направили запрос на восстановление пароля на сайте kupiavia.uz</p>
+                        <p style="font-size: 16px; font-weight: 400; color: #1E2133;">Вы направили запрос на восстановление пароля на сайте flyashgabat.com</p>
                         <p style="font-size: 16px; font-weight: 400; color: #1E2133;">Ваш код для сброса пароля:</p>
 
                         <!-- Code Box -->
@@ -44,10 +44,10 @@
                         <p style="font-size: 16px; font-weight: 400; color: #1E2133;">Данный код станет неактивным через 60 минут.</p>
 
                         <!-- Signature -->
-                        <p style="font-size: 16px; font-weight: 400; color: #1E2133;">С уважением,<br>Команда по поддержке клиентов kupiavia.uz</p>
+                        <p style="font-size: 16px; font-weight: 400; color: #1E2133;">С уважением,<br>Команда по поддержке клиентов flyashgabat.com</p>
 
                         <!-- Support Link -->
-                        <p style="font-size: 14px; font-weight: 400; color: #80849A;">В случае, если вам не удается нажать кнопку «Активировать», то перейдите по ссылке <a href="http://kupiavia.uz" style="color: #3F5CFF; text-decoration: none;">http://kupiavia.uz/</a>.</p>
+                        <p style="font-size: 14px; font-weight: 400; color: #80849A;">В случае, если вам не удается нажать кнопку «Активировать», то перейдите по ссылке <a href="http://flyashgabat.com" style="color: #3F5CFF; text-decoration: none;">http://flyashgabat.com/</a>.</p>
                     </td>
                 </tr>
             </table>
@@ -57,9 +57,9 @@
 
     <tfoot>
     <tr>
-        <td style="padding: 0; text-align: center; background-color: #77D2F1;">
+        <td style="padding: 0; text-align: center; background-color: #223A60;">
             <!-- Footer Image -->
-            <img src="https://kupi.abflow.uz:3456/images/footer.png" alt="Footer image" style="width: 100%; display: block;">
+            <img src="https://flyashgabat.com:4443/assets/images/footer-bg.png" alt="Footer image" style="width: 100%; display: block;">
         </td>
     </tr>
     </tfoot>

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Notifications\CustomEmailVerification;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Support\Facades\Hash;
@@ -28,11 +27,9 @@ class AuthService
                 'password' => Hash::make($data['password']),
             ]);
 
-            $user->notify(new CustomEmailVerification());
-
             $accessToken = $user->createToken('authToken')->plainTextToken;
 
-            return ['user' => $user, 'token' => $accessToken, 'message' => 'Verify email address'];
+            return ['user' => $user, 'token' => $accessToken, 'message' => 'Registered successfully'];
         } catch (Exception $e) {
             Log::error('Registration error: ' . $e->getMessage());
 
@@ -56,7 +53,7 @@ class AuthService
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return [
-            'status' => $user->hasVerifiedEmail() ? 'success' : 'email_verification_required',
+            'status' => 'success',
             'user' => $user,
             'token' => $token,
         ];

@@ -171,7 +171,7 @@
     <tfoot>
     <tr>
         <td style="padding: 0; text-align: center; background-color: #223A60;">
-            <img src="https://flyashgabat.com:4443/assets/images/footer-bg.png"  alt="Logo" style="width: 100%; display: block;">
+            <img src="https://flyashgabat.com:4443/assets/images/footer-bg.png" alt="Footer" style="width: 100%; display: block;">
 
         </td>
     </tr>
