@@ -59,7 +59,7 @@ class PasswordResetController extends Controller
         $request->validate([
                 'email' => 'required|email',
                 'code' => 'required|string',
-                'password' => 'required|min:8|regex:/[a-zA-Z]/|regex:/[0-9]/',
+                'password' => 'required|confirmed|min:8',
             ]
         );
 
