@@ -259,7 +259,7 @@
                 <tr>
                     <td>
                         <h6>Фамилия пассажира / Name passenger</h6>
-                        <p>{{ $traveler['Name']['NamePartList']['NamePart'][2] }} {{ $traveler['Name']['NamePartList']['NamePart'][0] }}</p>
+                        <p>{{ $traveler['Name']['NamePartList']['NamePart'][1] }} {{ $traveler['Name']['NamePartList']['NamePart'][0] }}</p>
                     </td>
                     <td>
                         <h6>Документ / Document</h6>
