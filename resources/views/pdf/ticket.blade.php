@@ -200,7 +200,7 @@
     use Illuminate\Support\Facades\App;
 
     $airportDataRepository = App::make('App\Repositories\AirportDataRepositoryInterface');
-    $geoDataService = new GeoDataService($airportDataRepository);
+    $geoDataService = new GeoDataService($airportDataRepository)
 
 @endphp
 
@@ -266,7 +266,7 @@
                         <p>
                             @php
                                 $passportNumber = collect($traveler['CustomSupplierParameterList']['CustomSupplierParameter'])
-                                    ->firstWhere('Name', 'PassportNumber')['Value'] ?? 'N/A';
+                                    ->firstWhere('Name', 'PassportNumber')['Value'] ?? 'N/A'
                             @endphp
                             {{ $passportNumber }}
                         </p>
@@ -275,11 +275,12 @@
                         <h6>Дата рождения / Birthday</h6>
                         <p>
                             @php
-                                $dateOfBirth = collect($traveler['CustomSupplierParameterList']['CustomSupplierParameter'])
+                                use Carbon\Carbon;$dateOfBirth = collect($traveler['CustomSupplierParameterList']['CustomSupplierParameter'])
                                     ->firstWhere('Name', 'DateOfBirth')['Value'] ?? 'N/A';
                                 $formattedDateOfBirth = $dateOfBirth !== 'N/A'
-                                    ? \Carbon\Carbon::createFromFormat('m/d/Y', $dateOfBirth)->format('Y-m-d')
-                                    : 'N/A';
+                                    ?
+                                Carbon::createFromFormat('m/d/Y', $dateOfBirth)->format('d M Y')
+                                    : 'N/A'
                             @endphp
                             {{ $formattedDateOfBirth }}
                         </p>
@@ -330,8 +331,7 @@
                         <td>
                             <h6>Отправление / Departing</h6>
                             <p>
-                                {{ date('d.m.Y', strtotime(str_replace('-', ' ', $segment['DepartDate']))) }}
-                                {{ date('H:i', strtotime(str_replace('-', ' ', $segment['DepartDate']))) }}
+                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
                             </p>
                             <p>
                                 {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['cityName']}},
@@ -341,8 +341,7 @@
                         <td>
                             <h6>Прибытие / Arriving</h6>
                             <p>
-                                {{ date('d.m.Y', strtotime(str_replace('-', ' ', $segment['ArriveDate']))) }}
-                                {{ date('H:i', strtotime(str_replace('-', ' ', $segment['ArriveDate']))) }}
+                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
                             </p>
                             <p>
                                 {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['cityName']}},
@@ -426,13 +425,14 @@
                                     </span>
 
                                 <h6>
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
-                                    ,
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['airportName']}}
-                                    -
                                     {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['cityName']}}
                                     ,
                                     {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['airportName']}}
+                                    -
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
+                                    ,
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['airportName']}}
+
                                 </h6>
                             </div>
                         </td>
@@ -445,8 +445,7 @@
                             <td>
                                 <h6>Отправление / Departing</h6>
                                 <p>
-                                    {{ date('d.m.Y', strtotime(str_replace('-', ' ', $segment['DepartDate']))) }}
-                                    {{ date('H:i', strtotime(str_replace('-', ' ', $segment['DepartDate']))) }}
+                                    {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
                                 </p>
                                 <p>
                                     {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['cityName']}},
@@ -456,8 +455,7 @@
                             <td>
                                 <h6>Прибытие / Arriving</h6>
                                 <p>
-                                    {{ date('d.m.Y', strtotime(str_replace('-', ' ', $segment['ArriveDate']))) }}
-                                    {{ date('H:i', strtotime(str_replace('-', ' ', $segment['ArriveDate']))) }}
+                                    {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
                                 </p>
                                 <p>
                                     {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['cityName']}},

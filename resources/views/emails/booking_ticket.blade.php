@@ -69,35 +69,41 @@
                                         </tr>
                                     </table>
 
-                                    <table width="100%" cellspacing="0" cellpadding="0"
-                                           style="margin-top: 10px;">
+                                    <table width="100%" cellspacing="0" cellpadding="5" style="margin-top: 10px;">
                                         <!-- Header Row -->
                                         <tr>
-                                            <td
-                                                style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
                                                 Вылет
                                             </td>
-                                            <td
-                                                style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
-                                                Прилет
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                Время вылета
                                             </td>
-                                            <td
-                                                style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                Дата вылета
+                                            </td>
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                Время прилёта
+                                            </td>
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                Дата прилёта
+                                            </td>
+                                            <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
                                                 Бронь
                                             </td>
                                         </tr>
 
                                         @foreach($bookingData['GroupList']['Group']['OutwardList']['Outward']['SegmentList']['Segment'] as $segment)
                                             <tr>
-                                                <td>{{ $segment['Origin']['Code'] }}
-                                                    → {{ $segment['Destination']['Code'] }}</td>
-                                                <td>{{ date('H:i', strtotime($segment['DepartDate'])) }}
-                                                    - {{ date('H:i', strtotime($segment['ArriveDate'])) }}</td>
-                                                <td>Рейс: {{ $segment['FlightId']['Code'] }}</td>
+                                                <td>{{ $segment['Origin']['Code'] }} → {{ $segment['Destination']['Code'] }}</td>
+                                                <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('H:i') }}</td>
+                                                <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y') }}</td>
+                                                <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('H:i') }}</td>
+                                                <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y') }}</td>
+                                                <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ $segment['FlightId']['Code'] }}</td>
                                             </tr>
                                         @endforeach
-
                                     </table>
+
                                 </td>
                             </tr>
                             @if(isset($bookingData['GroupList']['Group']['ReturnList']))
@@ -122,34 +128,39 @@
                                             </tr>
                                         </table>
 
-                                        <table width="100%" cellspacing="0" cellpadding="0"
-                                               style="margin-top: 10px;">
+                                        <table width="100%" cellspacing="0" cellpadding="5" style="margin-top: 10px;">
                                             <!-- Header Row -->
                                             <tr>
-                                                <td
-                                                    style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
                                                     Вылет
                                                 </td>
-                                                <td
-                                                    style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
-                                                    Прилет
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                    Время вылета
                                                 </td>
-                                                <td
-                                                    style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; line-height: 16px; text-align: left; padding-bottom: 8px;">
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                    Дата вылета
+                                                </td>
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                    Время прилёта
+                                                </td>
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
+                                                    Дата прилёта
+                                                </td>
+                                                <td style="color: #80849A; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 400; text-align: left;">
                                                     Бронь
                                                 </td>
                                             </tr>
 
                                             @foreach($bookingData['GroupList']['Group']['ReturnList']['Return']['SegmentList']['Segment'] as $segment)
                                                 <tr>
-                                                    <td>{{ $segment['Origin']['Code'] }}
-                                                        → {{ $segment['Destination']['Code'] }}</td>
-                                                    <td>{{ date('H:i', strtotime($segment['DepartDate'])) }}
-                                                        - {{ date('H:i', strtotime($segment['ArriveDate'])) }}</td>
-                                                    <td>Рейс: {{ $segment['FlightId']['Code'] }}</td>
+                                                    <td>{{ $segment['Origin']['Code'] }} → {{ $segment['Destination']['Code'] }}</td>
+                                                    <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('H:i') }}</td>
+                                                    <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y') }}</td>
+                                                     <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('H:i') }}</td>
+                                                    <td>{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y') }}</td>
+                                                    <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ $segment['FlightId']['Code'] }}</td>
                                                 </tr>
                                             @endforeach
-
                                         </table>
                                     </td>
                                 </tr>
