@@ -147,10 +147,13 @@ class FlightSearchService
 
         foreach ($segmentsList as $index => $segment) {
 
-            $operatorCode = strtolower($segment['TfOperator']['Code']);
+            $operator = $segment['VendingOperator'] ?? $segment['TfVendingOperator'];
+            $operatorCode = strtolower($operator['Code']);
             $supplierClass = $segment['TravelClass']['SupplierClass'] ?? '';
 
-            $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction);
+            if (count($features)) {
+                $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction, $operator['Code']);
+            }
 
             // Store the first and last segment for date extraction
             if ($index === 0) {
@@ -198,13 +201,19 @@ class FlightSearchService
                     'Time' => $arrivalTime,
                 ],
                 'Operator' => [
-                    'Name' => $segment['TfOperator']['Name'] ?? '',
-                    'Code' => $segment['TfOperator']['Code'] ?? '',
+                    'Name' => $operator['Name'] ?? '',
+                    'Code' => $operator['Code'] ?? '',
                     'Logo' => "https://www.travelfusion.com/images/operators/p{$operatorCode}.gif",
                 ],
                 'FlightNumber' => ($segment['FlightId']['Code'] ?? ''),
                 'TravelClass' => $segment['TravelClass'] ?? [],
-                'Features' => $relevantFeatures,
+                'Features' => $relevantFeatures ?? [
+                        "HoldBag" => false,
+                        "SmallCabinBag" => false,
+                        "LargeCabinBag" => false,
+                        "FlightChange" => false,
+                        "Cancellation" => false
+                    ],
             ];
 
             // Calculate stop duration if it's not the first segment
@@ -280,7 +289,7 @@ class FlightSearchService
         return $stops;
     }
 
-    private function getRelevantFeatures(array $features, string $supplierClass, string $direction): array
+    private function getRelevantFeatures(array $features, string $supplierClass, string $direction, string $operatorCode): array
     {
         $relevantFeatures = [
             'HoldBag' => false,
@@ -323,10 +332,18 @@ class FlightSearchService
                         }
                     }
 
-                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
-                        $isMatch = false;
-                        break;
+                    if ($conditionType === 'OperatorCode') {
+                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
+                        if ($conditionValueFirstPart !== $operatorCode) {
+                            $isMatch = false;
+                            break;
+                        }
                     }
+
+//                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
+//                        $isMatch = false;
+//                        break;
+//                    }
                 }
 
                 if ($isMatch) {
@@ -347,13 +364,13 @@ class FlightSearchService
                         }
                     }
 
-                    if(in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])){
+                    if (in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])) {
                         $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
-                    }else{
+                    } else {
                         $formattedValue = $value . ' ' . $currency;
                     }
 
-                    $relevantFeatures[$featureType] = $formattedValue ?[
+                    $relevantFeatures[$featureType] = $formattedValue ? [
                         'Bundled' => $isBundled,
                         'Value' => $formattedValue,
                     ] : false;
@@ -362,28 +379,6 @@ class FlightSearchService
         }
 
         return $relevantFeatures;
-    }
-
-    private function formatConditions(array $conditions): array
-    {
-        $filteredConditions = [];
-
-        foreach ($conditions as $condition) {
-            $type = $condition['@attributes']['Type'] ?? '';
-            $value = $condition['@attributes']['Value'] ?? '';
-
-            // Skip unnecessary condition types
-            if (in_array($type, ['Provision', 'ChargeModel', 'Phase', 'OperatorCode', 'SupplierClass', 'Direction', 'NumberOfSegments'])) {
-                continue;
-            }
-
-            $filteredConditions[] = [
-                'Type' => $type,
-                'Value' => $value,
-            ];
-        }
-
-        return $filteredConditions;
     }
 
 

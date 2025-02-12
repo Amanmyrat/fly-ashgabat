@@ -4,6 +4,7 @@ namespace App\Services\TravelFusion\Requests;
 
 use DateTime;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class ProcessTermsRequestBuilder
 {
@@ -19,14 +20,22 @@ class ProcessTermsRequestBuilder
      */
     public function build(): array
     {
-        return [
+        $requestData = [
             'ProcessTerms' => [
                 'XmlLoginId' => '', // Placeholder, will be added dynamically
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'RoutingId' => $this->data['routing_id'],
+                'OutwardId' => $this->data['outward_id'],
                 'BookingProfile' => $this->buildBookingProfile(),
             ],
         ];
+
+        $flightType = Cache::get('routing_' . $this->data['routing_id']);
+        if ($flightType === 'round-trip') {
+            $requestData['ProcessTerms']['ReturnId'] = $this->data['return_id'];
+        }
+
+        return $requestData;
     }
 
     /**
@@ -56,7 +65,6 @@ class ProcessTermsRequestBuilder
                     'NamePartList' => [
                         'NamePart' => [
                             $traveller['firstname'],
-                            substr($traveller['lastname'], 0, 1), // Initial of last name
                             $traveller['lastname'],
                         ],
                     ],
@@ -101,7 +109,6 @@ class ProcessTermsRequestBuilder
                 'NamePartList' => [
                     'NamePart' => [
                         $contactDetails['firstname'],
-                        substr($contactDetails['lastname'], 0, 1), // Initial of last name
                         $contactDetails['lastname'],
                     ],
                 ],
@@ -114,8 +121,8 @@ class ProcessTermsRequestBuilder
                 'Street' => $contactDetails['address']['street'],
                 'Locality' => '',
                 'City' => $contactDetails['address']['city'],
-                'Province' => '',
-                'Postcode' => '',
+                'Province' => 'OT',
+                'Postcode' => 'NONE',
                 'CountryCode' => $contactDetails['address']['country_code'],
             ],
             'MobilePhone' => [
@@ -145,8 +152,8 @@ class ProcessTermsRequestBuilder
                 'Street' => 'George Street',
                 'Locality' => '',
                 'City' => 'Bristol',
-                'Province' => '',
-                'Postcode' => '',
+                'Province' => 'OT',
+                'Postcode' => 'NONE',
                 'CountryCode' => 'GB',
             ],
             'CreditCard' => [

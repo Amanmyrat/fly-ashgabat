@@ -57,7 +57,7 @@ class TravelFusionService
         $this->injectLoginIds($requestData, $loginId);
 
         $xmlRoot = new SimpleXMLElement('<CommandList/>');
-        switch ($type){
+        switch ($type) {
             case 'processTerms':
                 $this->arrayToXmlProcessTerms($requestData, $xmlRoot);
                 break;
@@ -80,7 +80,11 @@ class TravelFusionService
         $response = Http::withHeaders([
             'Accept' => 'text/xml',
             'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xmlContent, 'text/xml')->post($endpoint);
+        ])
+            ->retry(3, 5000)
+            ->withoutVerifying()
+            ->timeout(120)
+            ->withBody($xmlContent, 'text/xml')->post($endpoint);
 
         if ($response->successful()) {
             $responseXml = simplexml_load_string($response->body());
@@ -137,15 +141,13 @@ class TravelFusionService
                         $travellerNode = $subNode->addChild('Traveller');
                         $this->arrayToXmlProcessTerms($traveller, $travellerNode);
                     }
-                }
-                // Special handling for NamePartList
+                } // Special handling for NamePartList
                 elseif ($key === 'NamePartList') {
                     $subNode = $xmlData->addChild($key);
                     foreach ($value['NamePart'] as $namePart) {
                         $subNode->addChild('NamePart', htmlspecialchars($namePart));
                     }
-                }
-                // Special handling for CustomSupplierParameterList
+                } // Special handling for CustomSupplierParameterList
                 elseif ($key === 'CustomSupplierParameterList') {
                     $subNode = $xmlData->addChild($key);
                     // Check if CustomSupplierParameter is a single associative array
@@ -162,8 +164,7 @@ class TravelFusionService
                             $paramNode->addChild('Value', htmlspecialchars($param['Value']));
                         }
                     }
-                }
-                // Recursively handle other nested arrays
+                } // Recursively handle other nested arrays
                 else {
                     $subNode = $xmlData->addChild($key);
                     $this->arrayToXmlProcessTerms($value, $subNode);
