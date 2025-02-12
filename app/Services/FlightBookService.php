@@ -131,8 +131,8 @@ class FlightBookService
 
         $contactDetails = $bookingDetails['BookingProfile']['ContactDetails'];
         $contactData = [
-//           'email' => $contactDetails['Email'],
-           'email' => 'tekemuradov@gmail.com',
+           'email' => $contactDetails['Email'],
+//           'email' => 'tekemuradov@gmail.com',
            'phone' => $contactDetails['MobilePhone']['InternationalCode'].$contactDetails['MobilePhone']['Number'],
         ];
 
