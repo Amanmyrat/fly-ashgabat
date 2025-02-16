@@ -4,13 +4,16 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Eloquent;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  *
@@ -37,6 +40,18 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @property string $firstname
+ * @property string $lastname
+ * @property string|null $company
+ * @property string $balance
+ * @property-read Collection<int, FlightBooking> $flightBookings
+ * @property-read int|null $flight_bookings_count
+ * @property-read Collection<int, PersonalAccessToken> $tokens
+ * @property-read int|null $tokens_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBalance($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCompany($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereFirstname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastname($value)
  * @mixin Eloquent
  */
 class User extends Authenticatable
@@ -55,6 +70,7 @@ class User extends Authenticatable
         'company',
         'email',
         'password',
+        'balance',
     ];
 
     /**
@@ -78,5 +94,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function flightBookings(): HasMany
+    {
+        return $this->hasMany(FlightBooking::class);
     }
 }

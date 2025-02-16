@@ -35,6 +35,11 @@ class FlightBookRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'payment_type' => [
+                'required',
+                'string',
+                Rule::in(['balance', 'post-pay']),
+            ],
             'travellers' => [
                 'required',
                 'array',
@@ -99,16 +104,6 @@ class FlightBookRequest extends FormRequest
                 'string',
                 'max:100',
             ],
-//            'contact_details.address.flat' => [
-//                'nullable',
-//                'string',
-//                'max:50',
-//            ],
-//            'contact_details.address.building_number' => [
-//                'nullable',
-//                'string',
-//                'max:50',
-//            ],
             'contact_details.address.street' => [
                 'required',
                 'string',

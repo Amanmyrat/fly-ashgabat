@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
-use App\Http\Controllers\FlightBookController;
-use App\Http\Controllers\FlightSearchController;
 use App\Http\Controllers\GeoDataController;
+use App\Http\Controllers\TFusion\FlightBookController;
+use App\Http\Controllers\TFusion\FlightProcessController;
+use App\Http\Controllers\TFusion\FlightSearchController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\VisaController;
 use Illuminate\Support\Facades\Route;
@@ -20,10 +21,12 @@ Route::get('/visas/all', [VisaController::class, 'getAllVisas']);
 Route::get('/visas', [VisaController::class, 'getVisas']);
 Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
+Route::group(['prefix' => 'tfusion'], function () {
+    Route::get('search/flights', [FlightSearchController::class, 'search']);
+    Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
+    Route::post('book/flights', [FlightBookController::class, 'book']);
+});
 
-Route::get('search/tfusion/flights', [FlightSearchController::class, 'search']);
-Route::post('book/tfusion', [FlightBookController::class, 'book']);
-Route::get('book/{book_id}/check', [FlightBookController::class, 'check']);
 Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);
 
 Route::group(['prefix' => 'user'], function () {
@@ -33,4 +36,9 @@ Route::group(['prefix' => 'user'], function () {
     Route::post('/password/request-reset', [PasswordResetController::class, 'requestReset']);
     Route::post('/password/verify-code', [PasswordResetController::class, 'verifyCode']);
     Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
+});
+
+Route::group(['middleware' => 'auth:sanctum'], function () {
+
+    Route::get('bookings', [FlightBookController::class, 'getBookings']);
 });

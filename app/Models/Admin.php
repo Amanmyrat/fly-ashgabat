@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -34,6 +34,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static Admin wherePassword($value)
  * @method static Admin whereRole($value)
  * @method static Admin whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read int|null $tokens_count
  * @mixin Eloquent
  */
 class Admin extends Authenticatable

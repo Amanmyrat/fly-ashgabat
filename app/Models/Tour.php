@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 use Spatie\Translatable\HasTranslations;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property array $name

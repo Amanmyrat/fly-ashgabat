@@ -35,7 +35,7 @@ class FlightSearchService
         $startRoutingResponse = $this->travelFusionService->sendRequest($startRoutingRequest);
 
         if (!isset($startRoutingResponse['StartRouting']['RouterList'])) {
-            return ['message' => 'No result found'];
+            return ['success' => false, 'message' => 'No result found'];
         }
 
         // Step 2: CheckRouting
@@ -45,9 +45,10 @@ class FlightSearchService
 
         $flightType = $validatedData['flight_type'];
 
-        Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(20));
+        Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(30));
 
         return [
+            'success' => true,
             'routing_id' => $routingId,
             'flights' => $this->formatFlights($checkRoutingResponse),
         ];

@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\TFusion;
 
+use App\Http\Controllers\BaseController;
 use App\Http\Requests\FlightSearchRequest;
 use App\Services\FlightSearchService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 
-class FlightSearchController extends Controller
+class FlightSearchController extends BaseController
 {
-
     public function __construct(protected FlightSearchService $flightSearchService)
     {
     }
@@ -24,15 +23,6 @@ class FlightSearchController extends Controller
     {
         $validatedData = $request->validated();
 
-        try {
-            $response = $this->flightSearchService->search($validatedData);
-            return new JsonResponse([
-                'data' => $response,
-                'requested_values' => $request->all(),
-            ]);
-
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 500);
-        }
+        return $this->handleServiceCall(fn() => $this->flightSearchService->search($validatedData));
     }
 }
