@@ -54,6 +54,11 @@ class UserResource extends Resource
     public static function table(Tables\Table $table): Tables\Table
     {
         return $table->columns([
+            TextColumn::make('email')
+                ->label('Email')
+                ->sortable()
+                ->searchable(),
+
             TextColumn::make('firstname')
                 ->label('First Name')
                 ->sortable()
