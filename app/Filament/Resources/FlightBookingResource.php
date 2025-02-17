@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App;
 use App\Enum\BookingStatus;
 use App\Filament\Resources\BookingResource\Pages;
+use App\Jobs\CheckBookingStatusJob;
 use App\Jobs\StartBookingJob;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -12,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -22,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 use Filament\Infolists\Components\Actions;
 use Filament\Infolists\Components\Actions\Action;
+use function VeeWee\Xml\Xslt\Configurator\functions;
 
 
 class FlightBookingResource extends Resource
@@ -176,7 +179,18 @@ class FlightBookingResource extends Resource
                         ->color('primary')
                         ->icon('heroicon-o-play')
                         ->visible(fn ($record) => $record->status === BookingStatus::PENDING)
-                        ->action(fn ($record) => StartBookingJob::dispatch($record))
+                        ->action(function ($record) {
+                            // Dispatch a job
+                            StartBookingJob::dispatch($record);
+                            $record->update(['status' => BookingStatus::IN_PROGRESS]);
+                            CheckBookingStatusJob::dispatch($record)->delay(now()->addSeconds(5));
+
+                            Notification::make()
+                                ->title('Booking Started')
+                                ->body("The booking for record #{$record->id} has been started successfully.")
+                                ->success()
+                                ->send();
+                        })
                         ->requiresConfirmation()
                         ->tooltip('Click to start the booking process'),
                 ]),

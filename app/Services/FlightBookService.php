@@ -41,7 +41,9 @@ class FlightBookService
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $fullPrice['Amount']];
         }
 
-        $booking = $user?->flightBookings()->create([
+
+        $bookingData = [
+            'user_id' => $user?->id ?? null,
             'booking_reference' => $bookingReference,
             'origin' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Origin'],
             'destination' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Destination'],
@@ -57,7 +59,13 @@ class FlightBookService
             ],
             'payment_type' => $validatedData['payment_type'],
             'status' => BookingStatus::PENDING->value,
-        ]);
+        ];
+
+        $booking = FlightBooking::create($bookingData);
+
+        if (!$booking) {
+            throw new \Exception('Failed to create booking');
+        }
 
         if (!empty($validatedData['contact_details'])) {
             $booking->contactDetail()->create($validatedData['contact_details']);
