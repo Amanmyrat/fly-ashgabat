@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enum\BookingStatus;
+use App\Enum\PaymentType;
+use App\Services\AirportLocatorService;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,6 +79,8 @@ class FlightBooking extends Model
         'return' => 'array',
         'price' => 'array',
         'features' => 'array',
+        'status' => BookingStatus::class,
+        'payment_type' => PaymentType::class
     ];
 
     public function user(): BelongsTo
@@ -96,5 +101,72 @@ class FlightBooking extends Model
     public function contactDetail(): HasOne
     {
         return $this->hasOne(ContactDetail::class);
+    }
+
+
+    /**
+     * Get formatted flight directions based on the direction type.
+     *
+     * @param AirportLocatorService $airportLocatorService
+     * @return string
+     */
+    public function getFlightDirectionsAndType(AirportLocatorService $airportLocatorService): string
+    {
+        $originCode = $this->origin['Code'] ?? null;
+        $destinationCode = $this->destination['Code'] ?? null;
+
+        $departureCity = $this->getCityNameByCode($originCode, $airportLocatorService);
+        $arrivalCity = $this->getCityNameByCode($destinationCode, $airportLocatorService);
+
+        return sprintf(
+            '%s - %s',
+            $departureCity,
+            $arrivalCity,
+        );
+    }
+
+
+    /**
+     * Get formatted flight directions based on the direction type with date
+     *
+     * @param AirportLocatorService $airportLocatorService
+     * @return string
+     */
+    public function getFlightDirectionsAndTypeWithDate(AirportLocatorService $airportLocatorService): string
+    {
+        $originCode = $this->origin['Code'] ?? null;
+        $destinationCode = $this->destination['Code'] ?? null;
+
+        $departureDate = $firstSegment['DepatureDateTime'] ?? null;
+
+        $departureCity = $this->getCityNameByCode($originCode, $airportLocatorService);
+        $arrivalCity = $this->getCityNameByCode($destinationCode, $airportLocatorService);
+
+        $formattedDepartureDate = $departureDate ? \Carbon\Carbon::parse($departureDate)->format('d.m.Y H:i') : 'Unknown date';
+
+        return sprintf(
+            '%s - %s и даты вылета: %s',
+            $departureCity,
+            $arrivalCity,
+            $formattedDepartureDate
+        );
+    }
+
+    /**
+     * Fetch city name by code using the AirportLocatorService.
+     *
+     * @param string|null $cityCode
+     * @param AirportLocatorService $airportLocatorService
+     * @return string
+     */
+    protected function getCityNameByCode(?string $cityCode, AirportLocatorService $airportLocatorService): string
+    {
+        if (!$cityCode) {
+            return 'Unknown';
+        }
+
+        $cityInfo = $airportLocatorService->getCityByCode($cityCode);
+
+        return $cityInfo['name']['en'] ?? $cityCode;
     }
 }

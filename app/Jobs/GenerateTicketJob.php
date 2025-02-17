@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enum\BookingStatus;
 use App\Mail\BookingTicketMail;
 use App\Models\FlightBooking;
 use App\Models\FlightTicket;
@@ -15,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -35,6 +35,7 @@ class GenerateTicketJob implements ShouldQueue
      */
     public function handle(TravelFusionService $travelFusionService)
     {
+        Log::info("Generate tickets for: {$this->booking->booking_reference}");
         $response = $travelFusionService->sendRequest(
             (new GetBookingRequestBuilder($this->booking->booking_reference))->build()
         );

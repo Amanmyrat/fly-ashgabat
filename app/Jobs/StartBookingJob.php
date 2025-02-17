@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class StartBookingJob implements ShouldQueue
 {
@@ -28,11 +29,14 @@ class StartBookingJob implements ShouldQueue
      */
     public function handle(TravelFusionService $travelFusionService)
     {
+        Log::info("Start booking for: {$this->booking->booking_reference}");
+
         $startBookingRequest = (new StartBookingRequestBuilder([
             'tf_booking_reference' => $this->booking->booking_reference,
             'price' => $this->booking->price
         ]))->build();
 
-        $travelFusionService->sendRequest($startBookingRequest);
+        $startBookingResponse = $travelFusionService->sendRequest($startBookingRequest);
+        Log::info($startBookingResponse);
     }
 }

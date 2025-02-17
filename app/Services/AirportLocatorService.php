@@ -186,4 +186,27 @@ class AirportLocatorService
 
         return $results;
     }
+
+    /**
+     * Get city information by city code.
+     *
+     * @param string $cityCode The 3-character city code to search for.
+     *
+     * @return array|null An array containing the airport information if found, or null if not found.
+     */
+    public function getCityByCode(string $cityCode): ?array
+    {
+        $airports = $this->airportDataRepository->getAllAirports();
+        $cities = $this->airportDataRepository->getAllCities();
+
+        $foundCity = $cities[$cityCode] ?? null;
+
+        return $foundCity ?? [
+                'name' => [
+                    'ru' => $airports[$cityCode]['cityName']['ru'],
+                    'en' => $airports[$cityCode]['cityName']['en']
+                ],
+                'country' => $airports[$cityCode]['country']
+            ];
+    }
 }
