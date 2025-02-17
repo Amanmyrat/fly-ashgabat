@@ -43,6 +43,13 @@ class CheckBookingStatusJob implements ShouldQueue
 
         if ($status === 'Succeeded') {
             $this->booking->update(['status' => BookingStatus::APPROVED->value]);
+
+            // Deduct balance if payment type is balance
+            if ($this->booking->payment_type === 'balance' && $this->booking->user) {
+                $amountToDeduct = $this->booking->price['Amount'];
+                $this->booking->user->decrement('balance', $amountToDeduct);
+            }
+
             GenerateTicketJob::dispatch($this->booking);
             return;
         }
