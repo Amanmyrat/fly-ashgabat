@@ -128,6 +128,7 @@ class FlightBookController extends BaseController
             'status' => $booking->status,
             'features' => $booking->features,
             'tickets' => $booking->tickets->map(fn($ticket) => [
+                'id' => $ticket->id,
                 'name' => $ticket->name,
                 'ticket_url' => $ticket->ticket_url
             ]),
