@@ -39,6 +39,5 @@ Route::group(['prefix' => 'user'], function () {
 });
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
-
     Route::get('bookings', [FlightBookController::class, 'getBookings']);
 });

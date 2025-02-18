@@ -4,14 +4,11 @@ namespace App\Http\Controllers\TFusion;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\FlightBookRequest;
-use App\Http\Resources\BookingResource;
-use App\Http\Resources\FlightBookingResource;
 use App\Jobs\CheckBookingStatusJob;
 use App\Jobs\StartBookingJob;
 use App\Services\FlightBookService;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class FlightBookController extends BaseController

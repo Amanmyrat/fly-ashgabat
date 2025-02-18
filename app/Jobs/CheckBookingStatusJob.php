@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enum\BookingStatus;
+use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
@@ -45,7 +46,7 @@ class CheckBookingStatusJob implements ShouldQueue
             $this->booking->update(['status' => BookingStatus::APPROVED->value]);
 
             // Deduct balance if payment type is balance
-            if ($this->booking->payment_type === 'balance' && $this->booking->user) {
+            if ($this->booking->payment_type === PaymentType::BALANCE && $this->booking->user) {
                 $amountToDeduct = $this->booking->price['Amount'];
                 $this->booking->user->decrement('balance', $amountToDeduct);
             }
