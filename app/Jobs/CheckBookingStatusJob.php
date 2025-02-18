@@ -70,7 +70,7 @@ class CheckBookingStatusJob implements ShouldQueue
             Log::info("Re-dispatching job for booking: {$this->booking->booking_reference}");
 
             // Re-dispatch the job with a delay
-            self::dispatch($this->booking)->delay(now()->addSeconds(10));
+            self::dispatch($this->booking)->delay(now()->addSeconds(5));
         }
     }
 }

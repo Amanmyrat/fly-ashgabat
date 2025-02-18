@@ -74,7 +74,7 @@ class FlightSearchService
 
             // Sleep for a second before the next request (to prevent API rate limits)
             if (!$allComplete) {
-                sleep(1);
+                sleep(2);
             }
 
         } while (!$allComplete);
