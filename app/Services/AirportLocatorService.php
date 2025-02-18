@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Repositories\AirportDataRepositoryInterface;
+use Illuminate\Support\Facades\App;
 
 class AirportLocatorService
 {
+    private string $locale;
+
     public function __construct(protected AirportDataRepositoryInterface $airportDataRepository)
     {
+        $this->locale = App::getLocale();
     }
 
     /**
@@ -39,26 +43,27 @@ class AirportLocatorService
      */
     private function processAirports(array $airports, array $countries, array $cities): array
     {
-        // Process each airport entry
         foreach ($airports as $aKey => $airport) {
-            // Update country information if available
-            if ($airport['country'] != null && isset($countries[$airport['country']])) {
-                $airports[$aKey]['country'] = $countries[$airport['country']]['name'];
-            }
+            $countryCode = $airport['country'] ?? null;
+
+            // Localized country name
+            $airports[$aKey]['country'] = isset($countries[$countryCode])
+                ? ($countries[$countryCode]['name'][$this->locale] ?? $countries[$countryCode]['name']['en'])
+                : null;
 
             // Set airport code
             $airports[$aKey]['code'] = $aKey;
 
-            // Determine city information
+            // Localized city information
             $airports[$aKey]['city'] = isset($airport['airportName'])
                 ? $this->getCityString($airport, $countries)
-                : $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru'];
+                : ($airport['cityName'][$this->locale] ?? $airport['cityName']['en']) . ', ' . $airports[$aKey]['country'];
 
-            // Update city information
+            // Localized area information
             if ($airport['area'] != null && isset($cities[$airport['area']])) {
                 $airports[$aKey]['area'] = [
-                    'name' => $cities[$airport['area']]['name'],
-                    'code' => $airports[$aKey]['area']
+                    'name' => $cities[$airport['area']]['name'][$this->locale] ?? $cities[$airport['area']]['name']['en'],
+                    'code' => $airport['area']
                 ];
             }
         }
@@ -75,9 +80,13 @@ class AirportLocatorService
     private function getCityString(array $airport, array $countries): string
     {
         return isset($airport['airportName'])
-            ? $airport['airportName']['ru'] . ', ' . $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru']
-            : $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru'];
+            ? ($airport['airportName'][$this->locale] ?? $airport['airportName']['en']) . ', ' .
+            ($airport['cityName'][$this->locale] ?? $airport['cityName']['en']) . ', ' .
+            ($countries[$airport['country']]['name'][$this->locale] ?? $countries[$airport['country']]['name']['en'])
+            : ($airport['cityName'][$this->locale] ?? $airport['cityName']['en']) . ', ' .
+            ($countries[$airport['country']]['name'][$this->locale] ?? $countries[$airport['country']]['name']['en']);
     }
+
 
     /**
      * Filter airports based on the search query.
@@ -202,11 +211,9 @@ class AirportLocatorService
         $foundCity = $cities[$cityCode] ?? null;
 
         return $foundCity ?? [
-                'name' => [
-                    'ru' => $airports[$cityCode]['cityName']['ru'],
-                    'en' => $airports[$cityCode]['cityName']['en']
-                ],
+                'name' => $airports[$cityCode]['cityName'][$this->locale] ?? $airports[$cityCode]['cityName']['en'], // Corrected to return a string
                 'country' => $airports[$cityCode]['country']
             ];
     }
+
 }

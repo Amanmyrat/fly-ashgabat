@@ -16,6 +16,8 @@ class FlightSearchController extends BaseController
     /**
      * Search tfusion flights
      *
+     * @localizationHeader
+     *
      * @param FlightSearchRequest $request
      * @return JsonResponse
      */

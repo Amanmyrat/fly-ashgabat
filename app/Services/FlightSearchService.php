@@ -9,12 +9,14 @@ use App\Services\TravelFusion\TravelFusionService;
 
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 
 class FlightSearchService
 {
     private array $airports;
     private array $countries;
+    private string $locale;
 
     public function __construct(
         protected TravelFusionService            $travelFusionService,
@@ -23,6 +25,7 @@ class FlightSearchService
     {
         $this->airports = $this->airportDataRepository->getAllAirports();
         $this->countries = $this->airportDataRepository->getAllCountries();
+        $this->locale = App::getLocale();
     }
 
     /**
@@ -158,13 +161,21 @@ class FlightSearchService
         return [
             'Origin' => [
                 'Code' => $origin['Code'],
-                'Airport' => $this->airports[$origin['Code']]['airportName'] ?? $this->airports[$origin['Code']]['cityName'],
-                'Country' => $this->countries[$this->airports[$origin['Code']]['country']]['name'],
+                'Airport' => $this->airports[$origin['Code']]['airportName'][$this->locale]
+                    ?? $this->airports[$origin['Code']]['cityName'][$this->locale]
+                    ?? $this->airports[$origin['Code']]['airportName']['en']
+                    ?? $this->airports[$origin['Code']]['cityName']['en'], // Fallback to English
+                'Country' => $this->countries[$this->airports[$origin['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->airports[$origin['Code']]['country']]['name']['en'], // Fallback to English
             ],
             'Destination' => [
                 'Code' => $destination['Code'],
-                'Airport' => $this->airports[$destination['Code']]['airportName'] ?? $this->airports[$destination['Code']]['cityName'],
-                'Country' => $this->countries[$this->airports[$destination['Code']]['country']]['name'],
+                'Airport' => $this->airports[$destination['Code']]['airportName'][$this->locale]
+                    ?? $this->airports[$destination['Code']]['cityName'][$this->locale]
+                    ?? $this->airports[$destination['Code']]['airportName']['en']
+                    ?? $this->airports[$destination['Code']]['cityName']['en'], // Fallback to English
+                'Country' => $this->countries[$this->airports[$destination['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->airports[$destination['Code']]['country']]['name']['en'], // Fallback to English
             ],
             'TotalSum' => [
                 'Amount' => $totalSum,
@@ -220,13 +231,21 @@ class FlightSearchService
             $segments[] = [
                 'Origin' => [
                     'Code' => $segment['Origin']['Code'],
-                    'Airport' => $this->airports[$segment['Origin']['Code']]['airportName'] ?? $this->airports[$segment['Origin']['Code']]['cityName'],
-                    'Country' => $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name'],
+                    'Airport' => $this->airports[$segment['Origin']['Code']]['airportName'][$this->locale]
+                        ?? $this->airports[$segment['Origin']['Code']]['cityName'][$this->locale]
+                        ?? $this->airports[$segment['Origin']['Code']]['airportName']['en']
+                        ?? $this->airports[$segment['Origin']['Code']]['cityName']['en'], // Fallback to English
+                    'Country' => $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name'][$this->locale]
+                        ?? $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name']['en'], // Fallback to English
                 ],
                 'Destination' => [
                     'Code' => $segment['Destination']['Code'],
-                    'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'] ?? $this->airports[$segment['Destination']['Code']]['cityName'],
-                    'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'],
+                    'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'][$this->locale]
+                        ?? $this->airports[$segment['Destination']['Code']]['cityName'][$this->locale]
+                        ?? $this->airports[$segment['Destination']['Code']]['airportName']['en']
+                        ?? $this->airports[$segment['Destination']['Code']]['cityName']['en'], // Fallback to English
+                    'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'][$this->locale]
+                        ?? $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name']['en'], // Fallback to English
                 ],
 
                 'Duration' => [
@@ -317,8 +336,12 @@ class FlightSearchService
             $stops[] = [
                 'Location' => [
                     'Code' => $destinationCode,
-                    'Airport' => $this->airports[$destinationCode]['airportName'] ?? $this->airports[$destinationCode]['cityName'],
-                    'Country' => $this->countries[$this->airports[$destinationCode]['country']]['name'],
+                    'Airport' => $this->airports[$destinationCode]['airportName'][$this->locale]
+                        ?? $this->airports[$destinationCode]['cityName'][$this->locale]
+                        ?? $this->airports[$destinationCode]['airportName']['en']
+                        ?? $this->airports[$destinationCode]['cityName']['en'], // Fallback to English
+                    'Country' => $this->countries[$this->airports[$destinationCode]['country']]['name'][$this->locale]
+                        ?? $this->countries[$this->airports[$destinationCode]['country']]['name']['en'], // Fallback to English
                 ],
                 'Duration' => [
                     'Hours' => $hours,

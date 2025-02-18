@@ -20,6 +20,8 @@ class GeoDataController extends Controller
     /**
      * Get a list of airports
      *
+     * @localizationHeader
+     *
      * @param Request $request The HTTP request object containing the search query.
      * @return JsonResponse JSON response containing airport search results.
      */
@@ -38,6 +40,9 @@ class GeoDataController extends Controller
 
     /**
      * Get nationality information.
+     *
+     *
+     * @localizationHeader
      *
      * @return JsonResponse JSON response containing information about the Nationalities.
      */
