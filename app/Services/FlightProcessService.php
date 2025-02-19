@@ -32,11 +32,33 @@ class FlightProcessService
             ];
         }
 
-        // TODO here we should get required luggage options
+        $requiredParameters = $processDetailsResponse['ProcessDetails']['Router']['RequiredParameterList']['RequiredParameter'];
+
+        $options = [];
+
+        foreach ($requiredParameters as $param) {
+            if ($param['Type'] === 'value_select' && !empty($param['DisplayText'])) {
+                $name = $param['Name'];
+                $options[$name] = [];
+
+                // Extracting luggage options from DisplayText
+                preg_match_all('/(\d+)\s*\((.*?)\)/', $param['DisplayText'], $matches, PREG_SET_ORDER);
+
+                foreach ($matches as $match) {
+                    $options[$name][] = [
+                        'key' => (int)$match[1], // Luggage option key
+                        'value' => $match[2],    // Luggage description
+                    ];
+                }
+            }
+        }
+
         return [
             'success' => true,
+            'options' => $options,
             'message' => 'Processing successful',
         ];
+
     }
 
 }

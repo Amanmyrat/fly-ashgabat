@@ -41,7 +41,7 @@ class FlightBookService
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $fullPrice['Amount']];
         }
 
-
+        // TODO save some date for booking reference pay time (15min)
         $bookingData = [
             'user_id' => $user?->id ?? null,
             'booking_reference' => $bookingReference,
