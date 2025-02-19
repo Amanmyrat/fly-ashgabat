@@ -7,6 +7,7 @@ use App\Http\Controllers\TFusion\FlightBookController;
 use App\Http\Controllers\TFusion\FlightProcessController;
 use App\Http\Controllers\TFusion\FlightSearchController;
 use App\Http\Controllers\TourController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,5 +40,9 @@ Route::group(['prefix' => 'user'], function () {
 });
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
+
+    Route::get('/user', [UserController::class, 'show']);
+    Route::post('/user', [UserController::class, 'update']);
+
     Route::get('bookings', [FlightBookController::class, 'getBookings']);
 });

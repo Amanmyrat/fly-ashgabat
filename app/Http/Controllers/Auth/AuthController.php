@@ -71,25 +71,6 @@ class AuthController extends Controller
     }
 
     /**
-     * User verification email resend
-     *
-     * Handle email sending.
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function resend(Request $request): JsonResponse
-    {
-        if (!$request->user()->hasVerifiedEmail()) {
-            $request->user()->notify(new CustomEmailVerification());
-
-
-            return response()->json(['data' => ['message' => 'Email verification link sent']]);
-        }
-
-        return response()->json(['data' => ['message' => 'Email already verified']]);
-    }
-
-    /**
      * User password change
      *
      * Handle user password changing.

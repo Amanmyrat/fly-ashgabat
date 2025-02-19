@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Exception;
@@ -29,7 +30,7 @@ class AuthService
 
             $accessToken = $user->createToken('authToken')->plainTextToken;
 
-            return ['user' => $user, 'token' => $accessToken, 'message' => 'Registered successfully'];
+            return ['user' => new UserResource($user), 'token' => $accessToken, 'message' => 'Registered successfully'];
         } catch (Exception $e) {
             Log::error('Registration error: ' . $e->getMessage());
 
@@ -54,7 +55,7 @@ class AuthService
 
         return [
             'status' => 'success',
-            'user' => $user,
+            'user' => new UserResource($user),
             'token' => $token,
         ];
     }
