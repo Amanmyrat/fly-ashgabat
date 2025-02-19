@@ -130,6 +130,7 @@ class FlightBookRequest extends FormRequest
                 'email',
                 'max:100',
             ],
+            'options' => ['nullable', 'array'],
         ];
 
         if ($flightType === 'round-trip') {

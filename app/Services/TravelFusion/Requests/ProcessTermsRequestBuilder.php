@@ -58,6 +58,39 @@ class ProcessTermsRequestBuilder
         $travellers = [];
 
         foreach ($this->data['travellers'] as $traveller) {
+            $customSupplierParameters = [
+                [
+                    'Name' => 'DateOfBirth',
+                    'Value' => date('d/m/Y', strtotime($traveller['birthdate'])),
+                ],
+                [
+                    'Name' => 'PassportNumber',
+                    'Value' => $traveller['passport_number'],
+                ],
+                [
+                    'Name' => 'PassportExpiryDate',
+                    'Value' => date('d/m/Y', strtotime($traveller['passport_expiry_date'])),
+                ],
+                [
+                    'Name' => 'PassportCountryOfIssue',
+                    'Value' => $traveller['passport_country'],
+                ],
+                [
+                    'Name' => 'Nationality',
+                    'Value' => $traveller['nationality'],
+                ],
+            ];
+
+            // Loop through options and add them to CustomSupplierParameterList
+            if (!empty($this->data['options'])) {
+                foreach ($this->data['options'] as $optionName => $optionValue) {
+                    $customSupplierParameters[] = [
+                        'Name' => $optionName,
+                        'Value' => $optionValue,
+                    ];
+                }
+            }
+
             $travellers[] = [
                 'Age' => $this->calculateAgeCategory($traveller['birthdate']),
                 'Name' => [
@@ -70,28 +103,7 @@ class ProcessTermsRequestBuilder
                     ],
                 ],
                 'CustomSupplierParameterList' => [
-                    'CustomSupplierParameter' => [
-                        [
-                            'Name' => 'DateOfBirth',
-                            'Value' => date('d/m/Y', strtotime($traveller['birthdate'])),
-                        ],
-                        [
-                            'Name' => 'PassportNumber',
-                            'Value' => $traveller['passport_number'],
-                        ],
-                        [
-                            'Name' => 'PassportExpiryDate',
-                            'Value' => date('d/m/Y', strtotime($traveller['passport_expiry_date'])),
-                        ],
-                        [
-                            'Name' => 'PassportCountryOfIssue',
-                            'Value' => $traveller['passport_country'],
-                        ],
-                        [
-                            'Name' => 'Nationality',
-                            'Value' => $traveller['nationality'],
-                        ],
-                    ],
+                    'CustomSupplierParameter' => $customSupplierParameters,
                 ],
             ];
         }

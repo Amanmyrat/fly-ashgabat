@@ -46,8 +46,8 @@ class FlightProcessService
 
                 foreach ($matches as $match) {
                     $options[$name][] = [
-                        'key' => (int)$match[1], // Luggage option key
-                        'value' => $match[2],    // Luggage description
+                        'key' => (int)$match[1],
+                        'value' => $match[2],
                     ];
                 }
             }
