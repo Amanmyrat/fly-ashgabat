@@ -401,9 +401,32 @@
                 @endforeach
                 <tr>
                     <td colspan="5">
-                        <h6>
-                            Внимание! / Attention! Возврат: Да / Refund: Yes Обмен: Да / Exchange: Yes
-                        </h6>
+                        <div class="attention-box" style="margin: 5px 0; line-height: 1.4;">
+                            <h6 style="font-weight: bold; margin-bottom: 4px;">Внимание! / Attention!</h6>
+                            @php
+                                $features = $bookingModel->outward['Features'];
+                                $refundText = '';
+                                $exchangeText = '';
+
+                                if (is_array($features['Cancellation'])) {
+                                    $refundText = $features['Cancellation']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                    $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                } else {
+                                    $refundText = $features['Cancellation'] ? 'Да / Yes' : 'Нет / No';
+                                    $exchangeText = $features['FlightChange'] ? 'Да / Yes' : 'Нет / No';
+                                }
+                            @endphp
+                            <div style="display: grid; gap: 2px;">
+                                <div>Возврат / Refund: {{ $refundText }}</div>
+                                <div>Обмен / Exchange: {{ $exchangeText }}</div>
+                                @if(is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
+                                    <div>Багаж / Baggage: {{ $features['HoldBag']['Value'] }}</div>
+                                @endif
+                                @if(is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
+                                    <div>Ручная кладь / Hand baggage: {{ $features['CabinBag']['Value'] }}</div>
+                                @endif
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -482,13 +505,38 @@
                             </td>
                         </tr>
                     @endforeach
+                    @if(isset($bookingModel->return))
                     <tr>
                         <td colspan="5">
-                            <h6>
-                                Внимание! / Attention! Возврат: Да / Refund: Yes Обмен: Да / Exchange: Yes
-                            </h6>
+                            <div class="attention-box" style="margin: 5px 0; line-height: 1.4;">
+                                <h6 style="font-weight: bold; margin-bottom: 4px;">Внимание! / Attention!</h6>
+                                @php
+                                    $features = $bookingModel->return['Features'];
+                                    $refundText = '';
+                                    $exchangeText = '';
+
+                                    if (is_array($features['Cancellation'])) {
+                                        $refundText = $features['Cancellation']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                        $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                    } else {
+                                        $refundText = $features['Cancellation'] ? 'Да / Yes' : 'Нет / No';
+                                        $exchangeText = $features['FlightChange'] ? 'Да / Yes' : 'Нет / No';
+                                    }
+                                @endphp
+                                <div style="display: grid; gap: 2px;">
+                                    <div>Возврат / Refund: {{ $refundText }}</div>
+                                    <div>Обмен / Exchange: {{ $exchangeText }}</div>
+                                    @if(is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
+                                        <div>Багаж / Baggage: {{ $features['HoldBag']['Value'] }}</div>
+                                    @endif
+                                    @if(is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
+                                        <div>Ручная кладь / Hand baggage: {{ $features['CabinBag']['Value'] }}</div>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
                     </tr>
+                    @endif
                     </tbody>
                 </table>
             @endif

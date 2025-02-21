@@ -6,11 +6,13 @@ use App\Services\TravelFusion\Requests\ProcessDetailsRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 
 class FlightProcessService
 {
     public function __construct(
-        protected TravelFusionService $travelFusionService,
+        protected TravelFusionService   $travelFusionService,
+        protected FlightFeaturesService $featuresService
     )
     {
     }
@@ -32,12 +34,23 @@ class FlightProcessService
             ];
         }
 
+        $features = $processDetailsResponse['ProcessDetails']['Router']['Features'];
+        $outwardData = $processDetailsResponse['ProcessDetails']['Router']['GroupList']['Group']['OutwardList']['Outward'];
+        $outwardCacheKey = $validatedData['routing_id'] . '_' . $validatedData['outward_id'];
+        $this->setSegmentFeatures($outwardData, $features, $outwardCacheKey);
+
+        if (isset($processDetailsResponse['ProcessDetails']['Router']['GroupList']['Group']['ReturnList'])) {
+            $returnData = $processDetailsResponse['ProcessDetails']['Router']['GroupList']['Group']['ReturnList']['Return'];
+            $returnCacheKey = $validatedData['routing_id'] . '_' . $validatedData['return_id'];
+            $this->setSegmentFeatures($returnData, $features, $returnCacheKey);
+        }
+
         $requiredParameters = $processDetailsResponse['ProcessDetails']['Router']['RequiredParameterList']['RequiredParameter'];
 
         $options = [];
 
         foreach ($requiredParameters as $param) {
-            if ($param['Type'] === 'value_select' && !empty($param['DisplayText'])) {
+            if ($param['Type'] === 'value_select' && !empty($param['DisplayText'] && $param['Name'] != 'FrequentFlyerType')) {
                 $name = $param['Name'];
                 $options[$name] = [];
 
@@ -53,12 +66,35 @@ class FlightProcessService
             }
         }
 
+        Cache::put('options_'.$validatedData['routing_id'], $options, now()->addMinutes(15));
         return [
             'success' => true,
             'options' => $options,
             'message' => 'Processing successful',
         ];
 
+    }
+
+    private function setSegmentFeatures($flightData, $features, $cacheKey)
+    {
+        $segments = $flightData['SegmentList']['Segment'] ?? [];
+        $segments = isset($segments[0]) ? $segments : [$segments];
+
+        $operator = $segments[0]['VendingOperator'] ?? $segments[0]['TfVendingOperator'];
+        $supplierClass = $segments[0]['TravelClass']['SupplierClass'] ?? '';
+
+        if (count($features)) {
+            $relevantFeatures = $this->featuresService->getRelevantFeatures($features, $supplierClass, $operator['Code']);
+        }
+
+        $features = $relevantFeatures ?? [
+                "HoldBag" => false,
+                "SmallCabinBag" => false,
+                "LargeCabinBag" => false,
+                "FlightChange" => false,
+                "Cancellation" => false
+            ];
+        Cache::put('process_'.$cacheKey, $features, now()->addMinutes(15));
     }
 
 }

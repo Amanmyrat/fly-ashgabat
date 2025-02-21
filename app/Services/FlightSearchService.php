@@ -20,7 +20,8 @@ class FlightSearchService
 
     public function __construct(
         protected TravelFusionService            $travelFusionService,
-        protected AirportDataRepositoryInterface $airportDataRepository
+        protected AirportDataRepositoryInterface $airportDataRepository,
+        protected FlightFeaturesService $featuresService
     )
     {
         $this->airports = $this->airportDataRepository->getAllAirports();
@@ -204,8 +205,12 @@ class FlightSearchService
             $supplierClass = $segment['TravelClass']['SupplierClass'] ?? '';
 
             if (count($features)) {
-                $relevantFeatures = $this->getRelevantFeatures($features, $supplierClass, $direction, $operator['Code']);
+                $relevantFeatures = $this->featuresService->getRelevantFeatures($features, $supplierClass, $operator['Code']);
             }
+
+//            if($supplierClass === 'Premium Economy (flexible)'){
+//                dd($relevantFeatures ?? [],  $supplierClass, $operator['Code'], $features);
+//            }
 
             // Store the first and last segment for date extraction
             if ($index === 0) {
@@ -352,98 +357,4 @@ class FlightSearchService
 
         return $stops;
     }
-
-    private function getRelevantFeatures(array $features, string $supplierClass, string $direction, string $operatorCode): array
-    {
-        $relevantFeatures = [
-            'HoldBag' => false,
-            'SmallCabinBag' => false,
-            'LargeCabinBag' => false,
-            'FlightChange' => false,
-            'Cancellation' => false,
-        ];
-
-        foreach ($features['Feature'] as $feature) {
-            $featureType = $feature['@attributes']['Type'] ?? '';
-            $options = $feature['Option'] ?? [];
-
-            // Skip if the feature type is not in the required list
-            if (!in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag', 'FlightChange', 'Cancellation'])) {
-                continue;
-            }
-
-            foreach ($options as $option) {
-                $conditions = $option['Condition'] ?? [];
-                $value = $option['@attributes']['Value'] ?? '';
-                $currency = $option['@attributes']['Currency'] ?? '';
-
-                if (!isset($option['@attributes']['Value'])) {
-                    continue;
-                }
-
-                $isMatch = true;
-
-                foreach ($conditions as $condition) {
-                    $conditionType = $condition['@attributes']['Type'] ?? '';
-                    $conditionValue = $condition['@attributes']['Value'] ?? '';
-
-                    // Match SupplierClass and Direction
-                    if ($conditionType === 'SupplierClass') {
-                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
-                        if ($conditionValueFirstPart !== $supplierClass) {
-                            $isMatch = false;
-                            break;
-                        }
-                    }
-
-                    if ($conditionType === 'OperatorCode') {
-                        $conditionValueFirstPart = explode(',', $conditionValue)[0];
-                        if ($conditionValueFirstPart !== $operatorCode) {
-                            $isMatch = false;
-                            break;
-                        }
-                    }
-
-//                    if ($conditionType === 'Direction' && $conditionValue !== $direction) {
-//                        $isMatch = false;
-//                        break;
-//                    }
-                }
-
-                if ($isMatch) {
-                    // Format the feature based on conditions
-                    $maxQuantity = null;
-                    $maxWeight = null;
-                    $isBundled = false;
-
-                    foreach ($conditions as $condition) {
-                        if ($condition['@attributes']['Type'] === 'MaxQuantity') {
-                            $maxQuantity = (int)$condition['@attributes']['Value'];
-                        }
-                        if ($condition['@attributes']['Type'] === 'MaxWeight') {
-                            $maxWeight = $condition['@attributes']['Value'];
-                        }
-                        if ($condition['@attributes']['Type'] === 'Provision') {
-                            $isBundled = $condition['@attributes']['Value'] == 'Bundled';
-                        }
-                    }
-
-                    if (in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])) {
-                        $formattedValue = $maxQuantity && $maxWeight ? "{$maxQuantity} x {$maxWeight}" : null;
-                    } else {
-                        $formattedValue = $value . ' ' . $currency;
-                    }
-
-                    $relevantFeatures[$featureType] = $formattedValue ? [
-                        'Bundled' => $isBundled,
-                        'Value' => $formattedValue,
-                    ] : false;
-                }
-            }
-        }
-
-        return $relevantFeatures;
-    }
-
-
 }

@@ -30,14 +30,12 @@ use Illuminate\Support\Carbon;
  * @property array $outward
  * @property array|null $return
  * @property array $price
- * @property array $features
  * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereBookingReference($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereDestination($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereFeatures($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereOrigin($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|FlightBooking whereOutward($value)
@@ -67,7 +65,6 @@ class FlightBooking extends Model
         'outward',
         'return',
         'price',
-        'features',
         'status',
         'payment_type',
     ];
@@ -78,7 +75,6 @@ class FlightBooking extends Model
         'outward' => 'array',
         'return' => 'array',
         'price' => 'array',
-        'features' => 'array',
         'status' => BookingStatus::class,
         'payment_type' => PaymentType::class
     ];
@@ -103,7 +99,6 @@ class FlightBooking extends Model
         return $this->hasOne(ContactDetail::class);
     }
 
-
     /**
      * Get formatted flight directions based on the direction type.
      *
@@ -124,7 +119,6 @@ class FlightBooking extends Model
             $arrivalCity,
         );
     }
-
 
     /**
      * Get formatted flight directions based on the direction type with date

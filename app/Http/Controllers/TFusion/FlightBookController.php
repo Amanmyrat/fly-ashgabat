@@ -106,6 +106,13 @@ class FlightBookController extends BaseController
         $firstReturnSegment = $returnSegments[0] ?? null;
         $lastReturnSegment = $returnSegments ? end($returnSegments) : null;
 
+        $defaultFeatures = [
+            "HoldBag" => false,
+            "CabinBag" => false,
+            "FlightChange" => false,
+            "Cancellation" => false
+        ];
+
         return [
             'id' => $booking->id,
             'booking_reference' => $booking->booking_reference,
@@ -116,6 +123,7 @@ class FlightBookController extends BaseController
                 'departureDate' => $this->splitDateTime($firstOutwardSegment['DepartDate'] ?? null),
                 'arriveDate' => $this->splitDateTime($lastOutwardSegment['ArriveDate'] ?? null),
                 'travelClass' => $firstOutwardSegment['TravelClass']['TfClass'] ?? null, // Travel class from first segment
+                'features' => $booking->outward['Features'] ?? $defaultFeatures
             ],
             'return' => $returnSegments ? [
                 'origin' => $this->formatAirport($firstReturnSegment['Origin']['Code'] ?? null),
@@ -123,6 +131,7 @@ class FlightBookController extends BaseController
                 'departureDate' => $this->splitDateTime($firstReturnSegment['DepartDate'] ?? null),
                 'arriveDate' => $this->splitDateTime($lastReturnSegment['ArriveDate'] ?? null),
                 'travelClass' => $firstReturnSegment['TravelClass']['TfClass'] ?? null, // Travel class for return
+                'features' => $booking->return['Features'] ?? $defaultFeatures
             ] : null,
             'price' => $booking->price,
             'status' => $booking->status,

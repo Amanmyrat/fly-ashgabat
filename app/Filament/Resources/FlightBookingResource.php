@@ -6,6 +6,7 @@ use App;
 use App\Enum\BookingStatus;
 use App\Filament\Resources\BookingResource\Pages;
 use App\Jobs\CheckBookingStatusJob;
+use App\Jobs\GenerateTicketJob;
 use App\Jobs\StartBookingJob;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -188,6 +189,25 @@ class FlightBookingResource extends Resource
                             Notification::make()
                                 ->title('Booking Started')
                                 ->body("The booking for record #{$record->id} has been started successfully.")
+                                ->success()
+                                ->send();
+                        })
+                        ->requiresConfirmation()
+                        ->tooltip('Click to start the booking process'),
+
+                    Action::make('generate_tickets')
+                        ->label('Generate tickets')
+                        ->color('primary')
+                        ->icon('heroicon-o-play')
+                        ->visible(fn ($record) => $record->status === BookingStatus::APPROVED && $record->tickets->isEmpty())
+                        ->action(function ($record) {
+                            // Dispatch a job
+
+                            GenerateTicketJob::dispatch($record);
+
+                            Notification::make()
+                                ->title('Generating tickets')
+                                ->body("The ticket generation for record #{$record->id} has been started successfully.")
                                 ->success()
                                 ->send();
                         })

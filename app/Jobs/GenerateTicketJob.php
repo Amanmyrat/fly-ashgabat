@@ -76,7 +76,9 @@ class GenerateTicketJob implements ShouldQueue
         $fullName = implode(' ', $traveler['Name']['NamePartList']['NamePart']);
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
-        $data = compact('traveler', 'bookingData', 'supplierReference', 'contactData');
+        $bookingModel = $this->booking;
+        Log::info($bookingModel->outward['Features']);
+        $data = compact('traveler', 'bookingData', 'supplierReference', 'contactData', 'bookingModel');
         $pdf = SnappyPdf::loadView('pdf.ticket', $data)
             ->setOption('encoding', 'UTF-8');
 
