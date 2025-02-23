@@ -25,6 +25,25 @@ class FlightSearchController extends BaseController
     {
         $validatedData = $request->validated();
 
-        return $this->handleServiceCall(fn() => $this->flightSearchService->search($validatedData));
+        return $this->handleServiceCall(function () use ($validatedData) {
+            $maxTries = 3;
+            $result   = null;
+
+            for ($i = 1; $i <= $maxTries; $i++) {
+                $result = $this->flightSearchService->search($validatedData);
+
+                // Add serviceTries count to the result
+                $result['serviceTries'] = $i;
+
+                // If flights found, return immediately
+                if (!empty($result['flights'])) {
+                    return $result;
+                }
+            }
+
+            // Return the final result after 3 attempts (with empty flights if still empty)
+            return $result;
+        });
     }
+
 }
