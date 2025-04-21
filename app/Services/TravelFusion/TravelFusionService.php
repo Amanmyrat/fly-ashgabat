@@ -79,7 +79,8 @@ class TravelFusionService
     {
         $response = Http::withHeaders([
             'Accept' => 'text/xml',
-            'Content-Type' => 'text/xml; charset=utf-8',
+            'Accept-Encoding' => 'gzip, deflate',
+            'Content-Type' => 'text/xml; charset=utf-8'
         ])
             ->retry(3, 5000)
             ->withoutVerifying()

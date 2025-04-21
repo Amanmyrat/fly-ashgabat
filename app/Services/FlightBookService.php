@@ -22,7 +22,7 @@ class FlightBookService
      * @throws ConnectionException
      * @throws Exception
      */
-    public function processDetails(array $validatedData, ?User $user): array
+    public function processTerms(array $validatedData, ?User $user): array
     {
         $processTermsRequest = (new ProcessTermsRequestBuilder($validatedData))->build();
         $processTermsResponse = $this->travelFusionService->sendRequest($processTermsRequest, 'processTerms');
