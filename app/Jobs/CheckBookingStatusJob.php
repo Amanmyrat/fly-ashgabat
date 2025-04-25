@@ -20,7 +20,7 @@ class CheckBookingStatusJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected FlightBooking $booking;
-    public int $tries = 20;
+    public int $tries = 36;
     public int $backoff = 5;
 
     public function __construct(FlightBooking $booking)

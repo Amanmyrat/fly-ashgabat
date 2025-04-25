@@ -50,6 +50,8 @@ class FlightSearchService
         $completedRouters = []; // Track which routers are complete
 
         $tries = 0;
+        $maxTries = 15;
+
         do {
             $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
             $tries++;
@@ -61,27 +63,23 @@ class FlightSearchService
             $currentRouters = $checkRoutingResponse['CheckRouting']['RouterList']['Router'];
 
             foreach ($currentRouters as $index => $router) {
-                // Ensure the router index matches the original sorting order
                 if (!isset($completedRouters[$index]) || (isset($router['Complete']) && $router['Complete'] === "true")) {
-                    // Store the router while keeping its index
                     $allRouters[$index] = $router;
 
-                    // Mark as complete if applicable
                     if (isset($router['Complete']) && $router['Complete'] === "true") {
                         $completedRouters[$index] = true;
                     }
                 }
             }
 
-            // Check if all routers are now complete
             $allComplete = count($completedRouters) === count($allRouters);
 
-            // Sleep for a second before the next request (to prevent API rate limits)
-            if (!$allComplete) {
+            if (!$allComplete && $tries < $maxTries) {
                 sleep(2);
             }
 
-        } while (!$allComplete);
+        } while (!$allComplete && $tries < $maxTries);
+
 
         // Store in Cache
         $flightType = $validatedData['flight_type'];
