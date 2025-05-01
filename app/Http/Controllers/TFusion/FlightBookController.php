@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\TFusion;
 
+use App\Enum\BookingStatus;
+use App\Enum\PaymentType;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\FlightBookRequest;
+use App\Http\Resources\FlightBookingResource;
 use App\Jobs\CheckBookingStatusJob;
 use App\Jobs\StartBookingJob;
 use App\Repositories\AirportDataRepositoryInterface;
@@ -12,6 +15,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use App\Models\FlightBooking;
 
 class FlightBookController extends BaseController
 {
@@ -25,12 +29,12 @@ class FlightBookController extends BaseController
     }
 
     /**
-     * Book a flight
+     * Process flight booking and create initial booking record
      *
      * @param FlightBookRequest $request
      * @return JsonResponse
      */
-    public function book(FlightBookRequest $request): JsonResponse
+    public function processBooking(FlightBookRequest $request): JsonResponse
     {
         $validatedData = $request->validated();
         $user = $this->getAuthenticatedUser();
@@ -40,29 +44,47 @@ class FlightBookController extends BaseController
         }
 
         try {
-            // Step 1: Process Details
             $response = $this->flightBookService->processTerms($validatedData, $user);
             if (!$response['success']) {
                 return response()->json($response, 400);
             }
 
-            // Step 2: Start Booking if balance payment
-            if ($validatedData['payment_type'] === 'balance') {
-                StartBookingJob::dispatch($response['booking']);
-
-                // Step 3: Dispatch the check booking status job
-                CheckBookingStatusJob::dispatch($response['booking'])->delay(now()->addSeconds(5));
-            }
-
-            return response()->json(['data' => [
+            return response()->json([
                 'success' => true,
-                'booking_reference' => $response['booking']['booking_reference'],
-            ]]);
+                'data' => new FlightBookingResource($response['booking'])
+            ]);
 
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
+    }
 
+    /**
+     * Start the actual booking process
+     *
+     * @param FlightBooking $booking
+     * @return JsonResponse
+     */
+    public function startBooking(FlightBooking $booking): JsonResponse
+    {
+        try {
+            if ($booking->status != BookingStatus::PENDING) {
+                return $this->errorResponse('Booking is not in pending status', 400);
+            }
+
+            if ($booking->payment_type == PaymentType::BALANCE) {
+                StartBookingJob::dispatch($booking);
+                CheckBookingStatusJob::dispatch($booking)->delay(now()->addSeconds(5));
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking process started successfully'
+            ]);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
     }
 
     /**
