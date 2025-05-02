@@ -104015,6 +104015,21 @@
         "lng": 4.32535,
         "timezone": "Europe/Amsterdam"
     },
+    "ZYA": {
+        "cityName": {
+            "ru": "Амстердам",
+            "en": "Amsterdam"
+        },
+        "airportName": {
+            "ru": "Центральный вокзал",
+            "en": "Central Station"
+        },
+        "area": "AMS",
+        "country": "NL",
+        "lat": 52.377956,
+        "lng": 4.897070,
+        "timezone": "Europe/Amsterdam"
+    },
     "ZYI": {
         "cityName": {
             "ru": "Аэропорт Зуни Синьчжоу",

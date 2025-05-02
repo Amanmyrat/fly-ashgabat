@@ -54,8 +54,8 @@ class FlightSearchService
 
         do {
             $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
-            $tries++;
 
+            $tries++;
             if (!isset($checkRoutingResponse['CheckRouting']['RouterList']['Router'])) {
                 break; // No valid response
             }
@@ -63,7 +63,8 @@ class FlightSearchService
             $currentRouters = $checkRoutingResponse['CheckRouting']['RouterList']['Router'];
 
             foreach ($currentRouters as $index => $router) {
-                if (!isset($completedRouters[$index]) || (isset($router['Complete']) && $router['Complete'] === "true")) {
+                if (!isset($allRouters[$index]) ||
+                    (isset($router['Complete']) && $router['Complete'] === "true" && isset($router['GroupList']['Group']))) {
                     $allRouters[$index] = $router;
 
                     if (isset($router['Complete']) && $router['Complete'] === "true") {
@@ -79,7 +80,6 @@ class FlightSearchService
             }
 
         } while (!$allComplete && $tries < $maxTries);
-
 
         // Store in Cache
         $flightType = $validatedData['flight_type'];

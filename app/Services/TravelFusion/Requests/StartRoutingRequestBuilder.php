@@ -29,8 +29,8 @@ class StartRoutingRequestBuilder
                 'OutwardDates' => [
                     'DateOfSearch' => date('d/m/Y-H:i', strtotime($this->data['departure_date'])),
                 ],
-                'MaxChanges' => $this->data['is_direct_flight'] ? 1 : 2,
-                'MaxHops' => $this->data['is_direct_flight'] ? 2 : 4,
+                'MaxChanges' => $this->data['is_direct_flight'] ? 1 : 4,
+                'MaxHops' => $this->data['is_direct_flight'] ? 1 : 4,
                 'TravellerList' => [
                     'Traveller' => [],
                 ],

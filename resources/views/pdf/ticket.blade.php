@@ -326,12 +326,17 @@
                 </thead>
 
                 <tbody>
-                @foreach($bookingData['GroupList']['Group']['OutwardList']['Outward']['SegmentList']['Segment'] as $segment)
+
+                @php
+                    $segmentsRaw = $bookingData['GroupList']['Group']['OutwardList']['Outward']['SegmentList']['Segment'] ?? [];
+                    $segments = isset($segmentsRaw[0]) ? $segmentsRaw : [$segmentsRaw];
+                @endphp
+                @foreach($segments as $segment)
                     <tr>
                         <td>
                             <h6>Отправление / Departing</h6>
                             <p>
-                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
+                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
                             </p>
                             <p>
                                 {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['cityName']}},
@@ -463,7 +468,12 @@
                     </thead>
 
                     <tbody>
-                    @foreach($bookingData['GroupList']['Group']['ReturnList']['Return']['SegmentList']['Segment'] as $segment)
+
+                    @php
+                        $segmentsRaw = $bookingData['GroupList']['Group']['ReturnList']['Return']['SegmentList']['Segment'] ?? [];
+                        $segments = isset($segmentsRaw[0]) ? $segmentsRaw : [$segmentsRaw];
+                    @endphp
+                    @foreach($segments as $segment)
                         <tr>
                             <td>
                                 <h6>Отправление / Departing</h6>

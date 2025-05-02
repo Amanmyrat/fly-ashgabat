@@ -92,7 +92,11 @@
                                             </td>
                                         </tr>
 
-                                        @foreach($bookingData['GroupList']['Group']['OutwardList']['Outward']['SegmentList']['Segment'] as $segment)
+                                        @php
+                                            $segmentsRaw = $bookingData['GroupList']['Group']['OutwardList']['Outward']['SegmentList']['Segment'] ?? [];
+                                            $segments = isset($segmentsRaw[0]) ? $segmentsRaw : [$segmentsRaw];
+                                        @endphp
+                                        @foreach($segments as $segment)
                                             <tr>
                                                 <td>{{ $segment['Origin']['Code'] }} → {{ $segment['Destination']['Code'] }}</td>
                                                 <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('H:i') }}</td>
@@ -151,7 +155,11 @@
                                                 </td>
                                             </tr>
 
-                                            @foreach($bookingData['GroupList']['Group']['ReturnList']['Return']['SegmentList']['Segment'] as $segment)
+                                            @php
+                                                $segmentsRaw = $bookingData['GroupList']['Group']['ReturnList']['Return']['SegmentList']['Segment'] ?? [];
+                                                $segments = isset($segmentsRaw[0]) ? $segmentsRaw : [$segmentsRaw];
+                                            @endphp
+                                            @foreach($segments as $segment)
                                                 <tr>
                                                     <td>{{ $segment['Origin']['Code'] }} → {{ $segment['Destination']['Code'] }}</td>
                                                     <td style="font-size: 18px; font-weight: 600; color: #1E2133;">{{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('H:i') }}</td>
