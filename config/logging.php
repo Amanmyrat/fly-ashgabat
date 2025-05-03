@@ -129,7 +129,7 @@ return [
 
         'travelfusion' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/travelfusion.log'),
+            'path' => storage_path('logs/travelfusion/travelfusion.log'),
             'level' => 'debug',
             'days' => 30,
             'formatter' => Monolog\Formatter\LineFormatter::class,

@@ -52,7 +52,7 @@ class FlightSearchService
         $completedRouters = []; // Track which routers are complete
 
         $tries = 0;
-        $maxTries = 15;
+        $maxTries = 5;
 
         do {
             $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
