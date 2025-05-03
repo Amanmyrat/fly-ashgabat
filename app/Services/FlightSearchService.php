@@ -6,6 +6,7 @@ use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
 use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
+use App\Services\IpGeolocationService;
 
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
@@ -21,7 +22,8 @@ class FlightSearchService
     public function __construct(
         protected TravelFusionService            $travelFusionService,
         protected AirportDataRepositoryInterface $airportDataRepository,
-        protected FlightFeaturesService $featuresService
+        protected FlightFeaturesService $featuresService,
+        protected IpGeolocationService $ipGeolocationService
     )
     {
         $this->airports = $this->airportDataRepository->getAllAirports();
@@ -35,7 +37,7 @@ class FlightSearchService
     public function search(array $validatedData): array
     {
         // Step 1: StartRouting
-        $startRoutingRequest = (new StartRoutingRequestBuilder($validatedData))->build();
+        $startRoutingRequest = (new StartRoutingRequestBuilder($validatedData, $this->ipGeolocationService))->build();
         $startRoutingResponse = $this->travelFusionService->sendRequest($startRoutingRequest);
 
         if (!isset($startRoutingResponse['StartRouting']['RouterList'])) {

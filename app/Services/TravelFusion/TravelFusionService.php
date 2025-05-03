@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use App\Services\TravelFusion\Requests\LoginRequestBuilder;
 use SimpleXMLElement;
+use Illuminate\Support\Facades\Log;
 
 class TravelFusionService
 {
@@ -77,6 +78,9 @@ class TravelFusionService
      */
     private function makeRequest(string $endpoint, string $xmlContent): array
     {
+        // Log request in beautiful XML format
+        $this->logRequest($endpoint, $xmlContent);
+
         $response = Http::withHeaders([
             'Accept' => 'text/xml',
             'Accept-Encoding' => 'gzip, deflate',
@@ -87,12 +91,51 @@ class TravelFusionService
             ->timeout(120)
             ->withBody($xmlContent, 'text/xml')->post($endpoint);
 
+        // Log response in beautiful XML format
+        $this->logResponse($endpoint, $response->body());
+
         if ($response->successful()) {
             $responseXml = simplexml_load_string($response->body());
             return json_decode(json_encode($responseXml), true);
         }
 
         throw new Exception('TravelFusion request failed: ' . $response->body());
+    }
+
+    private function logRequest(string $endpoint, string $xmlContent): void
+    {
+        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><Request></Request>');
+
+        // Add endpoint information
+        $xml->addChild('Endpoint', $endpoint);
+        $xml->addChild('Timestamp', now()->toIso8601String());
+
+        // Add request data
+        $requestData = $xml->addChild('Data');
+        $requestData->addChild('XmlContent', htmlspecialchars($xmlContent));
+
+        // Format XML for better readability
+        $dom = dom_import_simplexml($xml)->ownerDocument;
+        $dom->formatOutput = true;
+        $formattedXml = $dom->saveXML();
+
+        Log::channel('travelfusion')->info("Request to {$endpoint}:\n" . $formattedXml);
+    }
+
+    private function logResponse(string $endpoint, string $responseBody): void
+    {
+        try {
+            // Try to parse and format the XML response
+            $xml = new \SimpleXMLElement($responseBody);
+            $dom = dom_import_simplexml($xml)->ownerDocument;
+            $dom->formatOutput = true;
+            $formattedXml = $dom->saveXML();
+
+            Log::channel('travelfusion')->info("Response from {$endpoint}:\n" . $formattedXml);
+        } catch (\Exception $e) {
+            // If response is not valid XML, log it as is
+            Log::channel('travelfusion')->info("Response from {$endpoint}:\n" . $responseBody);
+        }
     }
 
     /**
@@ -181,6 +224,5 @@ class TravelFusionService
             }
         }
     }
-
 }
 

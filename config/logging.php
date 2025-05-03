@@ -127,6 +127,17 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'travelfusion' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/travelfusion.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
     ],
 
 ];

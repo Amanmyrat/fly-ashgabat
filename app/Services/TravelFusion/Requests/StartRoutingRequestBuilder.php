@@ -2,13 +2,20 @@
 
 namespace App\Services\TravelFusion\Requests;
 
+use function Psl\Str\uppercase;
+use App\Services\IpGeolocationService;
+
 class StartRoutingRequestBuilder
 {
     protected array $data;
+    protected IpGeolocationService $ipGeolocationService;
 
-    public function __construct(array $validatedData)
-    {
+    public function __construct(
+        array $validatedData,
+        IpGeolocationService $ipGeolocationService
+    ) {
         $this->data = $validatedData;
+        $this->ipGeolocationService = $ipGeolocationService;
     }
 
     public function build(): array
@@ -39,8 +46,38 @@ class StartRoutingRequestBuilder
                 'BookingProfile' => [
                     'CustomSupplierParameterList' => [
                         'CustomSupplierParameter' => [
-                            'Name' => 'IncludeStructuredFeatures',
-                            'Value' => 'y',
+                            [
+                                'Name' => 'IncludeStructuredFeatures',
+                                'Value' => 'y',
+                            ],
+                            [
+                                'Name' => 'PreferredLanguage',
+                                'Value' => uppercase(app()->getLocale()),
+                            ],
+                            [
+                                'Name' => 'EndUserIPAddress',
+                                'Value' => $this->data['meta']['end_user_ip_address'] ?? '',
+                            ],
+                            [
+                                'Name' => 'EndUserBrowserAgent',
+                                'Value' => $this->data['meta']['end_user_browser_agent'] ?? '',
+                            ],
+                            [
+                                'Name' => 'EndUserDeviceMACAddress',
+                                'Value' => $this->data['meta']['end_user_device_mac_address'] ?? '',
+                            ],
+                            [
+                                'Name' => 'RequestOrigin',
+                                'Value' => $this->getRequestOrigin(),
+                            ],
+                            [
+                                'Name' => 'PointOfSale',
+                                'Value' => 'TM',
+                            ],
+                            [
+                                'Name' => 'CountryOfTheUser',
+                                'Value' => $this->getCountryOfTheUser(),
+                            ],
                         ]
                     ]
                 ]
@@ -80,4 +117,16 @@ class StartRoutingRequestBuilder
         return $requestData;
     }
 
+    protected function getRequestOrigin(): string
+    {
+        $ip = $this->data['meta']['end_user_ip_address'] ?? '';
+        $country = $this->getCountryOfTheUser();
+        return sprintf('%s-flyashgabat.com', $country);
+    }
+
+    protected function getCountryOfTheUser(): string
+    {
+        $ip = $this->data['meta']['end_user_ip_address'] ?? '';
+        return $this->ipGeolocationService->getCountryCode($ip);
+    }
 }

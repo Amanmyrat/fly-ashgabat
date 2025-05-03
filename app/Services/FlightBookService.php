@@ -14,7 +14,10 @@ use Str;
 
 class FlightBookService
 {
-    public function __construct(protected TravelFusionService $travelFusionService)
+    public function __construct(
+        protected TravelFusionService  $travelFusionService,
+        protected IpGeolocationService $ipGeolocationService
+    )
     {
     }
 
@@ -24,7 +27,7 @@ class FlightBookService
      */
     public function processTerms(array $validatedData, ?User $user): array
     {
-        $processTermsRequest = (new ProcessTermsRequestBuilder($validatedData))->build();
+        $processTermsRequest = (new ProcessTermsRequestBuilder($validatedData, $this->ipGeolocationService))->build();
         $processTermsResponse = $this->travelFusionService->sendRequest($processTermsRequest, 'processTerms');
 
         if (!isset($processTermsResponse['ProcessTerms']['Router']['GroupList']['Group'])) {
@@ -47,21 +50,21 @@ class FlightBookService
         $outward = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['OutwardList']['Outward'];
         $return = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['ReturnList']['Return'] ?? null;
 
-        $outwardCacheKey  = $validatedData['routing_id'].'_'.$validatedData['outward_id'];
-        $outwardFeatures  = Cache::get('process_'.$outwardCacheKey, []);
+        $outwardCacheKey = $validatedData['routing_id'] . '_' . $validatedData['outward_id'];
+        $outwardFeatures = Cache::get('process_' . $outwardCacheKey, []);
 
         // Return (only if return_id is present)
         $returnFeatures = null;
         if (!empty($validatedData['return_id'])) {
-            $returnCacheKey = $validatedData['routing_id'].'_'.$validatedData['return_id'];
-            $returnFeatures = Cache::get('process_'.$returnCacheKey, []);
+            $returnCacheKey = $validatedData['routing_id'] . '_' . $validatedData['return_id'];
+            $returnFeatures = Cache::get('process_' . $returnCacheKey, []);
         }
 
-        $options = Cache::get('options_'.$validatedData['routing_id'], []);
+        $options = Cache::get('options_' . $validatedData['routing_id'], []);
 
         foreach ($validatedData['options'] as $optionKey => $selectedKey) {
             $isOutward = Str::startsWith($optionKey, 'Outward');
-            $isReturn  = Str::startsWith($optionKey, 'Return');
+            $isReturn = Str::startsWith($optionKey, 'Return');
 
             $cleanKey = $optionKey;
             if ($isOutward) {
@@ -72,8 +75,8 @@ class FlightBookService
 
             $featureKey = match ($cleanKey) {
                 'HandLuggageOptions' => 'CabinBag',
-                'LuggageOptions'     => 'HoldBag',
-                default              => $cleanKey,
+                'LuggageOptions' => 'HoldBag',
+                default => $cleanKey,
             };
 
             $subOptions = null;
@@ -86,7 +89,7 @@ class FlightBookService
             }
 
             $selectedOption = collect($subOptions)
-                ->first(fn ($opt) => isset($opt['key']) && (string) $opt['key'] === (string) $selectedKey);
+                ->first(fn($opt) => isset($opt['key']) && (string)$opt['key'] === (string)$selectedKey);
 
             if (!$selectedOption) {
                 continue;
@@ -102,7 +105,7 @@ class FlightBookService
 
             $formatted = [
                 'Bundled' => true,
-                'Value'   => trim($formattedValue) ?? '',
+                'Value' => trim($formattedValue) ?? '',
             ];
 
             if ($isOutward) {
@@ -120,8 +123,8 @@ class FlightBookService
         }
 
         $outward['Features'] = $outwardFeatures;
-        if($return){
-            $return['Features']  = $returnFeatures;
+        if ($return) {
+            $return['Features'] = $returnFeatures;
         }
 
         $bookingData = [

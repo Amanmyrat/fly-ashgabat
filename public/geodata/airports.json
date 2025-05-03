@@ -74714,6 +74714,21 @@
         "lng": -85.16221,
         "timezone": "America/New_York"
     },
+    "RMO": {
+        "cityName": {
+            "ru": "Кишинёв",
+            "en": "Chișinău"
+        },
+        "airportName": {
+            "ru": "Международный аэропорт Кишинёва",
+            "en": "Chișinău International Airport"
+        },
+        "area": "RMO",
+        "country": "MD",
+        "lat": 46.9277,
+        "lng": 28.9308,
+        "timezone": "Europe/Chisinau"
+    },
     "RMI": {
         "cityName": {
             "ru": "Римини",

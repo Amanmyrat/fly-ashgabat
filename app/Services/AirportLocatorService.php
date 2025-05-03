@@ -26,7 +26,29 @@ class AirportLocatorService
         $airports = $this->processAirports($airports, $countries, $cities);
 
         $arr = $this->filterAirportsByQuery($airports, $query);
-        return $this->groupAirports($arr);
+
+        // --- New logic: prioritize code-matching results ---
+        $codeMatches = [];
+        $otherMatches = [];
+        $upperQuery = strtoupper($query);
+        foreach ($arr as $aKey => $airport) {
+            $isCodeMatch = false;
+            if (strtoupper($aKey) === $upperQuery) {
+                $isCodeMatch = true;
+            } elseif (isset($airport['area']['code']) && strtoupper($airport['area']['code']) === $upperQuery) {
+                $isCodeMatch = true;
+            }
+            if ($isCodeMatch) {
+                $codeMatches[$aKey] = $airport;
+            } else {
+                $otherMatches[$aKey] = $airport;
+            }
+        }
+        // Merge code matches first, then others
+        $orderedArr = $codeMatches + $otherMatches;
+        // --- End new logic ---
+
+        return $this->groupAirports($orderedArr);
     }
 
     /**
@@ -110,13 +132,14 @@ class AirportLocatorService
     private function matchesQuery(string $query, array $airport, string $aKey): bool
     {
         $searchableFields = [
+            $airport['area']['code'] ?? null, // City code
             $airport['airportName']['en'] ?? null,
             $airport['airportName']['ru'] ?? null,
             $airport['country']['en']     ?? null,
             $airport['country']['ru']     ?? null,
             $airport['cityName']['en']    ?? null,
             $airport['cityName']['ru']    ?? null,
-            $aKey,
+            $aKey, // Airport code
         ];
 
         $searchableFields = array_filter($searchableFields);
@@ -124,10 +147,23 @@ class AirportLocatorService
         $lowerQuery = mb_strtolower($query);
         $pattern    = '/^' . preg_quote($lowerQuery, '/') . '/iu';
 
+        // Check for exact code match first
+        if (strtoupper($query) === strtoupper($aKey) || 
+            (isset($airport['area']['code']) && strtoupper($query) === strtoupper($airport['area']['code']))) {
+            return true;
+        }
+
+        // Check for partial matches in all fields
         foreach ($searchableFields as $field) {
             if (preg_match($pattern, mb_strtolower($field))) {
                 return true;
             }
+        }
+
+        // Check for city code matches in the middle of the string
+        if (isset($airport['area']['code']) && 
+            strpos(strtoupper($airport['area']['code']), strtoupper($query)) !== false) {
+            return true;
         }
 
         return false;

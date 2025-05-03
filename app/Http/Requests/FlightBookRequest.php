@@ -131,6 +131,24 @@ class FlightBookRequest extends FormRequest
                 'max:100',
             ],
             'options' => ['nullable', 'array'],
+            'meta' => [
+                'required',
+                'array',
+            ],
+            'meta.end_user_ip_address' => [
+                'required',
+                'string',
+                'ip',
+            ],
+            'meta.end_user_browser_agent' => [
+                'required',
+                'string',
+            ],
+            'meta.end_user_device_mac_address' => [
+                'nullable',
+                'string',
+                'regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
+            ],
         ];
 
         if ($flightType === 'round-trip') {
