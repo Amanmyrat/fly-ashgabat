@@ -42,35 +42,55 @@ class CheckBookingStatusJob implements ShouldQueue
 
         Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
-        if ($status === 'Succeeded') {
-            $this->booking->update(['status' => BookingStatus::APPROVED->value]);
+        match ($status) {
+            'Succeeded' => $this->handleSucceededStatus(),
+            'Failed' => $this->handleFailedStatus(),
+            'Unconfirmed' => $this->handleUnconfirmedStatus(),
+            'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
+            'BookingInProgress' => $this->handleBookingInProgressStatus(),
+            'Duplicate' => $this->handleDuplicateStatus(),
+            default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
+        };
+    }
 
-            // Deduct balance if payment type is balance
-            if ($this->booking->payment_type === PaymentType::BALANCE && $this->booking->user) {
-                $amountToDeduct = $this->booking->price['Amount'];
-                $this->booking->user->decrement('balance', $amountToDeduct);
-            }
+    private function handleSucceededStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 
-            GenerateTicketJob::dispatch($this->booking);
-            return;
+        if ($this->booking->payment_type === PaymentType::BALANCE && $this->booking->user) {
+            $amountToDeduct = $this->booking->price['Amount'];
+            $this->booking->user->decrement('balance', $amountToDeduct);
         }
 
-        if ($status === 'Failed') {
-            $this->booking->update(['status' => BookingStatus::FAILED->value]);
-            return;
-        }
+        GenerateTicketJob::dispatch($this->booking);
+    }
 
-        if ($status === 'Unconfirmed' || $status === 'UnconfirmedBySupplier') {
-            $this->booking->update(['status' => BookingStatus::CANCELED->value]);
-            return;
-        }
+    private function handleFailedStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::FAILED->value]);
+    }
 
-        if ($status === 'BookingInProgress') {
-            $this->booking->update(['status' => BookingStatus::IN_PROGRESS->value]);
-            Log::info("Re-dispatching job for booking: {$this->booking->booking_reference}");
+    private function handleUnconfirmedStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::UNCONFIRMED->value]);
+    }
 
-            // Re-dispatch the job with a delay
-            self::dispatch($this->booking)->delay(now()->addSeconds(5));
-        }
+    private function handleUnconfirmedBySupplierStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::UNCONFIRMED_BY_SUPPLIER->value]);
+    }
+
+    private function handleBookingInProgressStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::BOOKING_IN_PROGRESS->value]);
+        Log::info("Re-dispatching job for booking: {$this->booking->booking_reference}");
+
+        self::dispatch($this->booking)->delay(now()->addSeconds(5));
+    }
+
+    private function handleDuplicateStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::DUPLICATE->value]);
+        Log::warning("Duplicate booking detected for booking: {$this->booking->booking_reference}");
     }
 }

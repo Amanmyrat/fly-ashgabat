@@ -112,10 +112,12 @@ class FlightBookingResource extends Resource
                     ->label('Order status')
                     ->options([
                         BookingStatus::PENDING->value  => 'Pending',
-                        BookingStatus::IN_PROGRESS->value  => 'In-progress',
-                        BookingStatus::APPROVED->value => 'Approved',
+                        BookingStatus::BOOKING_IN_PROGRESS->value  => 'In-progress',
+                        BookingStatus::SUCCEEDED->value => 'Approved',
                         BookingStatus::FAILED->value   => 'Failed',
-                        BookingStatus::CANCELED->value => 'Canceled',
+                        BookingStatus::UNCONFIRMED->value => 'Unconfirmed',
+                        BookingStatus::UNCONFIRMED_BY_SUPPLIER->value => 'Unconfirmed by supplier',
+                        BookingStatus::DUPLICATE->value => 'Duplicate',
                     ])->native(false),
             ])
             ->defaultSort('created_at', 'desc');

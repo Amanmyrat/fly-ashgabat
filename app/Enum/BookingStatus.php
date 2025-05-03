@@ -8,29 +8,34 @@ use Filament\Support\Contracts\HasLabel;
 enum BookingStatus: string implements HasLabel, HasColor
 {
     case PENDING = 'pending';
-    case IN_PROGRESS = 'in-progress';
-    case APPROVED = 'approved';
-    case FAILED = 'failed';
-    case CANCELED = 'canceled';
+    case BOOKING_IN_PROGRESS = 'BookingInProgress';
+    case SUCCEEDED = 'Succeeded';
+    case FAILED = 'Failed';
+    case UNCONFIRMED = 'Unconfirmed';
+    case UNCONFIRMED_BY_SUPPLIER = 'UnconfirmedBySupplier';
+    case DUPLICATE = 'Duplicate';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::PENDING  => 'В ожидании',
-            self::IN_PROGRESS  => 'В процессе',
-            self::APPROVED => 'Одобрено',
+            self::BOOKING_IN_PROGRESS  => 'В процессе',
+            self::SUCCEEDED => 'Одобрено',
             self::FAILED   => 'Неудача',
-            self::CANCELED => 'Отменено',
+            self::UNCONFIRMED => 'Отменено',
+            self::UNCONFIRMED_BY_SUPPLIER => 'Отменено поставщиком',
+            self::DUPLICATE => 'Дубликат',
         };
     }
 
     public function getColor(): string | array | null
     {
         return match ($this) {
-            self::PENDING, self::IN_PROGRESS => 'gray',
-            self::APPROVED => 'success',
+            self::PENDING, self::BOOKING_IN_PROGRESS => 'gray',
+            self::SUCCEEDED => 'success',
             self::FAILED   => 'danger',
-            self::CANCELED => 'warning',
+            self::UNCONFIRMED, self::UNCONFIRMED_BY_SUPPLIER => 'warning',
+            self::DUPLICATE => 'info',
         };
     }
 }
