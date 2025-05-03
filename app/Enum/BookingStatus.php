@@ -7,7 +7,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum BookingStatus: string implements HasLabel, HasColor
 {
-    case PENDING = 'pending';
+    case PENDING = 'Pending';
     case BOOKING_IN_PROGRESS = 'BookingInProgress';
     case SUCCEEDED = 'Succeeded';
     case FAILED = 'Failed';
