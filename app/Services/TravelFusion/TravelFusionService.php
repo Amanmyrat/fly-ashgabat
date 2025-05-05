@@ -104,38 +104,19 @@ class TravelFusionService
 
     private function logRequest(string $endpoint, string $xmlContent): void
     {
-        // Create a new XML document for logging
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><Request></Request>');
-
-        // Add endpoint information
-        $xml->addChild('Endpoint', $endpoint);
-        $xml->addChild('Timestamp', now()->toIso8601String());
-
-        // Parse the actual request XML and add it to the log
+        // Parse and format the request XML
         $requestXml = new \SimpleXMLElement($xmlContent);
         $dom = dom_import_simplexml($requestXml)->ownerDocument;
         $dom->formatOutput = true;
         $dom->preserveWhiteSpace = false;
         $formattedRequestXml = $dom->saveXML();
 
-        // Add the formatted request XML as CDATA to preserve formatting
-        $requestData = $xml->addChild('Data');
-        $cdata = $requestData->addChild('XmlContent');
-        $dom = dom_import_simplexml($cdata)->ownerDocument;
-        $cdataNode = $dom->createCDATASection($formattedRequestXml);
-        $dom->documentElement->appendChild($cdataNode);
-
-        // Format the log XML with reduced spacing
-        $logDom = dom_import_simplexml($xml)->ownerDocument;
-        $logDom->formatOutput = true;
-        $logDom->preserveWhiteSpace = false;
-        $formattedLogXml = $logDom->saveXML();
-
         // Clean up excessive newlines and spaces
-        $formattedLogXml = preg_replace('/\n\s*\n/', "\n", $formattedLogXml);
-        $formattedLogXml = preg_replace('/\s{2,}/', ' ', $formattedLogXml);
+        $formattedRequestXml = preg_replace('/\n\s*\n/', "\n", $formattedRequestXml);
+        $formattedRequestXml = preg_replace('/\s{2,}/', ' ', $formattedRequestXml);
 
-        Log::channel('travelfusion')->info("Request to {$endpoint}:\n" . $formattedLogXml);
+        Log::channel('travelfusion')->info("Request to {$endpoint}");
+        Log::channel('travelfusion')->info($formattedRequestXml);
     }
 
     private function logResponse(string $endpoint, string $responseBody): void
@@ -147,10 +128,12 @@ class TravelFusionService
             $dom->formatOutput = true;
             $formattedXml = $dom->saveXML();
 
-            Log::channel('travelfusion')->info("Response from {$endpoint}:\n" . $formattedXml);
+            Log::channel('travelfusion')->info("Response from {$endpoint}");
+            Log::channel('travelfusion')->info($formattedXml);
         } catch (\Exception $e) {
             // If response is not valid XML, log it as is
-            Log::channel('travelfusion')->info("Response from {$endpoint}:\n" . $responseBody);
+            Log::channel('travelfusion')->info("Response from {$endpoint}");
+            Log::channel('travelfusion')->info($responseBody);
         }
     }
 
