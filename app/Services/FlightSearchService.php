@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 class FlightSearchService
 {
     private array $airports;
+    private array $cities;
     private array $countries;
     private string $locale;
 
@@ -27,6 +28,7 @@ class FlightSearchService
     )
     {
         $this->airports = $this->airportDataRepository->getAllAirports();
+        $this->cities = $this->airportDataRepository->getAllCities();
         $this->countries = $this->airportDataRepository->getAllCountries();
         $this->locale = App::getLocale();
     }
@@ -50,23 +52,30 @@ class FlightSearchService
 
         $allRouters = []; // Store all routers as an indexed array
         $completedRouters = []; // Track which routers are complete
+        $totalRouters = 0; // Track total number of routers
 
         $tries = 0;
-        $maxTries = 5;
+        $maxTries = 15;
 
         do {
             $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
-
             $tries++;
+
             if (!isset($checkRoutingResponse['CheckRouting']['RouterList']['Router'])) {
                 break; // No valid response
             }
 
             $currentRouters = $checkRoutingResponse['CheckRouting']['RouterList']['Router'];
 
+            // If this is the first try, set the total number of routers
+            if ($tries === 1) {
+                $totalRouters = count($currentRouters);
+            }
+
             foreach ($currentRouters as $index => $router) {
+                // Only update if we haven't seen this router before or if it's now complete
                 if (!isset($allRouters[$index]) ||
-                    (isset($router['Complete']) && $router['Complete'] === "true" && isset($router['GroupList']['Group']))) {
+                    (isset($router['Complete']) && $router['Complete'] === "true" && !isset($completedRouters[$index]))) {
                     $allRouters[$index] = $router;
 
                     if (isset($router['Complete']) && $router['Complete'] === "true") {
@@ -75,7 +84,8 @@ class FlightSearchService
                 }
             }
 
-            $allComplete = count($completedRouters) === count($allRouters);
+            // Check if we have all routers and they are all complete
+            $allComplete = count($completedRouters) === $totalRouters && count($allRouters) === $totalRouters;
 
             if (!$allComplete && $tries < $maxTries) {
                 sleep(2);
@@ -88,7 +98,7 @@ class FlightSearchService
         Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(30));
 
         // Format and return flights
-        $flights = $this->formatFlights(array_values($allRouters)); // Keep the original order
+        $flights = $this->formatFlights(array_values($allRouters));
 
         return [
             'tries' => $tries,
@@ -159,25 +169,43 @@ class FlightSearchService
             $totalSum += $return['Price']['Amount'] ?? 0;
         }
 
-        return [
-            'Origin' => [
-                'Code' => $origin['Code'],
-                'Airport' => $this->airports[$origin['Code']]['airportName'][$this->locale]
+        // Calculate origin data
+        $originData = [
+            'Code' => $origin['Code'],
+            'Airport' => $origin['Type'] === 'airport'
+                ? ($this->airports[$origin['Code']]['airportName'][$this->locale]
                     ?? $this->airports[$origin['Code']]['cityName'][$this->locale]
                     ?? $this->airports[$origin['Code']]['airportName']['en']
-                    ?? $this->airports[$origin['Code']]['cityName']['en'], // Fallback to English
-                'Country' => $this->countries[$this->airports[$origin['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->airports[$origin['Code']]['country']]['name']['en'], // Fallback to English
-            ],
-            'Destination' => [
-                'Code' => $destination['Code'],
-                'Airport' => $this->airports[$destination['Code']]['airportName'][$this->locale]
+                    ?? $this->airports[$origin['Code']]['cityName']['en'])
+                : ($this->cities[$origin['Code']]['name'][$this->locale]
+                    ?? $this->cities[$origin['Code']]['name']['en']),
+            'Country' => $origin['Type'] === 'airport'
+                ? ($this->countries[$this->airports[$origin['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->airports[$origin['Code']]['country']]['name']['en'])
+                : ($this->countries[$this->cities[$origin['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->cities[$origin['Code']]['country']]['name']['en']),
+        ];
+
+        // Calculate destination data
+        $destinationData = [
+            'Code' => $destination['Code'],
+            'Airport' => $destination['Type'] === 'airport'
+                ? ($this->airports[$destination['Code']]['airportName'][$this->locale]
                     ?? $this->airports[$destination['Code']]['cityName'][$this->locale]
                     ?? $this->airports[$destination['Code']]['airportName']['en']
-                    ?? $this->airports[$destination['Code']]['cityName']['en'], // Fallback to English
-                'Country' => $this->countries[$this->airports[$destination['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->airports[$destination['Code']]['country']]['name']['en'], // Fallback to English
-            ],
+                    ?? $this->airports[$destination['Code']]['cityName']['en'])
+                : ($this->cities[$destination['Code']]['name'][$this->locale]
+                    ?? $this->cities[$destination['Code']]['name']['en']),
+            'Country' => $destination['Type'] === 'airport'
+                ? ($this->countries[$this->airports[$destination['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->airports[$destination['Code']]['country']]['name']['en'])
+                : ($this->countries[$this->cities[$destination['Code']]['country']]['name'][$this->locale]
+                    ?? $this->countries[$this->cities[$destination['Code']]['country']]['name']['en']),
+        ];
+
+        return [
+            'Origin' => $originData,
+            'Destination' => $destinationData,
             'TotalSum' => [
                 'Amount' => $totalSum,
                 'Currency' => $currency,
@@ -207,10 +235,6 @@ class FlightSearchService
             if (count($features)) {
                 $relevantFeatures = $this->featuresService->getRelevantFeatures($features, $supplierClass, $operator['Code']);
             }
-
-//            if($supplierClass === 'Premium Economy (flexible)'){
-//                dd($relevantFeatures ?? [],  $supplierClass, $operator['Code'], $features);
-//            }
 
             // Store the first and last segment for date extraction
             if ($index === 0) {
