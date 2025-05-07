@@ -138,7 +138,7 @@ class FlightBookRequest extends FormRequest
             'meta.end_user_ip_address' => [
                 'required',
                 'string',
-                'ip',
+                'ipv4',
             ],
             'meta.end_user_browser_agent' => [
                 'required',
