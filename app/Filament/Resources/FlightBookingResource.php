@@ -185,8 +185,8 @@ class FlightBookingResource extends Resource
                         ->action(function ($record) {
                             // Dispatch a job
                             StartBookingJob::dispatch($record);
-                            $record->update(['status' => BookingStatus::IN_PROGRESS]);
-                            CheckBookingStatusJob::dispatch($record)->delay(now()->addSeconds(5));
+                            $record->update(['status' => BookingStatus::BOOKING_IN_PROGRESS]);
+                            CheckBookingStatusJob::dispatch($record);
 
                             Notification::make()
                                 ->title('Booking Started')
@@ -201,7 +201,7 @@ class FlightBookingResource extends Resource
                         ->label('Generate tickets')
                         ->color('primary')
                         ->icon('heroicon-o-play')
-                        ->visible(fn ($record) => $record->status === BookingStatus::APPROVED && $record->tickets->isEmpty())
+                        ->visible(fn ($record) => $record->status === BookingStatus::SUCCEEDED && $record->tickets->isEmpty())
                         ->action(function ($record) {
                             // Dispatch a job
 

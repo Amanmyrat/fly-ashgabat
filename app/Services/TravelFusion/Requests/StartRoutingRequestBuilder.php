@@ -25,6 +25,7 @@ class StartRoutingRequestBuilder
                 'XmlLoginId' => '', // Placeholder, will be added dynamically
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'Mode' => 'plane',
+                'ProductType' => 'plane',
                 'Origin' => [
                     'Descriptor' => $this->data['departure_code'],
                     'Type' => 'auto',

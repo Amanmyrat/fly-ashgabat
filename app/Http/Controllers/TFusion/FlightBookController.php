@@ -6,6 +6,7 @@ use App\Enum\BookingStatus;
 use App\Enum\PaymentType;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\FlightBookRequest;
+use App\Http\Requests\StartBookingRequest;
 use App\Http\Resources\FlightBookingResource;
 use App\Jobs\CheckBookingStatusJob;
 use App\Jobs\StartBookingJob;
@@ -15,7 +16,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
-use App\Models\FlightBooking;
 
 class FlightBookController extends BaseController
 {
@@ -62,19 +62,22 @@ class FlightBookController extends BaseController
     /**
      * Start the actual booking process
      *
-     * @param FlightBooking $booking
+     * @param StartBookingRequest $request
      * @return JsonResponse
      */
-    public function startBooking(FlightBooking $booking): JsonResponse
+    public function startBooking(StartBookingRequest $request): JsonResponse
     {
         try {
+            $booking = $request->getBooking();
+            CheckBookingStatusJob::dispatch($booking);
+
             if ($booking->status != BookingStatus::PENDING) {
                 return $this->errorResponse('Booking is not in pending status', 400);
             }
 
             if ($booking->payment_type == PaymentType::BALANCE) {
                 StartBookingJob::dispatch($booking);
-                CheckBookingStatusJob::dispatch($booking)->delay(now()->addSeconds(5));
+                CheckBookingStatusJob::dispatch($booking);
             }
 
             return response()->json([

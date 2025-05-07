@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ext-dom": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
         "barryvdh/laravel-dompdf": "*",
@@ -22,7 +23,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/telescope": "*",
         "laravel/tinker": "^2.9",
-        "ext-dom": "*"
+        "predis/predis": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "*",

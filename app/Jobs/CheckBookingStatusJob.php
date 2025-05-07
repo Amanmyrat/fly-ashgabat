@@ -30,27 +30,28 @@ class CheckBookingStatusJob implements ShouldQueue
 
     /**
      * @throws ConnectionException
+     * @throws \Exception
      */
-    public function handle(TravelFusionService $travelFusionService)
+    public function handle(TravelFusionService $travelFusionService): void
     {
-        Log::info("Checking booking status for: {$this->booking->booking_reference}");
+        Log::info("Checking booking status for: {$this->booking->booking_reference}. Try {$this->attempts()}");
 
-        $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
-        $response = $travelFusionService->sendRequest($checkBookingRequest);
+         $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
+         $response = $travelFusionService->sendRequest($checkBookingRequest);
 
-        $status = $response['CheckBooking']['Status'] ?? null;
+         $status = $response['CheckBooking']['Status'] ?? null;
 
-        Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
+         Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
-        match ($status) {
-            'Succeeded' => $this->handleSucceededStatus(),
-            'Failed' => $this->handleFailedStatus(),
-            'Unconfirmed' => $this->handleUnconfirmedStatus(),
-            'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
-            'BookingInProgress' => $this->handleBookingInProgressStatus(),
-            'Duplicate' => $this->handleDuplicateStatus(),
-            default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
-        };
+         match ($status) {
+             'Succeeded' => $this->handleSucceededStatus(),
+             'Failed' => $this->handleFailedStatus(),
+             'Unconfirmed' => $this->handleUnconfirmedStatus(),
+             'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
+             'BookingInProgress' => $this->handleBookingInProgressStatus(),
+             'Duplicate' => $this->handleDuplicateStatus(),
+             default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
+         };
     }
 
     private function handleSucceededStatus(): void
@@ -80,12 +81,19 @@ class CheckBookingStatusJob implements ShouldQueue
         $this->booking->update(['status' => BookingStatus::UNCONFIRMED_BY_SUPPLIER->value]);
     }
 
+    /**
+     * @throws \Exception
+     */
     private function handleBookingInProgressStatus(): void
     {
         $this->booking->update(['status' => BookingStatus::BOOKING_IN_PROGRESS->value]);
         Log::info("Re-dispatching job for booking: {$this->booking->booking_reference}");
 
-        self::dispatch($this->booking)->delay(now()->addSeconds(5));
+        if ($this->attempts() < $this->tries) {
+            throw new \Exception('Booking still in progress');
+        } else {
+            Log::warning("Maximum attempts reached for booking: {$this->booking->booking_reference}");
+        }
     }
 
     private function handleDuplicateStatus(): void
