@@ -6,8 +6,6 @@ use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
 use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
-use App\Services\IpGeolocationService;
-
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\App;
@@ -39,9 +37,7 @@ class FlightSearchService
     public function search(array $validatedData): array
     {
         // Step 1: StartRouting
-        $startRoutingRequest = (new StartRoutingRequestBuilder($validatedData, $this->ipGeolocationService))->build();
-        $startRoutingResponse = $this->travelFusionService->sendRequest($startRoutingRequest);
-
+        $startRoutingResponse = $this->getStartRoutingResponse($validatedData);
         if (!isset($startRoutingResponse['StartRouting']['RouterList'])) {
             return ['success' => false, 'message' => 'No result found'];
         }
@@ -50,42 +46,71 @@ class FlightSearchService
         $routingId = $startRoutingResponse['StartRouting']['RoutingId'];
         $checkRoutingRequest = (new CheckRoutingRequestBuilder($routingId))->build();
 
-        $allRouters = []; // Store all routers as an indexed array
-        $completedRouters = []; // Track which routers are complete
-        $totalRouters = 0; // Track total number of routers
+        [$routers, $tries] = $this->pollForCompleteRouters($checkRoutingRequest);
 
+        // Store in Cache
+        $this->cacheRoutingType($routingId, $validatedData['flight_type']);
+
+        // Format and return flights
+        $flights = $this->formatFlights(array_values($routers));
+
+        return [
+            'success' => true,
+            'routing_id' => $routingId,
+            'tries' => $tries,
+            'flights' => $flights,
+        ];
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    private function getStartRoutingResponse(array $validatedData): array
+    {
+        $startRoutingRequest = (new StartRoutingRequestBuilder($validatedData, $this->ipGeolocationService))->build();
+        return $this->travelFusionService->sendRequest($startRoutingRequest);
+    }
+
+    /**
+     * @throws ConnectionException
+     */
+    private function pollForCompleteRouters(array $checkRoutingRequest): array
+    {
+        $allRouters = [];
+        $completedRouters = [];
+        $totalRouters = 0;
         $tries = 0;
         $maxTries = 15;
 
         do {
-            $checkRoutingResponse = $this->travelFusionService->sendRequest($checkRoutingRequest);
+            $response = $this->travelFusionService->sendRequest($checkRoutingRequest);
             $tries++;
 
-            if (!isset($checkRoutingResponse['CheckRouting']['RouterList']['Router'])) {
-                break; // No valid response
+            if (!isset($response['CheckRouting']['RouterList']['Router'])) {
+                break;
             }
 
-            $currentRouters = $checkRoutingResponse['CheckRouting']['RouterList']['Router'];
+            $currentRouters = $response['CheckRouting']['RouterList']['Router'];
 
-            // If this is the first try, set the total number of routers
             if ($tries === 1) {
                 $totalRouters = count($currentRouters);
             }
 
+            // Track completion status and store valid routers
             foreach ($currentRouters as $index => $router) {
-                // Only update if we haven't seen this router before or if it's now complete
-                if (!isset($allRouters[$index]) ||
-                    (isset($router['Complete']) && $router['Complete'] === "true" && !isset($completedRouters[$index]))) {
-                    $allRouters[$index] = $router;
+                // Track completion status for all routers
+                if (isset($router['Complete']) && $router['Complete'] === "true") {
+                    $completedRouters[$index] = true;
 
-                    if (isset($router['Complete']) && $router['Complete'] === "true") {
-                        $completedRouters[$index] = true;
+                    // Only store routers that have valid Group data
+                    if ($this->hasValidGroupData($router)) {
+                        $allRouters[$index] = $router;
                     }
                 }
             }
 
-            // Check if we have all routers and they are all complete
-            $allComplete = count($completedRouters) === $totalRouters && count($allRouters) === $totalRouters;
+            // Stop if all routers are complete
+            $allComplete = count($completedRouters) === $totalRouters;
 
             if (!$allComplete && $tries < $maxTries) {
                 sleep(2);
@@ -93,21 +118,26 @@ class FlightSearchService
 
         } while (!$allComplete && $tries < $maxTries);
 
-        // Store in Cache
-        $flightType = $validatedData['flight_type'];
-        Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(30));
-
-        // Format and return flights
-        $flights = $this->formatFlights(array_values($allRouters));
-
-        return [
-            'tries' => $tries,
-            'success' => true,
-            'routing_id' => $routingId,
-            'flights' => $flights,
-        ];
+        return [$allRouters, $tries];
     }
 
+    private function hasValidGroupData(array $router): bool
+    {
+        return isset($router['GroupList']['Group'])
+            && !isset($router['GroupList']['@attributes']);
+    }
+
+    private function isValidCompleteRouter(array $router): bool
+    {
+        return isset($router['Complete'])
+            && $router['Complete'] === "true"
+            && $this->hasValidGroupData($router);
+    }
+
+    private function cacheRoutingType(string $routingId, string $flightType): void
+    {
+        Cache::put('routing_' . $routingId, $flightType, now()->addMinutes(30));
+    }
 
     private function formatFlights(array $routers): array
     {
@@ -120,37 +150,45 @@ class FlightSearchService
 
             $groupList = $router['GroupList']['Group'] ?? [];
             $features = $router['Features'] ?? [];
-            $outwardList = $groupList['OutwardList']['Outward'] ?? [];
-            $returnList = $groupList['ReturnList']['Return'] ?? [];
 
-            if (empty($returnList)) {
-                // No return flights, handle only outward flights
-                foreach ($outwardList as $outward) {
-                    $formattedFlights[] = $this->formatFlightItem(
-                        $origin,
-                        $destination,
-                        $outward,
-                        null,
-                        $features
-                    );
-                }
-            } else {
-                // Match outward flights with return flights
-                foreach ($outwardList as $outward) {
-                    foreach ($returnList as $return) {
+            // Handle single group or array of groups
+            $groups = isset($groupList[0]) ? $groupList : [$groupList];
+
+            foreach ($groups as $group) {
+                $outwardList = $group['OutwardList']['Outward'] ?? [];
+                $returnList = $group['ReturnList']['Return'] ?? [];
+
+                // Handle single outward/return or array of them
+                $outwards = isset($outwardList[0]) ? $outwardList : [$outwardList];
+                $returns = isset($returnList[0]) ? $returnList : [$returnList];
+
+                if (empty($returns)) {
+                    // No return flights, handle only outward flights
+                    foreach ($outwards as $outward) {
                         $formattedFlights[] = $this->formatFlightItem(
                             $origin,
                             $destination,
                             $outward,
-                            $return,
+                            null,
                             $features
                         );
                     }
+                } else {
+                    // Match outward flights with return flights
+                    foreach ($outwards as $outward) {
+                        foreach ($returns as $return) {
+                            $formattedFlights[] = $this->formatFlightItem(
+                                $origin,
+                                $destination,
+                                $outward,
+                                $return,
+                                $features
+                            );
+                        }
+                    }
                 }
             }
-
         }
-
 
         return $formattedFlights;
     }

@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Mail\BookingTicketMail;
 use App\Models\FlightBooking;
 use App\Models\FlightTicket;
-use App\Services\TravelFusion\Requests\GetBookingRequestBuilder;
+use App\Services\TravelFusion\Requests\GetBookingDetailsRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Bus\Queueable;
@@ -37,7 +37,7 @@ class GenerateTicketJob implements ShouldQueue
     {
         Log::info("Generate tickets for: {$this->booking->booking_reference}");
         $response = $travelFusionService->sendRequest(
-            (new GetBookingRequestBuilder($this->booking->booking_reference))->build()
+            (new GetBookingDetailsRequestBuilder($this->booking->booking_reference))->build()
         );
 
         if (!isset($response['GetBookingDetails'])) {

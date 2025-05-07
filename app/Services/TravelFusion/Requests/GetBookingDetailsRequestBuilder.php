@@ -2,7 +2,7 @@
 
 namespace App\Services\TravelFusion\Requests;
 
-class GetBookingRequestBuilder
+class GetBookingDetailsRequestBuilder
 {
     public function __construct(protected string $bookId)
     {
