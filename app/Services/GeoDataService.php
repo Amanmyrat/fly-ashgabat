@@ -72,16 +72,20 @@ class GeoDataService
     /**
      * Get information about airports for booking purposes.
      *
-     * @param string $code Code.
+     * @param array $location Location.
      * @return array An array of information.
      */
-    public function getAirportInfo(string $code): array
+    public function getAirportInfo(array $location): array
     {
         $airports = $this->airportDataRepository->getAllAirports();
+        $cities = $this->airportDataRepository->getAllCities();
 
-        return [
-            'cityName' =>  $airports[$code]['cityName']['en'],
-            'airportName' => $airports[$code]['airportName']['en'] ?? '',
+        return $location['Type'] === 'airport' ? [
+            'cityName' =>  $airports[$location['Code']]['cityName']['en'],
+            'airportName' => $airports[$location['Code']]['airportName']['en'] ?? '',
+        ] : [
+            'cityName' =>  $cities[$location['Code']]['name']['en'],
+            'airportName' => '',
         ];
     }
 }

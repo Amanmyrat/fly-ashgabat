@@ -56,11 +56,11 @@
                                                 <img src="https://kupi.abflow.uz:3456/images/plane.png"
                                                      alt="Departure"
                                                      style="vertical-align: middle; margin-right: 4px;">
-                                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
+                                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['cityName']}}
                                                 <img src="https://kupi.abflow.uz:3456/images/arrow_right.png"
                                                      alt="Arrow"
                                                      style="vertical-align: middle; margin-right: 4px;">
-                                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['cityName']}}
+                                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['cityName']}}
                                             </td>
                                             <td
                                                 style="text-align: right; font-size: 18px; font-weight: 600; color: #1E2133;">
@@ -119,11 +119,11 @@
                                                     <img src="https://kupi.abflow.uz:3456/images/plane.png"
                                                          alt="Departure"
                                                          style="vertical-align: middle; margin-right: 4px;">
-                                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['cityName']}}
+                                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['cityName']}}
                                                     <img src="https://kupi.abflow.uz:3456/images/arrow_right.png"
                                                          alt="Arrow"
                                                          style="vertical-align: middle; margin-right: 4px;">
-                                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
+                                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['cityName']}}
                                                 </td>
                                                 <td
                                                     style="text-align: right; font-size: 18px; font-weight: 600; color: #1E2133;">

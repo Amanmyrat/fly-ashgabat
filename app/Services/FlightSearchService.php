@@ -91,11 +91,11 @@ class FlightSearchService
             }
 
             $currentRouters = $response['CheckRouting']['RouterList']['Router'];
-
+            $currentRouters = isset($currentRouters[0]) ? $currentRouters : [$currentRouters];
             if ($tries === 1) {
                 $totalRouters = count($currentRouters);
             }
-
+            
             // Track completion status and store valid routers
             foreach ($currentRouters as $index => $router) {
                 // Track completion status for all routers

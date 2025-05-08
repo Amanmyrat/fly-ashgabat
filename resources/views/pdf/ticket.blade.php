@@ -302,23 +302,28 @@
                 <tr>
                     <td colspan="5">
                         <div class="flex items-center">
-                                    <span class="icon">
-                                        <svg width="51" height="52" viewBox="0 0 51 52" fill="none"
-                                             xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="M21.9241 49.2034C24.5043 44.7057 31.132 33.1406 32.9298 29.9089C33.0043 29.7768 33.1342 29.6888 33.2806 29.6668L43.5132 29.7686C43.6403 29.7686 43.7701 29.7658 43.8972 29.7603C44.284 29.7466 44.6707 29.7026 45.0519 29.6228C46.3255 29.3587 48.6212 28.649 49.7786 26.8719C50.0715 26.4208 50.0742 25.8376 49.7842 25.3837C49.3919 24.7702 48.8615 24.2806 48.2869 23.8927C47.1874 23.1499 45.9111 22.7758 45.0768 22.5942C44.6016 22.4924 44.1181 22.4402 43.6347 22.4429L33.3469 22.4622C33.1867 22.4457 33.043 22.3549 32.9657 22.2118C31.1921 18.963 24.6588 7.34625 22.1143 2.82932C21.4816 1.70692 20.2938 1.01099 19.0037 1.0055L17.9622 1C17.9428 1 17.9262 1 17.9097 1.00275H17.8682C17.6196 1.00275 17.4373 1.23658 17.4981 1.47591L22.8685 22.1352C22.9099 22.292 22.8077 22.4433 22.6557 22.4736L17.8544 22.4543C16.9262 22.4516 15.998 22.4791 15.0725 22.5423C13.8819 22.6194 12.6967 22.7514 11.5199 22.9357L8.51982 23.4061C8.50601 23.4089 8.48943 23.4116 8.47562 23.4116C8.26567 23.4171 8.06124 23.3539 7.88996 23.2383C7.76565 23.153 7.66067 23.0403 7.58608 22.9027L4.64678 17.6513C4.44235 17.2854 4.1578 16.9828 3.82351 16.7545C3.39256 16.4629 2.87875 16.2978 2.34 16.2951L1.37862 16.2923C1.36204 16.2923 1.3427 16.2951 1.32613 16.2979H1.28745C1.14656 16.2979 1.04712 16.4299 1.08303 16.5647L3.25713 24.2288C3.30686 24.4021 3.24332 24.5837 3.09691 24.691L1.58305 25.7996C1.48913 25.8684 1.48913 26.0087 1.58305 26.0774L3.08863 27.197C3.23228 27.3043 3.29306 27.4886 3.24333 27.6592L1.00841 35.3064C0.969733 35.4412 1.06918 35.5732 1.21008 35.5732L2.17146 35.576C2.22395 35.576 2.27367 35.5732 2.32616 35.5705C3.25989 35.554 4.11625 35.0478 4.58039 34.2363L7.56114 29.0096C7.7269 28.718 8.02525 28.5364 8.34848 28.5089C8.3982 28.5089 8.44792 28.5144 8.50041 28.5227L11.4978 29.0178C13.5614 29.359 15.6471 29.535 17.7383 29.5433L22.722 29.5625C22.8739 29.5955 22.9734 29.7468 22.9319 29.9036L17.3958 50.5186C17.3323 50.7579 17.5118 50.9945 17.7605 50.9945L18.802 51C20.0921 51.0055 21.2883 50.3177 21.9264 49.2009L21.9241 49.2034Z"
-                                                fill="#85919D" stroke="#85919D"/>
-                                        </svg>
-                                    </span>
+                            <span class="icon">
+                                <svg width="51" height="52" viewBox="0 0 51 52" fill="none"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M21.9241 49.2034C24.5043 44.7057 31.132 33.1406 32.9298 29.9089C33.0043 29.7768 33.1342 29.6888 33.2806 29.6668L43.5132 29.7686C43.6403 29.7686 43.7701 29.7658 43.8972 29.7603C44.284 29.7466 44.6707 29.7026 45.0519 29.6228C46.3255 29.3587 48.6212 28.649 49.7786 26.8719C50.0715 26.4208 50.0742 25.8376 49.7842 25.3837C49.3919 24.7702 48.8615 24.2806 48.2869 23.8927C47.1874 23.1499 45.9111 22.7758 45.0768 22.5942C44.6016 22.4924 44.1181 22.4402 43.6347 22.4429L33.3469 22.4622C33.1867 22.4457 33.043 22.3549 32.9657 22.2118C31.1921 18.963 24.6588 7.34625 22.1143 2.82932C21.4816 1.70692 20.2938 1.01099 19.0037 1.0055L17.9622 1C17.9428 1 17.9262 1 17.9097 1.00275H17.8682C17.6196 1.00275 17.4373 1.23658 17.4981 1.47591L22.8685 22.1352C22.9099 22.292 22.8077 22.4433 22.6557 22.4736L17.8544 22.4543C16.9262 22.4516 15.998 22.4791 15.0725 22.5423C13.8819 22.6194 12.6967 22.7514 11.5199 22.9357L8.51982 23.4061C8.50601 23.4089 8.48943 23.4116 8.47562 23.4116C8.26567 23.4171 8.06124 23.3539 7.88996 23.2383C7.76565 23.153 7.66067 23.0403 7.58608 22.9027L4.64678 17.6513C4.44235 17.2854 4.1578 16.9828 3.82351 16.7545C3.39256 16.4629 2.87875 16.2978 2.34 16.2951L1.37862 16.2923C1.36204 16.2923 1.3427 16.2951 1.32613 16.2979H1.28745C1.14656 16.2979 1.04712 16.4299 1.08303 16.5647L3.25713 24.2288C3.30686 24.4021 3.24332 24.5837 3.09691 24.691L1.58305 25.7996C1.48913 25.8684 1.48913 26.0087 1.58305 26.0774L3.08863 27.197C3.23228 27.3043 3.29306 27.4886 3.24333 27.6592L1.00841 35.3064C0.969733 35.4412 1.06918 35.5732 1.21008 35.5732L2.17146 35.576C2.22395 35.576 2.27367 35.5732 2.32616 35.5705C3.25989 35.554 4.11625 35.0478 4.58039 34.2363L7.56114 29.0096C7.7269 28.718 8.02525 28.5364 8.34848 28.5089C8.3982 28.5089 8.44792 28.5144 8.50041 28.5227L11.4978 29.0178C13.5614 29.359 15.6471 29.535 17.7383 29.5433L22.722 29.5625C22.8739 29.5955 22.9734 29.7468 22.9319 29.9036L17.3958 50.5186C17.3323 50.7579 17.5118 50.9945 17.7605 50.9945L18.802 51C20.0921 51.0055 21.2883 50.3177 21.9264 49.2009L21.9241 49.2034Z"
+                                        fill="#85919D" stroke="#85919D"/>
+                                </svg>
+                            </span>
 
                             <h6>
-                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
-                                ,
-                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['airportName']}}
+                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['cityName']}}
+                                @if($bookingData['RequestedLocations']['Origin']['Type'] === 'airport')
+                                    ,
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['airportName']}}
+                                @endif
                                 -
-                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['cityName']}}
-                                ,
-                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['airportName']}}
+                                {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['cityName']}}
+
+                                @if($bookingData['RequestedLocations']['Destination']['Type'] === 'airport')
+                                    ,
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['airportName']}}
+                                @endif
                             </h6>
                         </div>
                     </td>
@@ -336,21 +341,29 @@
                         <td>
                             <h6>Отправление / Departing</h6>
                             <p>
-                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
+                                {{ Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
                             </p>
                             <p>
-                                {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['cityName']}},
-                                {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['airportName']}}
+                                {{$geoDataService->getAirportInfo($segment['Origin'])['cityName']}}
+
+                                @if($segment['Origin']['Type'] === 'airport')
+                                    ,
+                                    {{$geoDataService->getAirportInfo($segment['Origin'])['airportName']}}
+                                @endif
                             </p>
                         </td>
                         <td>
                             <h6>Прибытие / Arriving</h6>
                             <p>
-                                {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
+                                {{ Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
                             </p>
                             <p>
-                                {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['cityName']}},
-                                {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['airportName']}}
+                                {{$geoDataService->getAirportInfo($segment['Destination'])['cityName']}}
+
+                                @if($segment['Destination']['Type'] === 'airport')
+                                    ,
+                                    {{$geoDataService->getAirportInfo($segment['Destination'])['airportName']}}
+                                @endif
                             </p>
                         </td>
                         <td>
@@ -453,14 +466,18 @@
                                     </span>
 
                                 <h6>
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['cityName']}}
-                                    ,
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination']['Code'])['airportName']}}
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['cityName']}}
+                                    @if($bookingData['RequestedLocations']['Origin']['Type'] === 'airport')
+                                        ,
+                                        {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin'])['airportName']}}
+                                    @endif
                                     -
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['cityName']}}
-                                    ,
-                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Origin']['Code'])['airportName']}}
+                                    {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['cityName']}}
 
+                                    @if($bookingData['RequestedLocations']['Destination']['Type'] === 'airport')
+                                        ,
+                                        {{$geoDataService->getAirportInfo($bookingData['RequestedLocations']['Destination'])['airportName']}}
+                                    @endif
                                 </h6>
                             </div>
                         </td>
@@ -478,21 +495,29 @@
                             <td>
                                 <h6>Отправление / Departing</h6>
                                 <p>
-                                    {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
+                                    {{ Carbon::createFromFormat('d/m/Y-H:i', $segment['DepartDate'])->format('d M Y, H:i') }}
                                 </p>
                                 <p>
-                                    {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['cityName']}},
-                                    {{$geoDataService->getAirportInfo($segment['Origin']['Code'])['airportName']}}
+                                    {{$geoDataService->getAirportInfo($segment['Origin'])['cityName']}}
+
+                                    @if($segment['Origin']['Type'] === 'airport')
+                                        ,
+                                        {{$geoDataService->getAirportInfo($segment['Origin'])['airportName']}}
+                                    @endif
                                 </p>
                             </td>
                             <td>
                                 <h6>Прибытие / Arriving</h6>
                                 <p>
-                                    {{ \Carbon\Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
+                                    {{ Carbon::createFromFormat('d/m/Y-H:i', $segment['ArriveDate'])->format('d M Y, H:i') }}
                                 </p>
                                 <p>
-                                    {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['cityName']}},
-                                    {{$geoDataService->getAirportInfo($segment['Destination']['Code'])['airportName']}}
+                                    {{$geoDataService->getAirportInfo($segment['Destination'])['cityName']}}
+
+                                    @if($segment['Destination']['Type'] === 'airport')
+                                        ,
+                                        {{$geoDataService->getAirportInfo($segment['Destination'])['airportName']}}
+                                    @endif
                                 </p>
                             </td>
                             <td>
