@@ -4,18 +4,24 @@ namespace App\Services\TravelFusion\Requests;
 
 use function Psl\Str\uppercase;
 use App\Services\IpGeolocationService;
+use App\Repositories\AirportDataRepositoryInterface;
 
 class StartRoutingRequestBuilder
 {
     protected array $data;
     protected IpGeolocationService $ipGeolocationService;
+    protected array $airports;
+    protected array $cities;
 
     public function __construct(
         array $validatedData,
-        IpGeolocationService $ipGeolocationService
+        IpGeolocationService $ipGeolocationService,
+        AirportDataRepositoryInterface $airportDataRepository
     ) {
         $this->data = $validatedData;
         $this->ipGeolocationService = $ipGeolocationService;
+        $this->airports = $airportDataRepository->getAllAirports();
+        $this->cities = $airportDataRepository->getAllCities();
     }
 
     public function build(): array
@@ -26,14 +32,8 @@ class StartRoutingRequestBuilder
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'Mode' => 'plane',
                 'ProductType' => 'plane',
-                'Origin' => [
-                    'Descriptor' => $this->data['departure_code'],
-                    'Type' => 'auto',
-                ],
-                'Destination' => [
-                    'Descriptor' => $this->data['arrival_code'],
-                    'Type' => 'auto',
-                ],
+                'Origin' => $this->formatLocation($this->data['departure_code']),
+                'Destination' => $this->formatLocation($this->data['arrival_code']),
                 'OutwardDates' => [
                     'DateOfSearch' => date('d/m/Y-H:i', strtotime($this->data['departure_date'])),
                 ],
@@ -129,5 +129,32 @@ class StartRoutingRequestBuilder
     {
         $ip = $this->data['meta']['end_user_ip_address'] ?? '';
         return $this->ipGeolocationService->getCountryCode($ip);
+    }
+
+    protected function formatLocation(string $code): array
+    {
+        // Check if it's an airport code
+        if (isset($this->airports[$code])) {
+            return [
+                'Descriptor' => $code,
+                'Type' => 'airportcode',
+                'Radius' => 1000
+            ];
+        }
+
+        // Check if it's a city code
+        if (isset($this->cities[$code])) {
+            return [
+                'Descriptor' => $code,
+                'Type' => 'airportgroup'
+            ];
+        }
+
+        // If we can't determine the type, default to airportcode with radius
+        return [
+            'Descriptor' => $code,
+            'Type' => 'airportcode',
+            'Radius' => 1000
+        ];
     }
 }

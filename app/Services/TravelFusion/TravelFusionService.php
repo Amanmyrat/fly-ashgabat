@@ -7,6 +7,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use App\Services\TravelFusion\Requests\LoginRequestBuilder;
+use App\Services\TravelFusion\Requests\NewPasswordRequestBuilder;
+use App\Models\TravelFusionPasswordChange;
 use SimpleXMLElement;
 use Illuminate\Support\Facades\Log;
 
@@ -15,12 +17,22 @@ class TravelFusionService
     private string $baseUrl;
     private string $username;
     private string $password;
+    private const LOGIN_CACHE_KEY = 'travelfusion_login_id';
+    private const LOGIN_CACHE_DURATION = 75 * 24 * 60 * 60; // 75 days in seconds (15 days before password expiry)
 
     public function __construct()
     {
         $this->baseUrl = config('services.travelfusion.base_url', 'https://api.travelfusion.com');
-        $this->username = config('services.travelfusion.username', env('TRAVELFUSION_USERNAME'));
-        $this->password = config('services.travelfusion.password', env('TRAVELFUSION_PASSWORD'));
+        
+        // Get credentials from the active password record
+        $activePassword = TravelFusionPasswordChange::where('is_active', true)->first();
+        
+        if (!$activePassword) {
+            throw new Exception('No active TravelFusion password found');
+        }
+        
+        $this->username = $activePassword->username;
+        $this->password = $activePassword->password;
     }
 
     /**
@@ -46,11 +58,90 @@ class TravelFusionService
     }
 
     /**
+     * Change the TravelFusion API password
+     * 
+     * @param string $newPassword The new password to set
+     * @throws ConnectionException
+     * @throws Exception
+     */
+    public function changePassword(string $newPassword): void
+    {
+        // Validate password requirements
+        if (!$this->validatePassword($newPassword)) {
+            throw new Exception('Password does not meet requirements');
+        }
+
+        $builder = new NewPasswordRequestBuilder($this->username, $this->password, $newPassword);
+        $requestData = $builder->build();
+
+        $xmlRoot = new SimpleXMLElement('<CommandList/>');
+        $this->arrayToXml($requestData, $xmlRoot);
+        $xmlContent = $xmlRoot->asXML();
+
+        $response = $this->makeRequest($this->baseUrl, $xmlContent);
+
+        if (!isset($response['NewPassword']['Success']) || $response['NewPassword']['Success'] !== 'true') {
+            throw new Exception('Failed to change password');
+        }
+
+        // Create new password record
+        TravelFusionPasswordChange::create([
+            'username' => $this->username,
+            'password' => $newPassword,
+            'changed_at' => now(),
+            'expires_at' => now()->addDays(90),
+            'is_active' => true,
+        ]);
+
+        // Deactivate old password
+        TravelFusionPasswordChange::where('is_active', true)
+            ->where('username', $this->username)
+            ->update(['is_active' => false]);
+
+        // Update the password in the service
+        $this->password = $newPassword;
+
+        // Clear the login cache
+        Cache::forget(self::LOGIN_CACHE_KEY);
+
+        // Get new LoginId after password change
+        $newLoginId = $this->login();
+        
+        // Cache the new LoginId
+        Cache::put(self::LOGIN_CACHE_KEY, $newLoginId, self::LOGIN_CACHE_DURATION);
+    }
+
+    /**
+     * Validate password meets TravelFusion requirements
+     */
+    private function validatePassword(string $password): bool
+    {
+        // Password must be between 8 and 20 characters
+        if (strlen($password) < 8 || strlen($password) > 20) {
+            return false;
+        }
+
+        // Password must contain at least 1 capital letter, 1 lower letter, 1 number and 1 special character
+        if (!preg_match('/[A-Z]/', $password)) return false;
+        if (!preg_match('/[a-z]/', $password)) return false;
+        if (!preg_match('/[0-9]/', $password)) return false;
+        if (!preg_match('/[?!@#$%^+\-_=]/', $password)) return false;
+
+        // Only allow numbers, letters and specific special characters
+        if (!preg_match('/^[a-zA-Z0-9?!@#$%^+\-_=]+$/', $password)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @throws ConnectionException
      */
     public function sendRequest(array $requestData, string $type = 'default'): array
     {
-        $loginId = Cache::remember('travelfusion_login_id', now()->addDay(), function () {
+        // Get login ID from cache or login if not available
+        $loginId = Cache::remember(self::LOGIN_CACHE_KEY, self::LOGIN_CACHE_DURATION, function () {
             return $this->login();
         });
 
@@ -69,7 +160,18 @@ class TravelFusionService
 
         $xmlContent = $xmlRoot->asXML();
 
-        return $this->makeRequest($this->baseUrl, $xmlContent);
+        try {
+            return $this->makeRequest($this->baseUrl, $xmlContent);
+        } catch (Exception $e) {
+            // If the request fails, try to login again and retry once
+            if (str_contains($e->getMessage(), 'LoginId')) {
+                Cache::forget(self::LOGIN_CACHE_KEY);
+                $loginId = $this->login();
+                $this->injectLoginIds($requestData, $loginId);
+                return $this->makeRequest($this->baseUrl, $xmlContent);
+            }
+            throw $e;
+        }
     }
 
     /**

@@ -67,7 +67,12 @@ class FlightSearchService
      */
     private function getStartRoutingResponse(array $validatedData): array
     {
-        $startRoutingRequest = (new StartRoutingRequestBuilder($validatedData, $this->ipGeolocationService))->build();
+        $startRoutingRequest = (new StartRoutingRequestBuilder(
+            $validatedData,
+            $this->ipGeolocationService,
+            $this->airportDataRepository
+        ))->build();
+
         return $this->travelFusionService->sendRequest($startRoutingRequest);
     }
 
@@ -95,7 +100,7 @@ class FlightSearchService
             if ($tries === 1) {
                 $totalRouters = count($currentRouters);
             }
-            
+
             // Track completion status and store valid routers
             foreach ($currentRouters as $index => $router) {
                 // Track completion status for all routers
