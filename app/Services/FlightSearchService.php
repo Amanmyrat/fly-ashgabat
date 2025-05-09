@@ -392,6 +392,7 @@ class FlightSearchService
                 'Time' => $arrivalTime,
             ],
             'Stops' => count($segments) > 1 ? $this->formatStops($stopDurations, $segments) : null,
+            'StopsCount' => count($segments) - 1,
             'Segments' => $segments,
         ];
     }

@@ -75,6 +75,11 @@ class FlightBookRequest extends FormRequest
                 'string',
                 'max:100',
             ],
+            'travellers.*.middlename' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
             'travellers.*.lastname' => [
                 'required',
                 'string',
@@ -96,6 +101,11 @@ class FlightBookRequest extends FormRequest
             ],
             'contact_details.firstname' => [
                 'required',
+                'string',
+                'max:100',
+            ],
+            'contact_details.middlename' => [
+                'nullable',
                 'string',
                 'max:100',
             ],

@@ -158,10 +158,11 @@ class ProcessTermsRequestBuilder
                 'Name' => [
                     'Title' => $traveller['gender'] === 'male' ? 'Mr' : 'Ms',
                     'NamePartList' => [
-                        'NamePart' => [
+                        'NamePart' => array_filter([
                             $traveller['firstname'],
+                            $traveller['middlename'] ?? null,
                             $traveller['lastname'],
-                        ],
+                        ]),
                     ],
                 ],
                 'CustomSupplierParameterList' => [
@@ -181,10 +182,11 @@ class ProcessTermsRequestBuilder
             'Name' => [
                 'Title' => $contactDetails['gender'] === 'male' ? 'Mr' : 'Ms',
                 'NamePartList' => [
-                    'NamePart' => [
+                    'NamePart' => array_filter([
                         $contactDetails['firstname'],
+                        $contactDetails['middlename'] ?? null,
                         $contactDetails['lastname'],
-                    ],
+                    ]),
                 ],
             ],
             'Address' => [
