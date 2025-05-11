@@ -79,9 +79,9 @@ class StartRoutingRequestBuilder
                                 'Name' => 'CountryOfTheUser',
                                 'Value' => $this->getCountryOfTheUser(),
                             ],
-                        ]
-                    ]
-                ]
+                        ],
+                    ],
+                ],
             ],
         ];
 

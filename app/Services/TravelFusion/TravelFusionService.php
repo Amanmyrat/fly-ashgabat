@@ -261,8 +261,27 @@ class TravelFusionService
                 if (is_numeric($key)) {
                     $this->arrayToXml($value, $xmlData);
                 } else {
-                    $subNode = $xmlData->addChild($key);
-                    $this->arrayToXml($value, $subNode);
+                    // Special handling for CustomSupplierParameterList
+                    if ($key === 'CustomSupplierParameterList') {
+                        $subNode = $xmlData->addChild($key);
+                        // Check if CustomSupplierParameter is a single associative array
+                        if (isset($value['CustomSupplierParameter']['Name'])) {
+                            $param = $value['CustomSupplierParameter'];
+                            $paramNode = $subNode->addChild('CustomSupplierParameter');
+                            $paramNode->addChild('Name', htmlspecialchars($param['Name']));
+                            $paramNode->addChild('Value', htmlspecialchars($param['Value']));
+                        } else {
+                            // Handle multiple CustomSupplierParameter entries
+                            foreach ($value['CustomSupplierParameter'] as $param) {
+                                $paramNode = $subNode->addChild('CustomSupplierParameter');
+                                $paramNode->addChild('Name', htmlspecialchars($param['Name']));
+                                $paramNode->addChild('Value', htmlspecialchars($param['Value']));
+                            }
+                        }
+                    } else {
+                        $subNode = $xmlData->addChild($key);
+                        $this->arrayToXml($value, $subNode);
+                    }
                 }
             } else {
                 $xmlData->addChild($key, htmlspecialchars($value));
