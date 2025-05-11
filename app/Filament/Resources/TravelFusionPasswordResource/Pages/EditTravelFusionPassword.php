@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\Resources\TravelFusionPasswordResource\Pages;
+
+use App\Filament\Resources\TravelFusionPasswordResource;
+use Filament\Actions;
+use Filament\Resources\Pages\EditRecord;
+
+class EditTravelFusionPassword extends EditRecord
+{
+    protected static string $resource = TravelFusionPasswordResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\DeleteAction::make(),
+        ];
+    }
+} 

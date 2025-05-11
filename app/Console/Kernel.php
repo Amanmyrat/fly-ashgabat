@@ -22,6 +22,12 @@ class Kernel extends ConsoleKernel
         // Check TravelFusion password expiry daily
         $schedule->command('travelfusion:check-password-expiry')
             ->daily();
+
+        // Schedule the route caching command to run at 1 AM UK time (00:00 UTC)
+        $schedule->command('travelfusion:cache-routes')
+            ->dailyAt('00:00')
+            ->timezone('UTC')
+            ->withoutOverlapping();
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\TravelFusionPasswordChange;
+use App\Models\TravelFusionPassword;
 use App\Notifications\TravelFusionPasswordExpiring;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +22,7 @@ class CheckTravelFusionPasswordExpiry extends Command
     {
         try {
             // Get the current active password record
-            $currentPassword = TravelFusionPasswordChange::where('is_active', true)->first();
+            $currentPassword = TravelFusionPassword::where('is_active', true)->first();
             
             if (!$currentPassword) {
                 $this->error('No active password record found');

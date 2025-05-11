@@ -27,7 +27,6 @@ class EditTravelFusionPasswordChange extends EditRecord
             try {
 //                $service = new TravelFusionService();
 //                $service->changePassword($this->record->password);
-
                 // Deactivate all other passwords
                 $this->record->where('id', '!=', $this->record->id)
                     ->where('is_active', true)

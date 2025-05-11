@@ -4,11 +4,10 @@ namespace App\Services\TravelFusion;
 
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use App\Services\TravelFusion\Requests\LoginRequestBuilder;
 use App\Services\TravelFusion\Requests\NewPasswordRequestBuilder;
-use App\Models\TravelFusionPasswordChange;
+use App\Models\TravelFusionPassword;
 use SimpleXMLElement;
 use Illuminate\Support\Facades\Log;
 
@@ -17,22 +16,22 @@ class TravelFusionService
     private string $baseUrl;
     private string $username;
     private string $password;
-    private const LOGIN_CACHE_KEY = 'travelfusion_login_id';
-    private const LOGIN_CACHE_DURATION = 75 * 24 * 60 * 60; // 75 days in seconds (15 days before password expiry)
+    private ?string $loginId = null;
 
     public function __construct()
     {
         $this->baseUrl = config('services.travelfusion.base_url', 'https://api.travelfusion.com');
-        
+
         // Get credentials from the active password record
-        $activePassword = TravelFusionPasswordChange::where('is_active', true)->first();
-        
+        $activePassword = TravelFusionPassword::where('is_active', true)->first();
+
         if (!$activePassword) {
             throw new Exception('No active TravelFusion password found');
         }
-        
+
         $this->username = $activePassword->username;
         $this->password = $activePassword->password;
+        $this->loginId = $activePassword->login_id;
     }
 
     /**
@@ -51,7 +50,15 @@ class TravelFusionService
         $response = $this->makeRequest($this->baseUrl, $xmlContent);
 
         if (isset($response['Login']['LoginId'])) {
-            return $response['Login']['LoginId'];
+            $loginId = $response['Login']['LoginId'];
+            
+            // Update the login_id in the database
+            TravelFusionPassword::where('is_active', true)
+                ->where('username', $this->username)
+                ->update(['login_id' => $loginId]);
+                
+            $this->loginId = $loginId;
+            return $loginId;
         }
 
         throw new Exception('Failed to log in to TravelFusion');
@@ -59,7 +66,7 @@ class TravelFusionService
 
     /**
      * Change the TravelFusion API password
-     * 
+     *
      * @param string $newPassword The new password to set
      * @throws ConnectionException
      * @throws Exception
@@ -85,7 +92,7 @@ class TravelFusionService
         }
 
         // Create new password record
-        TravelFusionPasswordChange::create([
+        TravelFusionPassword::create([
             'username' => $this->username,
             'password' => $newPassword,
             'changed_at' => now(),
@@ -94,21 +101,16 @@ class TravelFusionService
         ]);
 
         // Deactivate old password
-        TravelFusionPasswordChange::where('is_active', true)
+        TravelFusionPassword::where('is_active', true)
             ->where('username', $this->username)
             ->update(['is_active' => false]);
 
         // Update the password in the service
         $this->password = $newPassword;
-
-        // Clear the login cache
-        Cache::forget(self::LOGIN_CACHE_KEY);
+        $this->loginId = null; // Reset login ID as it will be invalid after password change
 
         // Get new LoginId after password change
-        $newLoginId = $this->login();
-        
-        // Cache the new LoginId
-        Cache::put(self::LOGIN_CACHE_KEY, $newLoginId, self::LOGIN_CACHE_DURATION);
+        $this->login();
     }
 
     /**
@@ -140,13 +142,13 @@ class TravelFusionService
      */
     public function sendRequest(array $requestData, string $type = 'default'): array
     {
-        // Get login ID from cache or login if not available
-        $loginId = Cache::remember(self::LOGIN_CACHE_KEY, self::LOGIN_CACHE_DURATION, function () {
-            return $this->login();
-        });
+        // Get login ID from model or login if not available
+        if (!$this->loginId) {
+            $this->loginId = $this->login();
+        }
 
         // Inject LoginId and XmlLoginId
-        $this->injectLoginIds($requestData, $loginId);
+        $this->injectLoginIds($requestData, $this->loginId);
 
         $xmlRoot = new SimpleXMLElement('<CommandList/>');
         switch ($type) {
@@ -165,9 +167,8 @@ class TravelFusionService
         } catch (Exception $e) {
             // If the request fails, try to login again and retry once
             if (str_contains($e->getMessage(), 'LoginId')) {
-                Cache::forget(self::LOGIN_CACHE_KEY);
-                $loginId = $this->login();
-                $this->injectLoginIds($requestData, $loginId);
+                $this->loginId = $this->login();
+                $this->injectLoginIds($requestData, $this->loginId);
                 return $this->makeRequest($this->baseUrl, $xmlContent);
             }
             throw $e;

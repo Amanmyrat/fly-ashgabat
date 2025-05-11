@@ -24,6 +24,7 @@ Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
 Route::group(['prefix' => 'tfusion'], function () {
     Route::get('search/flights', [FlightSearchController::class, 'search']);
+    Route::get('search/test', [FlightSearchController::class, 'searchTest']);
     Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
     Route::post('bookings/start', [FlightBookController::class, 'startBooking']);

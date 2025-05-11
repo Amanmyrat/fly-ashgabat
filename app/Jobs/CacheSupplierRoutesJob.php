@@ -1,80 +1,57 @@
 <?php
 
-namespace App\Http\Controllers\TFusion;
+namespace App\Jobs;
 
-use App\Http\Controllers\BaseController;
-use App\Http\Requests\FlightSearchRequest;
-use App\Services\FlightSearchService;
 use App\Services\SupplierRouteService;
 use App\Services\TravelFusion\Requests\GetBranchSupplierListRequestBuilder;
 use App\Services\TravelFusion\Requests\ListSupplierRoutesRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class FlightSearchController extends BaseController
+class CacheSupplierRoutesJob implements ShouldQueue
 {
-    public function __construct(protected FlightSearchService $flightSearchService, protected TravelFusionService $travelFusionService, protected SupplierRouteService $supplierRouteService)
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct()
     {
+        $this->onQueue('low');
     }
 
     /**
-     * Search tfusion flights
-     *
-     * @localizationHeader
-     *
-     * @param FlightSearchRequest $request
-     * @return JsonResponse
+     * Execute the job.
      */
-    public function search(FlightSearchRequest $request): JsonResponse
-    {
-        $validatedData = $request->validated();
-
-        return $this->handleServiceCall(function () use ($validatedData) {
-            $maxTries = 3;
-            $result   = null;
-
-            for ($i = 1; $i <= $maxTries; $i++) {
-                $result = $this->flightSearchService->search($validatedData);
-
-                // Add serviceTries count to the result
-                $result['serviceTries'] = $i;
-
-                // If flights found, return immediately
-                if (!empty($result['flights'])) {
-                    return $result;
-                }
-            }
-
-            // Return the final result after 3 attempts (with empty flights if still empty)
-            return $result;
-        });
-    }
-
-    public function searchTest(): JsonResponse
+    public function handle(TravelFusionService $travelFusionService, SupplierRouteService $routeService): void
     {
         try {
             // Collect all supplier routes
             $allSupplierRoutes = [];
-
+            
             // Step 1: Get list of suppliers
             $supplierListRequest = (new GetBranchSupplierListRequestBuilder())->build();
-            $supplierListResponse = $this->travelFusionService->sendRequest($supplierListRequest);
+            $supplierListResponse = $travelFusionService->sendRequest($supplierListRequest);
 
             if (!isset($supplierListResponse['GetBranchSupplierList']['BranchSupplierList']['Supplier'])) {
                 Log::error('Failed to get supplier list from TravelFusion');
-                dd($supplierListResponse);
+                return;
             }
-
+            
             $suppliers = $supplierListResponse['GetBranchSupplierList']['BranchSupplierList']['Supplier'];
             $suppliers = is_array($suppliers) ? $suppliers : [$suppliers];
-
+             
             // Step 2: For each supplier, get their routes
             foreach ($suppliers as $supplier) {
                 $supplierCode = $supplier;
 
                 $routesRequest = (new ListSupplierRoutesRequestBuilder($supplierCode, false))->build();
-                $routesResponse = $this->travelFusionService->sendRequest($routesRequest);
+                $routesResponse = $travelFusionService->sendRequest($routesRequest);
 
                 if (!isset($routesResponse['ListSupplierRoutes']['RouteList'])) {
                     Log::error("Failed to get routes for supplier: {$supplierCode}");
@@ -125,19 +102,16 @@ class FlightSearchController extends BaseController
                     'cached_at' => now()->toIso8601String()
                 ];
             }
-
+            
             // Use our new method to store all routes efficiently without duplicates
-            $this->supplierRouteService->cacheRoutes($allSupplierRoutes);
-
+            $routeService->cacheRoutes($allSupplierRoutes);
+            
             Log::info('Successfully cached routes for ' . count($allSupplierRoutes) . ' suppliers');
-
+            
         } catch (\Exception $e) {
             Log::error('Error caching supplier routes: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
         }
-
-        return new JsonResponse('success');
     }
-
 }

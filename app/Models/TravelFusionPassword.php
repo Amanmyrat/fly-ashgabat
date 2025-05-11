@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TravelFusionPasswordChange extends Model
+class TravelFusionPassword extends Model
 {
     protected $fillable = [
         'username',
         'password',
+        'login_id',
         'changed_at',
         'expires_at',
         'is_active',

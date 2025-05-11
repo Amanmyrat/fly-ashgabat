@@ -22,7 +22,8 @@ class FlightSearchService
         protected TravelFusionService            $travelFusionService,
         protected AirportDataRepositoryInterface $airportDataRepository,
         protected FlightFeaturesService $featuresService,
-        protected IpGeolocationService $ipGeolocationService
+        protected IpGeolocationService $ipGeolocationService,
+        protected SupplierRouteService $supplierRouteService
     )
     {
         $this->airports = $this->airportDataRepository->getAllAirports();
@@ -36,6 +37,18 @@ class FlightSearchService
      */
     public function search(array $validatedData): array
     {
+        // Check if route is supported by any supplier
+        if (!$this->supplierRouteService->isRouteSupported(
+            $validatedData['departure_code'],
+            $validatedData['arrival_code']
+        )) {
+            return [
+                'success' => false,
+                'message' => 'No suppliers found for this route',
+                'flights' => []
+            ];
+        }
+
         // Step 1: StartRouting
         $startRoutingResponse = $this->getStartRoutingResponse($validatedData);
         if (!isset($startRoutingResponse['StartRouting']['RouterList'])) {
