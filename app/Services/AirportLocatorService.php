@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\AirportDataRepositoryInterface;
+use Illuminate\Support\Facades\App;
 
 class AirportLocatorService
 {
@@ -47,7 +48,6 @@ class AirportLocatorService
         // Merge code matches first, then others
         $orderedArr = $codeMatches + $otherMatches;
         // --- End new logic ---
-
         return $this->groupAirports($orderedArr);
     }
 
@@ -74,7 +74,7 @@ class AirportLocatorService
             // Determine city information
             $airports[$aKey]['city'] = isset($airport['airportName'])
                 ? $this->getCityString($airport, $countries)
-                : $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru'];
+                : $this->getLocalizedString($airport['cityName']) . ', ' . $this->getLocalizedString($countries[$airport['country']]['name']);
 
             // Update city information
             if ($airport['area'] != null && isset($cities[$airport['area']])) {
@@ -88,6 +88,18 @@ class AirportLocatorService
     }
 
     /**
+     * Get a localized string value based on the current application locale with fallback to English.
+     *
+     * @param array $data Array containing localized strings with language keys.
+     * @return string The localized string.
+     */
+    private function getLocalizedString(array $data): string
+    {
+        $locale = App::getLocale();
+        return $data[$locale] ?? $data['en'] ?? '';
+    }
+
+    /**
      * Get the city information string for an airport.
      *
      * @param array $airport The airport data.
@@ -97,8 +109,11 @@ class AirportLocatorService
     private function getCityString(array $airport, array $countries): string
     {
         return isset($airport['airportName'])
-            ? $airport['airportName']['ru'] . ', ' . $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru']
-            : $airport['cityName']['ru'] . ', ' . $countries[$airport['country']]['name']['ru'];
+            ? $this->getLocalizedString($airport['airportName']) . ', ' .
+              $this->getLocalizedString($airport['cityName']) . ', ' .
+              $this->getLocalizedString($countries[$airport['country']]['name'])
+            : $this->getLocalizedString($airport['cityName']) . ', ' .
+              $this->getLocalizedString($countries[$airport['country']]['name']);
     }
 
     /**
@@ -148,7 +163,7 @@ class AirportLocatorService
         $pattern    = '/^' . preg_quote($lowerQuery, '/') . '/iu';
 
         // Check for exact code match first
-        if (strtoupper($query) === strtoupper($aKey) || 
+        if (strtoupper($query) === strtoupper($aKey) ||
             (isset($airport['area']['code']) && strtoupper($query) === strtoupper($airport['area']['code']))) {
             return true;
         }
@@ -161,7 +176,7 @@ class AirportLocatorService
         }
 
         // Check for city code matches in the middle of the string
-        if (isset($airport['area']['code']) && 
+        if (isset($airport['area']['code']) &&
             strpos(strtoupper($airport['area']['code']), strtoupper($query)) !== false) {
             return true;
         }
@@ -177,6 +192,7 @@ class AirportLocatorService
      */
     private function groupAirports(array $arr): array
     {
+        $locale = App::getLocale();
         $results = [];
         $result = collect($arr)->groupBy('country');
 
@@ -199,9 +215,23 @@ class AirportLocatorService
         }
 
         foreach ($result as $countryKey => $cities) {
-            $country = $countryKey;
             foreach ($cities as $cityKey => $airports) {
-                $parent = $cityKey . ', ' . $country;
+                // Get localized city and country names for the parent key
+                $cityName = '';
+                $countryName = '';
+
+                // Get the first airport to extract city and country names
+                $firstAirport = $airports->first();
+                if (!empty($firstAirport['cityName'])) {
+                    $cityName = $this->getLocalizedString($firstAirport['cityName']);
+                }
+
+                if (!empty($firstAirport['country'])) {
+                    $countryName = $this->getLocalizedString($firstAirport['country']);
+                }
+
+                $parent = $cityName . ', ' . $countryName;
+
                 foreach ($airports as $airport) {
                     if (!empty($airport['area'])) {
                         $results[$parent]['citycode'] = $airport['area']['code'];
@@ -216,7 +246,6 @@ class AirportLocatorService
 
                     $results[$parent]['airports'][] = $airport;
                 }
-
             }
         }
 
