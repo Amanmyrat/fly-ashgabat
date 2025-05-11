@@ -21,7 +21,6 @@ class ProcessDetailsRequestBuilder
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'RoutingId' => $this->data['routing_id'],
                 'OutwardId' => $this->data['outward_id'],
-                'HandoffParametersOnly' => 'false',
             ],
         ];
 
@@ -29,6 +28,7 @@ class ProcessDetailsRequestBuilder
         if ($flightType === 'round-trip') {
             $requestData['ProcessDetails']['ReturnId'] = $this->data['return_id'];
         }
+        $requestData['ProcessDetails']['HandoffParametersOnly'] = 'false';
 
         return $requestData;
     }

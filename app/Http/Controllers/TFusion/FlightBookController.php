@@ -69,7 +69,6 @@ class FlightBookController extends BaseController
     {
         try {
             $booking = $request->getBooking();
-            CheckBookingStatusJob::dispatch($booking);
 
             if ($booking->status != BookingStatus::PENDING) {
                 return $this->errorResponse('Booking is not in pending status', 400);

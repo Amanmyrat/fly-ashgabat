@@ -36,22 +36,22 @@ class CheckBookingStatusJob implements ShouldQueue
     {
         Log::info("Checking booking status for: {$this->booking->booking_reference}. Try {$this->attempts()}");
 
-         $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
-         $response = $travelFusionService->sendRequest($checkBookingRequest);
+        $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
+        $response = $travelFusionService->sendRequest($checkBookingRequest);
 
-         $status = $response['CheckBooking']['Status'] ?? null;
+        $status = $response['CheckBooking']['Status'] ?? null;
 
-         Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
+        Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
-         match ($status) {
-             'Succeeded' => $this->handleSucceededStatus(),
-             'Failed' => $this->handleFailedStatus(),
-             'Unconfirmed' => $this->handleUnconfirmedStatus(),
-             'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
-             'BookingInProgress' => $this->handleBookingInProgressStatus(),
-             'Duplicate' => $this->handleDuplicateStatus(),
-             default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
-         };
+        match ($status) {
+            'Succeeded' => $this->handleSucceededStatus(),
+            'Failed' => $this->handleFailedStatus(),
+            'Unconfirmed' => $this->handleUnconfirmedStatus(),
+            'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
+            'BookingInProgress' => $this->handleBookingInProgressStatus(),
+            'Duplicate' => $this->handleDuplicateStatus(),
+            default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
+        };
     }
 
     private function handleSucceededStatus(): void

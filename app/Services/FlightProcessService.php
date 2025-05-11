@@ -48,7 +48,6 @@ class FlightProcessService
         $requiredParameters = $processDetailsResponse['ProcessDetails']['Router']['RequiredParameterList']['RequiredParameter'];
 
         $options = [];
-
         foreach ($requiredParameters as $param) {
             if ($param['Type'] === 'value_select' && !empty($param['DisplayText'] && $param['Name'] != 'FrequentFlyerType')) {
                 $name = $param['Name'];
@@ -66,10 +65,11 @@ class FlightProcessService
             }
         }
 
+
         Cache::put('options_'.$validatedData['routing_id'], $options, now()->addMinutes(15));
         return [
             'success' => true,
-            'options' => $options,
+            'options' => array_filter($options),
             'message' => 'Processing successful',
         ];
 

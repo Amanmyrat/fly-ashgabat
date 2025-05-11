@@ -51,12 +51,12 @@ class TravelFusionService
 
         if (isset($response['Login']['LoginId'])) {
             $loginId = $response['Login']['LoginId'];
-            
+
             // Update the login_id in the database
             TravelFusionPassword::where('is_active', true)
                 ->where('username', $this->username)
                 ->update(['login_id' => $loginId]);
-                
+
             $this->loginId = $loginId;
             return $loginId;
         }
