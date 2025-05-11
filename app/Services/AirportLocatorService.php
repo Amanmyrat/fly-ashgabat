@@ -96,7 +96,7 @@ class AirportLocatorService
     private function getLocalizedString(array $data): string
     {
         $locale = App::getLocale();
-        return $data[$locale] ?? $data['en'] ?? '';
+        return $data[$locale] ?? $data['ru'] ?? '';
     }
 
     /**
