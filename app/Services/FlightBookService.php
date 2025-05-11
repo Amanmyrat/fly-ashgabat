@@ -39,7 +39,11 @@ class FlightBookService
         }
 
         $bookingReference = $processTermsResponse['ProcessTerms']['TFBookingReference'];
-        $fullPrice = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['Price'];
+        $priceData = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['Price'];
+        $fullPrice = [
+            'Amount' => $priceData['Amount'],
+            'Currency' => $priceData['Currency']
+        ];
 
         if ($validatedData['payment_type'] === 'balance' && (!$user || $user->balance < $fullPrice['Amount'])) {
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $fullPrice['Amount']];

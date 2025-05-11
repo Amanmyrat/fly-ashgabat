@@ -31,7 +31,6 @@ class ProcessTermsRequestBuilder
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'RoutingId' => $this->data['routing_id'],
                 'OutwardId' => $this->data['outward_id'],
-                'BookingProfile' => $this->buildBookingProfile(),
             ],
         ];
 
@@ -39,6 +38,8 @@ class ProcessTermsRequestBuilder
         if ($flightType === 'round-trip') {
             $requestData['ProcessTerms']['ReturnId'] = $this->data['return_id'];
         }
+
+        $requestData['ProcessTerms']['BookingProfile'] = $this->buildBookingProfile();
 
         return $requestData;
     }
@@ -49,9 +50,6 @@ class ProcessTermsRequestBuilder
     protected function buildBookingProfile(): array
     {
         return [
-            'TravellerList' => $this->buildTravellerList(),
-            'ContactDetails' => $this->buildContactDetails(),
-            'BillingDetails' => $this->buildBillingDetails(),
             'CustomSupplierParameterList' => [
                 'CustomSupplierParameter' => [
                     [
@@ -84,31 +82,34 @@ class ProcessTermsRequestBuilder
                     ],
                 ],
             ],
+            'TravellerList' => $this->buildTravellerList(),
+            'ContactDetails' => $this->buildContactDetails(),
+            'BillingDetails' => $this->buildBillingDetails(),
         ];
     }
 
     protected function buildUserData(): string
     {
         $userData = [];
-        
+
         // Add email
         if (!empty($this->data['contact_details']['email'])) {
             $userData[] = str_replace(',', '\,', $this->data['contact_details']['email']);
         }
-        
+
         // Add phone number
         if (!empty($this->data['contact_details']['phone'])) {
             $phone = $this->data['contact_details']['phone'];
             $phoneNumber = '+' . ($phone['code'] ?? '') . ($phone['number'] ?? '');
             $userData[] = str_replace(',', '\,', $phoneNumber);
         }
-        
+
         // Add name from contact details
         if (!empty($this->data['contact_details']['firstname']) && !empty($this->data['contact_details']['lastname'])) {
             $name = $this->data['contact_details']['firstname'] . ' ' . $this->data['contact_details']['lastname'];
             $userData[] = str_replace(',', '\,', $name);
         }
-        
+
         return implode(',', $userData);
     }
 
@@ -154,7 +155,7 @@ class ProcessTermsRequestBuilder
             }
 
             $travellers[] = [
-                'Age' => $this->calculateAgeCategory($traveller['birthdate']),
+                'Age' => $traveller['age'],
                 'Name' => [
                     'Title' => $traveller['gender'] === 'male' ? 'Mr' : 'Ms',
                     'NamePartList' => [
@@ -203,7 +204,7 @@ class ProcessTermsRequestBuilder
             ],
             'MobilePhone' => [
                 'InternationalCode' => $contactDetails['phone']['code'],
-                'AreaCode' => $contactDetails['phone']['code'],
+                'AreaCode' => '',
                 'Number' => $contactDetails['phone']['number'],
                 'Extension' => '',
             ],
@@ -247,24 +248,6 @@ class ProcessTermsRequestBuilder
                 'IssueNumber' => '0',
             ],
         ];
-    }
-
-    /**
-     * @throws Exception
-     */
-    protected function calculateAgeCategory(string $birthdate): int
-    {
-        $birthdate = new DateTime($birthdate);
-        $today = new DateTime();
-        $age = $today->diff($birthdate)->y;
-
-        if ($age >= 12) {
-            return 30; // Adult
-        } elseif ($age >= 2) {
-            return 7; // Child
-        } else {
-            return 0; // Infant
-        }
     }
 
     protected function getRequestOrigin(): string

@@ -50,6 +50,12 @@ class FlightBookRequest extends FormRequest
                 'date',
                 'before:today',
             ],
+            'travellers.*.age' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:120',
+            ],
             'travellers.*.passport_number' => [
                 'required',
                 'string',
