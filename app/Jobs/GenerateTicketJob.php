@@ -77,7 +77,7 @@ class GenerateTicketJob implements ShouldQueue
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
         $bookingModel = $this->booking;
-        Log::info($bookingModel->outward['Features']);
+
         $data = compact('traveler', 'bookingData', 'supplierReference', 'contactData', 'bookingModel');
 
         $pdf = SnappyPdf::loadView('pdf.ticket', $data)

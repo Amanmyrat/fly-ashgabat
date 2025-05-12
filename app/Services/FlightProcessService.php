@@ -34,7 +34,8 @@ class FlightProcessService
             ];
         }
 
-        $features = $processDetailsResponse['ProcessDetails']['Router']['Features'];
+        $features = $processDetailsResponse['ProcessDetails']['Router']['Features'] ?? [];
+
         $outwardData = $processDetailsResponse['ProcessDetails']['Router']['GroupList']['Group']['OutwardList']['Outward'];
         $outwardCacheKey = $validatedData['routing_id'] . '_' . $validatedData['outward_id'];
         $this->setSegmentFeatures($outwardData, $features, $outwardCacheKey);

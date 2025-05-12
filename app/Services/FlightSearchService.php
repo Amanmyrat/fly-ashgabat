@@ -280,12 +280,12 @@ class FlightSearchService
                 'Amount' => $totalSum,
                 'Currency' => $currency,
             ],
-            'Outward' => $this->formatSegmentDetails($outward, $features, 'Outbound'),
-            'Return' => $return ? $this->formatSegmentDetails($return, $features, 'Inbound') : null,
+            'Outward' => $this->formatSegmentDetails($outward, $features),
+            'Return' => $return ? $this->formatSegmentDetails($return, $features) : null,
         ];
     }
 
-    private function formatSegmentDetails(array $segmentData, array $features, string $direction): array
+    private function formatSegmentDetails(array $segmentData, array $features): array
     {
         $segments = [];
         $stopDurations = []; // To calculate stop durations between segments
