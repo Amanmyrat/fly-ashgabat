@@ -180,6 +180,10 @@ class FlightSearchService
                 $outwards = isset($outwardList[0]) ? $outwardList : [$outwardList];
                 $returns = isset($returnList[0]) ? $returnList : [$returnList];
 
+                // Check if single outward and return (price is in group) or multiple (price is in segments)
+                $isSingleCombination = count($outwards) === 1 && (!empty($returns) && count($returns) === 1);
+                $groupPrice = $isSingleCombination ? ($group['Price'] ?? null) : null;
+
                 if (empty($returns)) {
                     // No return flights, handle only outward flights
                     foreach ($outwards as $outward) {
@@ -188,7 +192,8 @@ class FlightSearchService
                             $destination,
                             $outward,
                             null,
-                            $features
+                            $features,
+                            $groupPrice
                         );
                     }
                 } else {
@@ -200,7 +205,8 @@ class FlightSearchService
                                 $destination,
                                 $outward,
                                 $return,
-                                $features
+                                $features,
+                                $groupPrice
                             );
                         }
                     }
@@ -216,13 +222,21 @@ class FlightSearchService
         array  $destination,
         array  $outward,
         ?array $return,
-        array  $features
+        array  $features,
+        ?array $groupPrice = null
     ): array
     {
-        $totalSum = $outward['Price']['Amount'] ?? 0;
-        $currency = $outward['Price']['Currency'] ?? '';
-        if ($return) {
-            $totalSum += $return['Price']['Amount'] ?? 0;
+        // If we have a group price, use it
+        if ($groupPrice) {
+            $totalSum = $groupPrice['Amount'] ?? 0;
+            $currency = $groupPrice['Currency'] ?? '';
+        } else {
+            // Otherwise calculate from segments
+            $totalSum = $outward['Price']['Amount'] ?? 0;
+            $currency = $outward['Price']['Currency'] ?? '';
+            if ($return) {
+                $totalSum += $return['Price']['Amount'] ?? 0;
+            }
         }
 
         // Calculate origin data
@@ -318,8 +332,8 @@ class FlightSearchService
                     'Code' => $segment['Origin']['Code'],
                     'Airport' => $this->airports[$segment['Origin']['Code']]['airportName'][$this->locale]
                         ?? $this->airports[$segment['Origin']['Code']]['cityName'][$this->locale]
-                        ?? $this->airports[$segment['Origin']['Code']]['airportName']['en']
-                        ?? $this->airports[$segment['Origin']['Code']]['cityName']['en'], // Fallback to English
+                            ?? $this->airports[$segment['Origin']['Code']]['airportName']['en']
+                            ?? $this->airports[$segment['Origin']['Code']]['cityName']['en'], // Fallback to English
                     'Country' => $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name'][$this->locale]
                         ?? $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name']['en'], // Fallback to English
                 ],
@@ -327,8 +341,8 @@ class FlightSearchService
                     'Code' => $segment['Destination']['Code'],
                     'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'][$this->locale]
                         ?? $this->airports[$segment['Destination']['Code']]['cityName'][$this->locale]
-                        ?? $this->airports[$segment['Destination']['Code']]['airportName']['en']
-                        ?? $this->airports[$segment['Destination']['Code']]['cityName']['en'], // Fallback to English
+                            ?? $this->airports[$segment['Destination']['Code']]['airportName']['en']
+                            ?? $this->airports[$segment['Destination']['Code']]['cityName']['en'], // Fallback to English
                     'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'][$this->locale]
                         ?? $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name']['en'], // Fallback to English
                 ],
@@ -424,8 +438,8 @@ class FlightSearchService
                     'Code' => $destinationCode,
                     'Airport' => $this->airports[$destinationCode]['airportName'][$this->locale]
                         ?? $this->airports[$destinationCode]['cityName'][$this->locale]
-                        ?? $this->airports[$destinationCode]['airportName']['en']
-                        ?? $this->airports[$destinationCode]['cityName']['en'], // Fallback to English
+                            ?? $this->airports[$destinationCode]['airportName']['en']
+                            ?? $this->airports[$destinationCode]['cityName']['en'], // Fallback to English
                     'Country' => $this->countries[$this->airports[$destinationCode]['country']]['name'][$this->locale]
                         ?? $this->countries[$this->airports[$destinationCode]['country']]['name']['en'], // Fallback to English
                 ],
