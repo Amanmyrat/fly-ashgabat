@@ -157,8 +157,10 @@ class ProcessTermsRequestBuilder
             $travellers[] = [
                 'Age' => $traveller['age'],
                 'Name' => [
-                    'Title' => $traveller['gender'] === 'male' ? 'Mr' : 'Ms',
-                    'NamePartList' => [
+                    'Title' => $traveller['gender'] === 'male'
+                        ? 'Mr'
+                        : ($traveller['age'] < 18 ? 'Miss' : 'Mrs'),
+                'NamePartList' => [
                         'NamePart' => array_filter([
                             $traveller['firstname'],
                             $traveller['middlename'] ?? null,
