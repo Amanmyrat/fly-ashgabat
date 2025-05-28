@@ -183,7 +183,7 @@ class ProcessTermsRequestBuilder
 
         return [
             'Name' => [
-                'Title' => $contactDetails['gender'] === 'male' ? 'Mr' : 'Ms',
+                'Title' => $contactDetails['gender'] === 'male' ? 'Mr' : 'Mrs',
                 'NamePartList' => [
                     'NamePart' => array_filter([
                         $contactDetails['firstname'],
