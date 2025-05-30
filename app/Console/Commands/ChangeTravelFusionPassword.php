@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 
-class CheckTravelFusionPasswordExpiry extends Command
+class ChangeTravelFusionPassword extends Command
 {
     protected $signature = 'travelfusion:check-password-expiry';
     protected $description = 'Check TravelFusion API password expiry and notify if needed';
@@ -23,7 +23,7 @@ class CheckTravelFusionPasswordExpiry extends Command
         try {
             // Get the current active password record
             $currentPassword = TravelFusionPassword::where('is_active', true)->first();
-            
+
             if (!$currentPassword) {
                 $this->error('No active password record found');
                 return 1;
@@ -32,7 +32,7 @@ class CheckTravelFusionPasswordExpiry extends Command
             // Check if password is expiring soon
             if ($currentPassword->isExpiringSoon()) {
                 $this->info('Password is expiring soon, sending notifications...');
-                
+
                 // Send notifications to all configured emails
                 foreach ($this->notifyEmails as $email) {
                     Notification::route('mail', $email)
@@ -59,4 +59,4 @@ class CheckTravelFusionPasswordExpiry extends Command
             return 1;
         }
     }
-} 
+}
