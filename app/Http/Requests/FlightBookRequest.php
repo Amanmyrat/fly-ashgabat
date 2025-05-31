@@ -147,6 +147,19 @@ class FlightBookRequest extends FormRequest
                 'max:100',
             ],
             'options' => ['nullable', 'array'],
+            'options.*' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $this->validateOptionExists($attribute, $value, $fail);
+                }
+            ],
+            'travellers.*.options' => ['nullable', 'array'],
+            'travellers.*.options.*' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    $this->validateOptionExists($attribute, $value, $fail);
+                }
+            ],
             'meta' => [
                 'required',
                 'array',
@@ -172,5 +185,72 @@ class FlightBookRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    private function validateOptionExists($attribute, $value, $fail)
+    {
+        $routingId = $this->input('routing_id');
+
+        if (!$routingId) {
+            $fail('The routing_id is required to validate options.');
+            return;
+        }
+
+        $cachedOptions = Cache::get('options_' . $routingId, []);
+
+        // Debug: Let's see what we actually have in cache
+        \Log::info('Cached options for routing_id ' . $routingId, ['cached_options' => $cachedOptions]);
+
+        if (empty($cachedOptions)) {
+            $fail('No options found for this booking.');
+            return;
+        }
+
+        // Extract option name from attribute path
+        // For "options.OutwardLuggageOptions" -> "OutwardLuggageOptions"
+        // For "travellers.0.options.OutwardLuggageOptions" -> "OutwardLuggageOptions"
+        $optionName = null;
+        if (str_starts_with($attribute, 'options.')) {
+            $optionName = substr($attribute, 8); // Remove "options."
+        } elseif (preg_match('/travellers\.\d+\.options\.(.+)/', $attribute, $matches)) {
+            $optionName = $matches[1];
+        }
+
+        if (!$optionName) {
+            $fail('Invalid option attribute format.');
+            return;
+        }
+
+        // Find the option in cached options and validate the value
+        $optionFound = false;
+        foreach ($cachedOptions as $cachedOption) {
+            if (!isset($cachedOption['name']) || $cachedOption['name'] !== $optionName) {
+                continue;
+            }
+
+            $optionFound = true;
+
+            // Check if the selected value exists in the option's available values
+            $validValue = false;
+            if (isset($cachedOption['options']) && is_array($cachedOption['options'])) {
+                foreach ($cachedOption['options'] as $availableOption) {
+                    if (isset($availableOption['key']) && (string)$availableOption['key'] === (string)$value) {
+                        $validValue = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$validValue) {
+                $fail("The selected value '{$value}' is not valid for option '{$optionName}'.");
+                return;
+            }
+
+            break;
+        }
+
+        if (!$optionFound) {
+            $fail("The option '{$optionName}' is not available for this booking.");
+        }
     }
 }

@@ -50,27 +50,33 @@ class FlightProcessService
 
         $options = [];
         foreach ($requiredParameters as $param) {
-            if ($param['Type'] === 'value_select' && !empty($param['DisplayText'] && $param['Name'] != 'FrequentFlyerType')) {
+            if ($param['Type'] === 'value_select' && !empty($param['DisplayText']) && $param['Name'] != 'FrequentFlyerType') {
                 $name = $param['Name'];
-                $options[$name] = [];
+                $perPassenger = $param['PerPassenger'] ?? false;
+                $optionsList = [];
 
                 // Extracting luggage options from DisplayText
                 preg_match_all('/(\d+)\s*\((.*?)\)/', $param['DisplayText'], $matches, PREG_SET_ORDER);
 
                 foreach ($matches as $match) {
-                    $options[$name][] = [
+                    $optionsList[] = [
                         'key' => (int)$match[1],
                         'value' => $match[2],
                     ];
                 }
+
+                $options[] = [
+                    'name' => $name,
+                    'per_passenger' => $perPassenger === 'true' || $perPassenger === true,
+                    'options' => $optionsList
+                ];
             }
         }
-
 
         Cache::put('options_'.$validatedData['routing_id'], $options, now()->addMinutes(15));
         return [
             'success' => true,
-            'options' => array_filter($options),
+            'options' => array_filter($options, fn($option) => !empty($option['options'])),
             'message' => 'Processing successful',
         ];
 

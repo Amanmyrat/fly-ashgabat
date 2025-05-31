@@ -83,14 +83,16 @@ class FlightBookService
                 default => $cleanKey,
             };
 
-            $subOptions = null;
-            if (isset($options[$optionKey])) {
-                $subOptions = $options[$optionKey];
-            } elseif (isset($options[$cleanKey])) {
-                $subOptions = $options[$cleanKey];
-            } else {
+            // Find the option by name in the new structure
+            $optionData = collect($options)->first(function ($option) use ($optionKey, $cleanKey) {
+                return isset($option['name']) && ($option['name'] === $optionKey || $option['name'] === $cleanKey);
+            });
+
+            if (!$optionData || !isset($optionData['options'])) {
                 continue;
             }
+
+            $subOptions = $optionData['options'];
 
             $selectedOption = collect($subOptions)
                 ->first(fn($opt) => isset($opt['key']) && (string)$opt['key'] === (string)$selectedKey);

@@ -49,38 +49,50 @@ class ProcessTermsRequestBuilder
      */
     protected function buildBookingProfile(): array
     {
+        $customSupplierParameters = [
+            [
+                'Name' => 'EndUserIPAddress',
+                'Value' => $this->data['meta']['end_user_ip_address'] ?? '',
+            ],
+            [
+                'Name' => 'EndUserBrowserAgent',
+                'Value' => $this->data['meta']['end_user_browser_agent'] ?? '',
+            ],
+            [
+                'Name' => 'EndUserDeviceMACAddress',
+                'Value' => $this->data['meta']['end_user_device_mac_address'] ?? '',
+            ],
+            [
+                'Name' => 'RequestOrigin',
+                'Value' => $this->getRequestOrigin(),
+            ],
+            [
+                'Name' => 'PointOfSale',
+                'Value' => 'TM',
+            ],
+            [
+                'Name' => 'CountryOfTheUser',
+                'Value' => $this->getCountryOfTheUser(),
+            ],
+            [
+                'Name' => 'UserData',
+                'Value' => $this->buildUserData(),
+            ],
+        ];
+
+        // Add general booking options to BookingProfile
+        if (!empty($this->data['options'])) {
+            foreach ($this->data['options'] as $optionName => $optionValue) {
+                $customSupplierParameters[] = [
+                    'Name' => $optionName,
+                    'Value' => $optionValue,
+                ];
+            }
+        }
+
         return [
             'CustomSupplierParameterList' => [
-                'CustomSupplierParameter' => [
-                    [
-                        'Name' => 'EndUserIPAddress',
-                        'Value' => $this->data['meta']['end_user_ip_address'] ?? '',
-                    ],
-                    [
-                        'Name' => 'EndUserBrowserAgent',
-                        'Value' => $this->data['meta']['end_user_browser_agent'] ?? '',
-                    ],
-                    [
-                        'Name' => 'EndUserDeviceMACAddress',
-                        'Value' => $this->data['meta']['end_user_device_mac_address'] ?? '',
-                    ],
-                    [
-                        'Name' => 'RequestOrigin',
-                        'Value' => $this->getRequestOrigin(),
-                    ],
-                    [
-                        'Name' => 'PointOfSale',
-                        'Value' => 'TM',
-                    ],
-                    [
-                        'Name' => 'CountryOfTheUser',
-                        'Value' => $this->getCountryOfTheUser(),
-                    ],
-                    [
-                        'Name' => 'UserData',
-                        'Value' => $this->buildUserData(),
-                    ],
-                ],
+                'CustomSupplierParameter' => $customSupplierParameters,
             ],
             'TravellerList' => $this->buildTravellerList(),
             'ContactDetails' => $this->buildContactDetails(),
@@ -144,9 +156,9 @@ class ProcessTermsRequestBuilder
                 ],
             ];
 
-            // Loop through options and add them to CustomSupplierParameterList
-            if (!empty($this->data['options'])) {
-                foreach ($this->data['options'] as $optionName => $optionValue) {
+            // Add per-passenger options if they exist for this traveller
+            if (!empty($traveller['options'])) {
+                foreach ($traveller['options'] as $optionName => $optionValue) {
                     $customSupplierParameters[] = [
                         'Name' => $optionName,
                         'Value' => $optionValue,
