@@ -63,7 +63,6 @@ class FlightSearchController extends BaseController
 
             if (!isset($supplierListResponse['GetBranchSupplierList']['BranchSupplierList']['Supplier'])) {
                 Log::error('Failed to get supplier list from TravelFusion');
-                dd($supplierListResponse);
             }
 
             $suppliers = $supplierListResponse['GetBranchSupplierList']['BranchSupplierList']['Supplier'];

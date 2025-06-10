@@ -45,7 +45,7 @@ class FlightBookController extends BaseController
     {
         $validatedData = $request->validated();
         $user = $this->getAuthenticatedUser();
-dd($user);
+
         if ($validatedData['payment_type'] === PaymentType::BALANCE->value && !$user) {
             return $this->errorResponse('You must be logged in to use balance payment.', 403);
         }
@@ -77,7 +77,7 @@ dd($user);
         try {
             $booking = $request->getBooking();
             $user = $this->getAuthenticatedUser();
-dd($user);
+
             if ($booking->status != BookingStatus::PENDING) {
                 return $this->errorResponse('Booking is not in pending status', 400);
             }
