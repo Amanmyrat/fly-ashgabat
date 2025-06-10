@@ -76,7 +76,7 @@ class FlightProcessService
         Cache::put('options_'.$validatedData['routing_id'], $options, now()->addMinutes(15));
         return [
             'success' => true,
-            'options' => array_filter($options, fn($option) => !empty($option['options'])),
+            'options' => array_values(array_filter($options, fn($option) => !empty($option['options']))),
             'message' => 'Processing successful',
         ];
 

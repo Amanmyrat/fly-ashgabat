@@ -28,6 +28,7 @@ Route::group(['prefix' => 'tfusion'], function () {
     Route::get('search/test', [FlightSearchController::class, 'searchTest']);
     Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
+    Route::post('bookings/stripe/checkout', [FlightBookController::class, 'createStripePaymentIntent']);
     Route::post('bookings/start', [FlightBookController::class, 'startBooking']);
 });
 
@@ -56,4 +57,9 @@ Route::prefix('charter-flights')->group(function () {
     Route::get('/destination-cities', [CharterFlightController::class, 'getDestinationCities']);
     Route::get('/available-dates', [CharterFlightController::class, 'getAvailableDates']);
     Route::get('/available-flights', [CharterFlightController::class, 'getAvailableFlights']);
+});
+
+// Temporary test route for debugging - remove after testing
+Route::get('test/debug-error', function () {
+    throw new \Exception('Test exception with undefined array key "options"');
 });

@@ -68,6 +68,7 @@ class FlightBooking extends Model
         'price',
         'status',
         'payment_type',
+        'stripe_session_id',
     ];
 
     protected $casts = [

@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Spatie\Translatable\HasTranslations;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property array $name
@@ -24,25 +25,25 @@ use Spatie\Translatable\HasTranslations;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read mixed $translations
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereBackgroundImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereDays($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereIncluded($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereJsonContainsLocale(string $column, string $locale, ?mixed $value, string $operand = '=')
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereJsonContainsLocales(string $column, array $locales, ?mixed $value, string $operand = '=')
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereLocale(string $column, string $locale)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereLocales(string $column, array $locales)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereLocation($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereMainImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereNotIncluded($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Tour whereUpdatedAt($value)
+ * @method static Builder<static>|Tour newModelQuery()
+ * @method static Builder<static>|Tour newQuery()
+ * @method static Builder<static>|Tour query()
+ * @method static Builder<static>|Tour whereBackgroundImage($value)
+ * @method static Builder<static>|Tour whereCreatedAt($value)
+ * @method static Builder<static>|Tour whereDays($value)
+ * @method static Builder<static>|Tour whereDescription($value)
+ * @method static Builder<static>|Tour whereId($value)
+ * @method static Builder<static>|Tour whereIncluded($value)
+ * @method static Builder<static>|Tour whereJsonContainsLocale(string $column, string $locale, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Tour whereJsonContainsLocales(string $column, array $locales, ?mixed $value, string $operand = '=')
+ * @method static Builder<static>|Tour whereLocale(string $column, string $locale)
+ * @method static Builder<static>|Tour whereLocales(string $column, array $locales)
+ * @method static Builder<static>|Tour whereLocation($value)
+ * @method static Builder<static>|Tour whereMainImage($value)
+ * @method static Builder<static>|Tour whereName($value)
+ * @method static Builder<static>|Tour whereNotIncluded($value)
+ * @method static Builder<static>|Tour whereOrder($value)
+ * @method static Builder<static>|Tour whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class Tour extends Model

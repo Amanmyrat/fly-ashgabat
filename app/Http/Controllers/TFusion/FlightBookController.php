@@ -10,20 +10,27 @@ use App\Http\Requests\StartBookingRequest;
 use App\Http\Resources\FlightBookingResource;
 use App\Jobs\CheckBookingStatusJob;
 use App\Jobs\StartBookingJob;
+use App\Models\FlightBooking;
 use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\FlightBookService;
+use App\Services\StripePaymentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class FlightBookController extends BaseController
 {
     private array $airports;
     private array $countries;
 
-    public function __construct(protected FlightBookService $flightBookService, protected AirportDataRepositoryInterface $airportDataRepository)
-    {
+    public function __construct(
+        protected FlightBookService $flightBookService,
+        protected AirportDataRepositoryInterface $airportDataRepository,
+        protected StripePaymentService $stripePaymentService
+    ) {
         $this->airports = $this->airportDataRepository->getAllAirports();
         $this->countries = $this->airportDataRepository->getAllCountries();
     }
@@ -38,8 +45,8 @@ class FlightBookController extends BaseController
     {
         $validatedData = $request->validated();
         $user = $this->getAuthenticatedUser();
-
-        if ($validatedData['payment_type'] === 'balance' && !$user) {
+dd($user);
+        if ($validatedData['payment_type'] === PaymentType::BALANCE->value && !$user) {
             return $this->errorResponse('You must be logged in to use balance payment.', 403);
         }
 
@@ -69,12 +76,55 @@ class FlightBookController extends BaseController
     {
         try {
             $booking = $request->getBooking();
-
+            $user = $this->getAuthenticatedUser();
+dd($user);
             if ($booking->status != BookingStatus::PENDING) {
                 return $this->errorResponse('Booking is not in pending status', 400);
             }
 
-            if ($booking->payment_type == PaymentType::BALANCE) {
+            // Check ownership for registered users
+            if ($user && $booking->user_id !== $user->id) {
+                return $this->errorResponse('You can only start your own bookings.', 403);
+            }
+
+            // Handle Stripe payment verification
+            if ($booking->payment_type == PaymentType::STRIPE) {
+                    $sessionId = $request->validated('session_id');
+
+                // Validate session ID is provided
+                if (empty($sessionId)) {
+                    return $this->errorResponse('Stripe session ID is required for Stripe payments.', 400);
+                }
+
+                // Verify session ID matches booking
+                if ($booking->stripe_session_id !== $sessionId) {
+                    return $this->errorResponse('Stripe session ID does not match booking.', 400);
+                }
+
+                // 🔒 SECURITY: Verify payment actually succeeded with Stripe
+                $paymentVerification = $this->stripePaymentService->verifyPaymentStatus($sessionId);
+
+                if (!$paymentVerification['success']) {
+                    return $this->errorResponse($paymentVerification['message'], 400);
+                }
+
+                if (!$paymentVerification['paid']) {
+                    return $this->errorResponse(
+                        $paymentVerification['message'] ?? 'Payment was not completed successfully.',
+                        400
+                    );
+                }
+
+                // Payment verified - safe to proceed
+                Log::info('Stripe payment verified for booking', [
+                    'booking_reference' => $booking->booking_reference,
+                    'session_id' => $sessionId,
+                    'payment_status' => 'verified_paid'
+                ]);
+            }
+
+            // Start booking process for BALANCE, STRIPE, or POST_PAY
+            if (in_array($booking->payment_type, [PaymentType::BALANCE, PaymentType::STRIPE, PaymentType::POST_PAY])) {
                 StartBookingJob::dispatch($booking);
                 CheckBookingStatusJob::dispatch($booking);
             }
@@ -206,5 +256,57 @@ class FlightBookController extends BaseController
 
         [$date, $time] = explode('-', $dateTime);
         return ['date' => $date, 'time' => $time];
+    }
+
+    /**
+     * Create Stripe checkout session for booking
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function createStripePaymentIntent(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'booking_reference' => 'required|string|exists:flight_bookings,booking_reference'
+            ]);
+
+            $booking = FlightBooking::where('booking_reference', $request->booking_reference)
+                ->with('contactDetail')
+                ->first();
+            $user = $this->getAuthenticatedUser();
+
+            if ($booking->payment_type !== PaymentType::STRIPE) {
+                return $this->errorResponse('This booking is not configured for Stripe payment.', 400);
+            }
+
+            // Allow anonymous payments - only check ownership if user is logged in
+            if ($user && $booking->user_id !== $user->id) {
+                return $this->errorResponse('You can only create checkout session for your own bookings.', 403);
+            }
+
+            // For anonymous bookings, user_id should be null
+            if (!$user && $booking->user_id !== null) {
+                return $this->errorResponse('This booking belongs to a registered user.', 403);
+            }
+
+            $result = $this->stripePaymentService->createCheckoutSession($booking, $user);
+
+            if (!$result['success']) {
+                return $this->errorResponse($result['message'], 400);
+            }
+
+            // Store the session ID in the booking
+            $booking->update(['stripe_session_id' => $result['session_id']]);
+
+            return response()->json([
+                'success' => true,
+                'checkout_url' => $result['checkout_url'],
+                'session_id' => $result['session_id']
+            ]);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
     }
 }

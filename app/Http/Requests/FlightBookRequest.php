@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enum\PaymentType;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Http\FormRequest;
@@ -38,7 +39,7 @@ class FlightBookRequest extends FormRequest
             'payment_type' => [
                 'required',
                 'string',
-                Rule::in(['balance', 'post-pay']),
+                Rule::in([PaymentType::BALANCE->value, PaymentType::POST_PAY->value, PaymentType::STRIPE->value]),
             ],
             'travellers' => [
                 'required',

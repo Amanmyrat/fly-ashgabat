@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enum\BookingStatus;
+use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
 use App\Services\TravelFusion\Requests\ProcessTermsRequestBuilder;
@@ -45,8 +46,12 @@ class FlightBookService
             'Currency' => $priceData['Currency']
         ];
 
-        if ($validatedData['payment_type'] === 'balance' && (!$user || $user->balance < $fullPrice['Amount'])) {
+        if ($validatedData['payment_type'] === PaymentType::BALANCE->value && (!$user || $user->balance < $fullPrice['Amount'])) {
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $fullPrice['Amount']];
+        }
+
+        if ($validatedData['payment_type'] === PaymentType::STRIPE->value && !$user) {
+            return ['success' => false, 'message' => 'You must be logged in to use Stripe payment.'];
         }
 
         // TODO save some date for booking reference pay time (15min)
@@ -66,7 +71,9 @@ class FlightBookService
 
         $options = Cache::get('options_' . $validatedData['routing_id'], []);
 
-        foreach ($validatedData['options'] as $optionKey => $selectedKey) {
+        // Only process options if they exist in the validated data
+        if (!empty($validatedData['options'])) {
+            foreach ($validatedData['options'] as $optionKey => $selectedKey) {
             $isOutward = Str::startsWith($optionKey, 'Outward');
             $isReturn = Str::startsWith($optionKey, 'Return');
 
@@ -126,6 +133,7 @@ class FlightBookService
                     $returnFeatures[$featureKey] = $formatted;
                 }
             }
+        }
         }
 
         $outward['Features'] = $outwardFeatures;

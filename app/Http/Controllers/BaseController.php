@@ -6,6 +6,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class BaseController extends Controller
 {
@@ -34,19 +35,47 @@ class BaseController extends Controller
                 ? response()->json(['data' => $response])
                 : response()->json($response, 400);
         } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), 500);
+            // Log the full exception details
+            Log::error('Service call exception: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return $this->errorResponse($e, 500);
         }
     }
 
     /**
      * Return a JSON error response
      *
-     * @param string $message
+     * @param string|Exception $error
      * @param int $statusCode
      * @return JsonResponse
      */
-    public function errorResponse(string $message, int $statusCode): JsonResponse
+    public function errorResponse($error, int $statusCode): JsonResponse
     {
-        return response()->json(['error' => $message], $statusCode);
+        // If error is an Exception object, extract more information
+        if ($error instanceof Exception) {
+            $errorData = [
+                'error' => $error->getMessage(),
+            ];
+
+            // In debug mode, include more detailed information
+            if (config('app.debug')) {
+                $errorData['debug'] = [
+                    'exception' => get_class($error),
+                    'file' => $error->getFile(),
+                    'line' => $error->getLine(),
+                    'trace' => $error->getTraceAsString(),
+                ];
+            }
+
+            return response()->json($errorData, $statusCode);
+        }
+
+        // If error is just a string message
+        return response()->json(['error' => $error], $statusCode);
     }
 }

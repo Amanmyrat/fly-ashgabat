@@ -9,12 +9,14 @@ enum PaymentType: string implements HasLabel, HasColor
 {
     case POST_PAY = 'post-pay';
     case BALANCE = 'balance';
+    case STRIPE = 'stripe';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::POST_PAY  => 'Post pay',
             self::BALANCE  => 'Balance',
+            self::STRIPE  => 'Stripe',
         };
     }
 
@@ -23,6 +25,7 @@ enum PaymentType: string implements HasLabel, HasColor
         return match ($this) {
             self::BALANCE => 'success',
             self::POST_PAY => 'warning',
+            self::STRIPE => 'info',
         };
     }
 }

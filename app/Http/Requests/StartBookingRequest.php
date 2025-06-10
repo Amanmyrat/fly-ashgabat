@@ -22,6 +22,7 @@ class StartBookingRequest extends FormRequest
                 'string',
                 Rule::exists('flight_bookings', 'booking_reference'),
             ],
+            'session_id' => 'nullable|string', // Required for Stripe payments
         ];
     }
 
