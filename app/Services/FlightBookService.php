@@ -50,12 +50,7 @@ class FlightBookService
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $fullPrice['Amount']];
         }
 
-        if ($validatedData['payment_type'] === PaymentType::STRIPE->value && !$user) {
-            return ['success' => false, 'message' => 'You must be logged in to use Stripe payment.'];
-        }
-
         // TODO save some date for booking reference pay time (15min)
-
         $outward = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['OutwardList']['Outward'];
         $return = $processTermsResponse['ProcessTerms']['Router']['GroupList']['Group']['ReturnList']['Return'] ?? null;
 
