@@ -50,8 +50,8 @@ class StripePaymentService
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => config('app.frontend_url') . "/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_reference={$booking->booking_reference}",
-                'cancel_url' => config('app.frontend_url') . "/booking/cancel?booking_reference={$booking->booking_reference}",
+                'success_url' => config('app.frontend_url') . "/flight/book/{$booking->booking_reference}?payment=success&session_id={CHECKOUT_SESSION_ID}",
+                'cancel_url' => config('app.frontend_url') . "/flight/book?payment=cancelled&booking_reference={$booking->booking_reference}",
                 'metadata' => [
                     'booking_reference' => $booking->booking_reference,
                     'user_id' => $user?->id ?? 'anonymous',
