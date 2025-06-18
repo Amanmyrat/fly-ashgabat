@@ -16,4 +16,4 @@ class ListTravelFusionPasswords extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
-} 
+}
