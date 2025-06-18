@@ -228,14 +228,25 @@ class FlightSearchService
     {
         // If we have a group price, use it
         if ($groupPrice) {
-            $totalSum = $groupPrice['Amount'] ?? 0;
+            $totalSum = (float)($groupPrice['Amount'] ?? 0);
             $currency = $groupPrice['Currency'] ?? '';
+            
+            // Check if outward has price and add it
+            if (isset($outward['Price']['Amount'])) {
+                $totalSum += (float)$outward['Price']['Amount'];
+                $currency = $outward['Price']['Currency'];
+            }
+            
+            // Check if return has price and add it
+            if ($return && isset($return['Price']['Amount'])) {
+                $totalSum += (float)$return['Price']['Amount'];
+            }
         } else {
             // Otherwise calculate from segments
-            $totalSum = $outward['Price']['Amount'] ?? 0;
+            $totalSum = (float)($outward['Price']['Amount'] ?? 0);
             $currency = $outward['Price']['Currency'] ?? '';
             if ($return) {
-                $totalSum += $return['Price']['Amount'] ?? 0;
+                $totalSum += (float)($return['Price']['Amount'] ?? 0);
             }
         }
 
