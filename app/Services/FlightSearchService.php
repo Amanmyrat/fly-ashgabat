@@ -250,49 +250,106 @@ class FlightSearchService
             }
         }
 
-        // Calculate origin data
-        $originData = [
-            'Code' => $origin['Code'],
-            'Airport' => $origin['Type'] === 'airport'
-                ? ($this->airports[$origin['Code']]['airportName'][$this->locale]
-                    ?? $this->airports[$origin['Code']]['cityName'][$this->locale]
-                    ?? $this->airports[$origin['Code']]['airportName']['en']
-                    ?? $this->airports[$origin['Code']]['cityName']['en'])
-                : ($this->cities[$origin['Code']]['name'][$this->locale]
-                    ?? $this->cities[$origin['Code']]['name']['en']),
-            'Country' => $origin['Type'] === 'airport'
-                ? ($this->countries[$this->airports[$origin['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->airports[$origin['Code']]['country']]['name']['en'])
-                : ($this->countries[$this->cities[$origin['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->cities[$origin['Code']]['country']]['name']['en']),
-        ];
-
-        // Calculate destination data
-        $destinationData = [
-            'Code' => $destination['Code'],
-            'Airport' => $destination['Type'] === 'airport'
-                ? ($this->airports[$destination['Code']]['airportName'][$this->locale]
-                    ?? $this->airports[$destination['Code']]['cityName'][$this->locale]
-                    ?? $this->airports[$destination['Code']]['airportName']['en']
-                    ?? $this->airports[$destination['Code']]['cityName']['en'])
-                : ($this->cities[$destination['Code']]['name'][$this->locale]
-                    ?? $this->cities[$destination['Code']]['name']['en']),
-            'Country' => $destination['Type'] === 'airport'
-                ? ($this->countries[$this->airports[$destination['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->airports[$destination['Code']]['country']]['name']['en'])
-                : ($this->countries[$this->cities[$destination['Code']]['country']]['name'][$this->locale]
-                    ?? $this->countries[$this->cities[$destination['Code']]['country']]['name']['en']),
-        ];
-
         return [
-            'Origin' => $originData,
-            'Destination' => $destinationData,
+            'Origin' => $this->formatLocationData($origin),
+            'Destination' => $this->formatLocationData($destination),
             'TotalSum' => [
                 'Amount' => $totalSum,
                 'Currency' => $currency,
             ],
             'Outward' => $this->formatSegmentDetails($outward, $features),
             'Return' => $return ? $this->formatSegmentDetails($return, $features) : null,
+        ];
+    }
+
+    private function formatLocationData(array $location): array
+    {
+        $code = $location['Code'] ?? '';
+        $type = $location['Type'] ?? 'airport';
+        
+        // Initialize defaults
+        $airportName = $code;
+        $countryName = '';
+        
+        if ($type === 'airport') {
+            // Try to get airport data first
+            if (isset($this->airports[$code])) {
+                $airport = $this->airports[$code];
+                $airportName = $airport['airportName'][$this->locale] 
+                    ?? $airport['cityName'][$this->locale] 
+                    ?? $airport['airportName']['en'] 
+                    ?? $airport['cityName']['en'] 
+                    ?? $code;
+                
+                $countryCode = $airport['country'] ?? '';
+                $countryName = $this->countries[$countryCode]['name'][$this->locale] 
+                    ?? $this->countries[$countryCode]['name']['en'] 
+                    ?? $countryCode;
+            } else {
+                // Fallback to city data if airport not found
+                if (isset($this->cities[$code])) {
+                    $city = $this->cities[$code];
+                    $airportName = $city['name'][$this->locale] 
+                        ?? $city['name']['en'] 
+                        ?? $code;
+                    
+                    $countryCode = $city['country'] ?? '';
+                    $countryName = $this->countries[$countryCode]['name'][$this->locale] 
+                        ?? $this->countries[$countryCode]['name']['en'] 
+                        ?? $countryCode;
+                }
+            }
+        } else {
+            // Handle city type
+            if (isset($this->cities[$code])) {
+                $city = $this->cities[$code];
+                $airportName = $city['name'][$this->locale] 
+                    ?? $city['name']['en'] 
+                    ?? $code;
+                
+                $countryCode = $city['country'] ?? '';
+                $countryName = $this->countries[$countryCode]['name'][$this->locale] 
+                    ?? $this->countries[$countryCode]['name']['en'] 
+                    ?? $countryCode;
+            }
+        }
+        
+        return [
+            'Code' => $code,
+            'Airport' => $airportName,
+            'Country' => $countryName,
+        ];
+    }
+
+    private function getAirportInfo(string $code): array
+    {
+        if (isset($this->airports[$code])) {
+            $airport = $this->airports[$code];
+            $airportName = $airport['airportName'][$this->locale] 
+                ?? $airport['cityName'][$this->locale] 
+                ?? $airport['airportName']['en'] 
+                ?? $airport['cityName']['en'] 
+                ?? $code;
+            
+            $countryCode = $airport['country'] ?? '';
+            $countryName = isset($this->countries[$countryCode]) 
+                ? ($this->countries[$countryCode]['name'][$this->locale] 
+                    ?? $this->countries[$countryCode]['name']['en'] 
+                    ?? $countryCode)
+                : $countryCode;
+                
+            return [
+                'Code' => $code,
+                'Airport' => $airportName,
+                'Country' => $countryName,
+            ];
+        }
+        
+        // Fallback if airport not found
+        return [
+            'Code' => $code,
+            'Airport' => $code,
+            'Country' => '',
         ];
     }
 
@@ -339,24 +396,8 @@ class FlightSearchService
 
             // Add current segment details
             $segments[] = [
-                'Origin' => [
-                    'Code' => $segment['Origin']['Code'],
-                    'Airport' => $this->airports[$segment['Origin']['Code']]['airportName'][$this->locale]
-                        ?? $this->airports[$segment['Origin']['Code']]['cityName'][$this->locale]
-                            ?? $this->airports[$segment['Origin']['Code']]['airportName']['en']
-                            ?? $this->airports[$segment['Origin']['Code']]['cityName']['en'], // Fallback to English
-                    'Country' => $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name'][$this->locale]
-                        ?? $this->countries[$this->airports[$segment['Origin']['Code']]['country']]['name']['en'], // Fallback to English
-                ],
-                'Destination' => [
-                    'Code' => $segment['Destination']['Code'],
-                    'Airport' => $this->airports[$segment['Destination']['Code']]['airportName'][$this->locale]
-                        ?? $this->airports[$segment['Destination']['Code']]['cityName'][$this->locale]
-                            ?? $this->airports[$segment['Destination']['Code']]['airportName']['en']
-                            ?? $this->airports[$segment['Destination']['Code']]['cityName']['en'], // Fallback to English
-                    'Country' => $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name'][$this->locale]
-                        ?? $this->countries[$this->airports[$segment['Destination']['Code']]['country']]['name']['en'], // Fallback to English
-                ],
+                'Origin' => $this->getAirportInfo($segment['Origin']['Code']),
+                'Destination' => $this->getAirportInfo($segment['Destination']['Code']),
 
                 'Duration' => [
                     'Hours' => $hours,
@@ -445,15 +486,7 @@ class FlightSearchService
             $minutes = ($duration % 3600) / 60;
 
             $stops[] = [
-                'Location' => [
-                    'Code' => $destinationCode,
-                    'Airport' => $this->airports[$destinationCode]['airportName'][$this->locale]
-                        ?? $this->airports[$destinationCode]['cityName'][$this->locale]
-                            ?? $this->airports[$destinationCode]['airportName']['en']
-                            ?? $this->airports[$destinationCode]['cityName']['en'], // Fallback to English
-                    'Country' => $this->countries[$this->airports[$destinationCode]['country']]['name'][$this->locale]
-                        ?? $this->countries[$this->airports[$destinationCode]['country']]['name']['en'], // Fallback to English
-                ],
+                'Location' => $this->getAirportInfo($destinationCode),
                 'Duration' => [
                     'Hours' => $hours,
                     'Minutes' => $minutes,
