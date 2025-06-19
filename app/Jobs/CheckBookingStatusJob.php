@@ -9,13 +9,14 @@ use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class CheckBookingStatusJob implements ShouldQueue
+class CheckBookingStatusJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -26,6 +27,14 @@ class CheckBookingStatusJob implements ShouldQueue
     public function __construct(FlightBooking $booking)
     {
         $this->booking = $booking;
+    }
+
+    /**
+     * Get the unique ID for the job.
+     */
+    public function uniqueId(): string
+    {
+        return 'check-booking-' . $this->booking->booking_reference;
     }
 
     /**
@@ -56,6 +65,12 @@ class CheckBookingStatusJob implements ShouldQueue
 
     private function handleSucceededStatus(): void
     {
+        // Check if booking is already succeeded to prevent duplicate ticket generation
+        if ($this->booking->status === BookingStatus::SUCCEEDED) {
+            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
+            return;
+        }
+
         $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 
         if ($this->booking->payment_type === PaymentType::BALANCE && $this->booking->user) {

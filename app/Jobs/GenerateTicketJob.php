@@ -10,6 +10,7 @@ use App\Services\TravelFusion\TravelFusionService;
 use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
@@ -19,7 +20,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class GenerateTicketJob implements ShouldQueue
+class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,11 +32,26 @@ class GenerateTicketJob implements ShouldQueue
     }
 
     /**
+     * Get the unique ID for the job.
+     */
+    public function uniqueId(): string
+    {
+        return 'generate-ticket-' . $this->booking->booking_reference;
+    }
+
+    /**
      * @throws ConnectionException
      */
     public function handle(TravelFusionService $travelFusionService)
     {
         Log::info("Generate tickets for: {$this->booking->booking_reference}");
+        
+        // Check if tickets already exist to prevent duplicate generation
+        if ($this->booking->tickets()->exists()) {
+            Log::info("Tickets already exist for booking {$this->booking->booking_reference}, skipping generation");
+            return;
+        }
+
         $response = $travelFusionService->sendRequest(
             (new GetBookingDetailsRequestBuilder($this->booking->booking_reference))->build()
         );
