@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\TravelFusion;
 
 use App\Jobs\CacheSupplierRoutesJob;
 use Illuminate\Support\Facades\Cache;

@@ -49,6 +49,40 @@ class AirportDataRepository implements AirportDataRepositoryInterface
     }
 
     /**
+     * Retrieve all airlines' data.
+     *
+     * Reads the airlines.json file, decodes the JSON content, and returns it as an array.
+     *
+     * @return array An array of airlines data.
+     */
+    public function getAllAirlines(): array
+    {
+        try {
+            return json_decode(File::get(public_path('/geodata/airlines.json')), true);
+        } catch (FileNotFoundException $e) {
+            Log::error("Airlines data file not found: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Retrieve all aircraft data.
+     *
+     * Reads the aircraft.json file, decodes the JSON content, and returns it as an array.
+     *
+     * @return array An array of aircraft data.
+     */
+    public function getAllAirCrafts(): array
+    {
+        try {
+            return json_decode(File::get(public_path('/geodata/aircraft.json')), true);
+        } catch (FileNotFoundException $e) {
+            Log::error("AirCrafts data file not found: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Retrieve all metropolitan areas' data.
      *
      * Reads the metropolitanAreas.json file, decodes the JSON content, and returns it as an array.

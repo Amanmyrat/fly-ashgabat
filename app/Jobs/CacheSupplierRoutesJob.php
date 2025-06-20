@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Services\SupplierRouteService;
 use App\Services\TravelFusion\Requests\GetBranchSupplierListRequestBuilder;
 use App\Services\TravelFusion\Requests\ListSupplierRoutesRequestBuilder;
+use App\Services\TravelFusion\SupplierRouteService;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +33,7 @@ class CacheSupplierRoutesJob implements ShouldQueue
         try {
             // Collect all supplier routes
             $allSupplierRoutes = [];
-            
+
             // Step 1: Get list of suppliers
             $supplierListRequest = (new GetBranchSupplierListRequestBuilder())->build();
             $supplierListResponse = $travelFusionService->sendRequest($supplierListRequest);
@@ -42,10 +42,10 @@ class CacheSupplierRoutesJob implements ShouldQueue
                 Log::error('Failed to get supplier list from TravelFusion');
                 return;
             }
-            
+
             $suppliers = $supplierListResponse['GetBranchSupplierList']['BranchSupplierList']['Supplier'];
             $suppliers = is_array($suppliers) ? $suppliers : [$suppliers];
-             
+
             // Step 2: For each supplier, get their routes
             foreach ($suppliers as $supplier) {
                 $supplierCode = $supplier;
@@ -102,12 +102,12 @@ class CacheSupplierRoutesJob implements ShouldQueue
                     'cached_at' => now()->toIso8601String()
                 ];
             }
-            
+
             // Use our new method to store all routes efficiently without duplicates
             $routeService->cacheRoutes($allSupplierRoutes);
-            
+
             Log::info('Successfully cached routes for ' . count($allSupplierRoutes) . ' suppliers');
-            
+
         } catch (\Exception $e) {
             Log::error('Error caching supplier routes: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()

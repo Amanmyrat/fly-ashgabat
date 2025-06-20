@@ -88,4 +88,66 @@ class GeoDataService
             'airportName' => '',
         ];
     }
+
+
+    /**
+     * Retrieve detailed information about a specific flight route, including airports, airlines, and aircraft.
+     *
+     * This method gathers comprehensive data for a given flight route based on the provided airport codes,
+     * aircraft type, and airline codes. It compiles information about the departure and arrival airports,
+     * operating and marketing airlines, and the aircraft used.
+     *
+     * @param string $DepAirportCode The IATA code for the departure airport.
+     * @param string $ArrAirportCode The IATA code for the arrival airport.
+     * @param string $AircraftType The code representing the type of aircraft used for the flight.
+     * @param string $OpAirline The IATA or ICAO code of the operating airline.
+     * @param string $MarkAirline The IATA or ICAO code of the marketing airline.
+     * @return array An associative array containing detailed information about the flight route. The structure includes:
+     *               - 'depCode': Array containing 'code' for the departure airport and 'airport' name.
+     *               - 'arrCode': Array containing 'code' for the arrival airport and 'airport' name.
+     *               - 'opAirline': Array containing 'code' of the operating airline and nested 'airline' info with 'name' and 'logo'.
+     *               - 'markAirline': Array containing 'code' of the marketing airline and nested 'airline' info with 'name' and 'logo'.
+     *               - 'aircraftType': Array containing 'code' of the aircraft type and 'aircraft' name.
+     */
+    public function getInfo(string $DepAirportCode, string $ArrAirportCode, string $AircraftType, string $OpAirline, string $MarkAirline): array
+    {
+        $airports = $this->airportDataRepository->getAllAirports();
+        $airCrafts = $this->airportDataRepository->getAllAirCrafts();
+        $airlines = $this->airportDataRepository->getAllAirlines();
+
+        return [
+            'data' => [
+                'depCode' => [
+                    'code' => $DepAirportCode,
+                    'airport' => $airports[$DepAirportCode]['airportName'] ?? $airports[$DepAirportCode]['cityName']
+                ],
+                'arrCode' => [
+                    'code' => $ArrAirportCode,
+                    'airport' => $airports[$ArrAirportCode]['airportName'] ?? $airports[$ArrAirportCode]['cityName']
+                ],
+                'opAirline' => [
+                    'code' => $OpAirline,
+                    'airline' => [
+                        'name' => isset($airlines[$OpAirline]) ? $airlines[$OpAirline]['name'] : null,
+                        'logo' => isset($airlines[$OpAirline]['logo']['file'])
+                            ? asset('storage/airline_logos/' . $airlines[$OpAirline]['logo']['file'])
+                            : null
+                    ]
+                ],
+                'markAirline' => [
+                    'code' => $MarkAirline,
+                    'airline' => [
+                        'name' => isset($airlines[$MarkAirline]) ? $airlines[$MarkAirline]['name'] : null,
+                        'logo' => isset($airlines[$MarkAirline]['logo']['file'])
+                            ? asset('storage/airline_logos/' . $airlines[$MarkAirline]['logo']['file'])
+                            : null
+                    ]
+                ],
+                'aircraftType' => [
+                    'code' => $AircraftType,
+                    'aircraft' => $airCrafts[$AircraftType]['name'] ?? null
+                ]
+            ]
+        ];
+    }
 }

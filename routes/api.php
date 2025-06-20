@@ -4,9 +4,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\CharterFlightController;
 use App\Http\Controllers\GeoDataController;
+use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchController;
 use App\Http\Controllers\TFusion\FlightBookController;
 use App\Http\Controllers\TFusion\FlightProcessController;
-use App\Http\Controllers\TFusion\FlightSearchController;
+use App\Http\Controllers\TFusion\FlightSearchController as TFusionSearchController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -23,9 +24,12 @@ Route::get('/visas/all', [VisaController::class, 'getAllVisas']);
 Route::get('/visas', [VisaController::class, 'getVisas']);
 Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
+Route::group(['prefix' => 'nemo'], function () {
+    Route::get('search/flights', [NemoFlightSearchController::class, 'search']);
+});
 Route::group(['prefix' => 'tfusion'], function () {
-    Route::get('search/flights', [FlightSearchController::class, 'search']);
-    Route::get('search/test', [FlightSearchController::class, 'searchTest']);
+    Route::get('search/flights', [TFusionSearchController::class, 'search']);
+    Route::get('search/test', [TFusionSearchController::class, 'searchTest']);
     Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
     Route::post('bookings/stripe/checkout', [FlightBookController::class, 'createStripePaymentIntent']);

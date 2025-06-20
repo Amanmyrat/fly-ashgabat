@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\TravelFusion;
 
 use App\Services\TravelFusion\Requests\ProcessDetailsRequestBuilder;
-use App\Services\TravelFusion\TravelFusionService;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;

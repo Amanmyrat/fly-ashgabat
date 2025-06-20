@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\TravelFusion;
 
 use App\Repositories\AirportDataRepositoryInterface;
+use App\Services\IpGeolocationService;
 use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
 use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
-use App\Services\TravelFusion\TravelFusionService;
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\App;
@@ -230,13 +230,13 @@ class FlightSearchService
         if ($groupPrice) {
             $totalSum = (float)($groupPrice['Amount'] ?? 0);
             $currency = $groupPrice['Currency'] ?? '';
-            
+
             // Check if outward has price and add it
             if (isset($outward['Price']['Amount'])) {
                 $totalSum += (float)$outward['Price']['Amount'];
                 $currency = $outward['Price']['Currency'];
             }
-            
+
             // Check if return has price and add it
             if ($return && isset($return['Price']['Amount'])) {
                 $totalSum += (float)$return['Price']['Amount'];
@@ -266,36 +266,36 @@ class FlightSearchService
     {
         $code = $location['Code'] ?? '';
         $type = $location['Type'] ?? 'airport';
-        
+
         // Initialize defaults
         $airportName = $code;
         $countryName = '';
-        
+
         if ($type === 'airport') {
             // Try to get airport data first
             if (isset($this->airports[$code])) {
                 $airport = $this->airports[$code];
-                $airportName = $airport['airportName'][$this->locale] 
-                    ?? $airport['cityName'][$this->locale] 
-                    ?? $airport['airportName']['en'] 
-                    ?? $airport['cityName']['en'] 
+                $airportName = $airport['airportName'][$this->locale]
+                    ?? $airport['cityName'][$this->locale]
+                    ?? $airport['airportName']['en']
+                    ?? $airport['cityName']['en']
                     ?? $code;
-                
+
                 $countryCode = $airport['country'] ?? '';
-                $countryName = $this->countries[$countryCode]['name'][$this->locale] 
-                    ?? $this->countries[$countryCode]['name']['en'] 
+                $countryName = $this->countries[$countryCode]['name'][$this->locale]
+                    ?? $this->countries[$countryCode]['name']['en']
                     ?? $countryCode;
             } else {
                 // Fallback to city data if airport not found
                 if (isset($this->cities[$code])) {
                     $city = $this->cities[$code];
-                    $airportName = $city['name'][$this->locale] 
-                        ?? $city['name']['en'] 
+                    $airportName = $city['name'][$this->locale]
+                        ?? $city['name']['en']
                         ?? $code;
-                    
+
                     $countryCode = $city['country'] ?? '';
-                    $countryName = $this->countries[$countryCode]['name'][$this->locale] 
-                        ?? $this->countries[$countryCode]['name']['en'] 
+                    $countryName = $this->countries[$countryCode]['name'][$this->locale]
+                        ?? $this->countries[$countryCode]['name']['en']
                         ?? $countryCode;
                 }
             }
@@ -303,17 +303,17 @@ class FlightSearchService
             // Handle city type
             if (isset($this->cities[$code])) {
                 $city = $this->cities[$code];
-                $airportName = $city['name'][$this->locale] 
-                    ?? $city['name']['en'] 
+                $airportName = $city['name'][$this->locale]
+                    ?? $city['name']['en']
                     ?? $code;
-                
+
                 $countryCode = $city['country'] ?? '';
-                $countryName = $this->countries[$countryCode]['name'][$this->locale] 
-                    ?? $this->countries[$countryCode]['name']['en'] 
+                $countryName = $this->countries[$countryCode]['name'][$this->locale]
+                    ?? $this->countries[$countryCode]['name']['en']
                     ?? $countryCode;
             }
         }
-        
+
         return [
             'Code' => $code,
             'Airport' => $airportName,
@@ -325,26 +325,26 @@ class FlightSearchService
     {
         if (isset($this->airports[$code])) {
             $airport = $this->airports[$code];
-            $airportName = $airport['airportName'][$this->locale] 
-                ?? $airport['cityName'][$this->locale] 
-                ?? $airport['airportName']['en'] 
-                ?? $airport['cityName']['en'] 
+            $airportName = $airport['airportName'][$this->locale]
+                ?? $airport['cityName'][$this->locale]
+                ?? $airport['airportName']['en']
+                ?? $airport['cityName']['en']
                 ?? $code;
-            
+
             $countryCode = $airport['country'] ?? '';
-            $countryName = isset($this->countries[$countryCode]) 
-                ? ($this->countries[$countryCode]['name'][$this->locale] 
-                    ?? $this->countries[$countryCode]['name']['en'] 
+            $countryName = isset($this->countries[$countryCode])
+                ? ($this->countries[$countryCode]['name'][$this->locale]
+                    ?? $this->countries[$countryCode]['name']['en']
                     ?? $countryCode)
                 : $countryCode;
-                
+
             return [
                 'Code' => $code,
                 'Airport' => $airportName,
                 'Country' => $countryName,
             ];
         }
-        
+
         // Fallback if airport not found
         return [
             'Code' => $code,

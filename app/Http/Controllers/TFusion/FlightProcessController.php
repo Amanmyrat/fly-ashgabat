@@ -4,7 +4,7 @@ namespace App\Http\Controllers\TFusion;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\FlightProcessDetailsRequest;
-use App\Services\FlightProcessService;
+use App\Services\TravelFusion\FlightProcessService;
 use Illuminate\Http\JsonResponse;
 
 class FlightProcessController extends BaseController

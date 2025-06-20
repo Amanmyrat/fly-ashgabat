@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\TravelFusion;
 
 use App\Enum\BookingStatus;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
+use App\Services\IpGeolocationService;
 use App\Services\TravelFusion\Requests\ProcessTermsRequestBuilder;
-use App\Services\TravelFusion\TravelFusionService;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
