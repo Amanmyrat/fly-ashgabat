@@ -38,7 +38,6 @@ Route::group(['prefix' => 'tfusion'], function () {
 });
 Route::group(['prefix' => 'xmlagency'], function () {
     Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
-    Route::get('search/test', [XMLAgencyFlightSearchController::class, 'searchTest']);
 });
 
 Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);

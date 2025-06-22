@@ -22,9 +22,13 @@ class XMLAgencyService
     public function sendRequest(array $requestData, string $soapAction): array
     {
         $xmlContent = $this->buildSoapXml($requestData);
+//        dd($xmlContent);
         return $this->makeRequest($this->baseUrl . config('xmlagency.search_endpoint'), $xmlContent, $soapAction);
     }
 
+    /**
+     * @throws \DOMException
+     */
     private function buildSoapXml(array $requestData): string
     {
         $dom = new DOMDocument('1.0', 'utf-8');
@@ -49,6 +53,9 @@ class XMLAgencyService
             if (is_array($value)) {
                 if (is_numeric($key)) {
                     $this->arrayToXml($value, $parent, $dom);
+                } elseif ($key === '_flights') {
+                    // Handle special flights structure
+                    $this->createSearchFlights($value, $parent, $dom);
                 } else {
                     $element = $this->createElement($key, $parent, $dom);
                     $this->arrayToXml($value, $element, $dom);
@@ -110,7 +117,7 @@ class XMLAgencyService
         }
     }
 
-        private function needsPrefix(string $name, DOMElement $parent): bool
+    private function needsPrefix(string $name, DOMElement $parent): bool
     {
         // Elements that need 'a:' prefix based on their parent
         $parentName = $parent->localName ?? $parent->nodeName;
@@ -134,6 +141,24 @@ class XMLAgencyService
         return false;
     }
 
+    private function createSearchFlights(array $flightData, DOMElement $parent, DOMDocument $dom): void
+    {
+        // Create SearchFlights element
+        $searchFlightsElement = $this->createElement('SearchFlights', $parent, $dom);
+
+        // Create SearchFlight element for departure
+        if (isset($flightData['departure'])) {
+            $searchFlightElement = $this->createElement('SearchFlight', $searchFlightsElement, $dom);
+            $this->arrayToXml($flightData['departure'], $searchFlightElement, $dom);
+        }
+
+        // Create SearchFlight element for return (if exists)
+        if (isset($flightData['return'])) {
+            $searchFlightElement = $this->createElement('SearchFlight', $searchFlightsElement, $dom);
+            $this->arrayToXml($flightData['return'], $searchFlightElement, $dom);
+        }
+    }
+
     private function makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
     {
         $actionUrl = config('xmlagency.soap_actions.' . $soapAction);
@@ -154,13 +179,106 @@ class XMLAgencyService
             ->send('POST', $endpoint, [
                 'body' => $xmlContent
             ]);
+
         Log::info('XML Agency Response', ['body' => $response->body()]);
 
         if ($response->successful()) {
-            $responseXml = simplexml_load_string($response->body());
-            return json_decode(json_encode($responseXml), true);
+            return $this->parseXmlResponse($response->body());
         }
 
         throw new \Exception('XML Agency request failed: ' . $response->body());
+    }
+
+    /**
+     * Parse XML response and convert to array, handling namespaces properly
+     */
+    private function parseXmlResponse(string $xmlString): array
+    {
+        try {
+            $dom = new DOMDocument();
+            $dom->loadXML($xmlString);
+
+            // Remove the dd() and use proper XML parsing
+            $xpath = new \DOMXPath($dom);
+
+            // Register namespaces
+            $xpath->registerNamespace('s', 'http://www.w3.org/2003/05/soap-envelope');
+            $xpath->registerNamespace('temp', 'http://tempuri.org/');
+            $xpath->registerNamespace('a', 'http://schemas.datacontract.org/2004/07/SiteCity.Avia.Search');
+            $xpath->registerNamespace('common', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
+            $xpath->registerNamespace('b', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
+
+            // Get the main result element
+            $resultNode = $xpath->query('//temp:AeroSearchResult')->item(0);
+
+            if (!$resultNode) {
+                throw new \Exception('Could not find AeroSearchResult in response');
+            }
+
+            return $this->domNodeToArray($resultNode, $xpath);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to parse XML response', ['error' => $e->getMessage(), 'xml' => $xmlString]);
+            throw new \Exception('Failed to parse XML response: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Convert DOM node to array recursively
+     */
+    private function domNodeToArray(\DOMNode $node, \DOMXPath $xpath): array
+    {
+        $result = [];
+
+        // Handle text content
+        if ($node->nodeType === XML_TEXT_NODE) {
+            $textValue = trim($node->nodeValue);
+            return empty($textValue) ? [] : ['text' => $textValue];
+        }
+
+        // Handle element nodes
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            // Get attributes
+            if ($node->hasAttributes()) {
+                foreach ($node->attributes as $attr) {
+                    $result['@' . $attr->nodeName] = $attr->nodeValue;
+                }
+            }
+
+            // Get child nodes
+            $children = [];
+            $hasElementChildren = false;
+
+            foreach ($node->childNodes as $child) {
+                if ($child->nodeType === XML_TEXT_NODE) {
+                    $textContent = trim($child->nodeValue);
+                    if (!empty($textContent) && !$hasElementChildren) {
+                        $result['value'] = $textContent;
+                    }
+                } elseif ($child->nodeType === XML_ELEMENT_NODE) {
+                    $hasElementChildren = true;
+                    $childName = $child->localName ?: $child->nodeName;
+                    $childValue = $this->domNodeToArray($child, $xpath);
+
+                    // Handle multiple elements with same name
+                    if (isset($children[$childName])) {
+                        if (!is_array($children[$childName]) || !array_key_exists(0, $children[$childName])) {
+                            $children[$childName] = [$children[$childName]];
+                        }
+                        $children[$childName][] = $childValue;
+                    } else {
+                        $children[$childName] = $childValue;
+                    }
+                }
+            }
+
+            // If we found element children, remove any text value as it's probably whitespace
+            if ($hasElementChildren) {
+                unset($result['value']);
+                $result = array_merge($result, $children);
+            }
+        }
+
+        return $result;
     }
 }
