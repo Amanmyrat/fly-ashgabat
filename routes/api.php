@@ -8,6 +8,7 @@ use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchControll
 use App\Http\Controllers\TFusion\FlightBookController;
 use App\Http\Controllers\TFusion\FlightProcessController;
 use App\Http\Controllers\TFusion\FlightSearchController as TFusionSearchController;
+use App\Http\Controllers\XMLAgency\FlightSearchController as XMLAgencyFlightSearchController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -34,6 +35,10 @@ Route::group(['prefix' => 'tfusion'], function () {
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
     Route::post('bookings/stripe/checkout', [FlightBookController::class, 'createStripePaymentIntent']);
     Route::post('bookings/start', [FlightBookController::class, 'startBooking']);
+});
+Route::group(['prefix' => 'xmlagency'], function () {
+    Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
+    Route::get('search/test', [XMLAgencyFlightSearchController::class, 'searchTest']);
 });
 
 Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);
