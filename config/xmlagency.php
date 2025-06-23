@@ -12,7 +12,6 @@ return [
     
     // Basic settings
     'currency' => env('XMLAGENCY_CURRENCY', 'EUR'),
-    'language' => strtoupper(app()->getLocale()),
     'timeout' => env('XMLAGENCY_TIMEOUT', 60),
     
     // SOAP Actions
