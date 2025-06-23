@@ -28,34 +28,34 @@ class FlightSearchService
         return $this->processResponse($response, $validatedData);
     }
 
-        private function processResponse(array $response, array $requestData): array
+    private function processResponse(array $response, array $requestData): array
     {
         $flights = [];
-        
+
         // Extract reference data
         $airportsData = $this->extractAirportsData($response);
         $airlinesData = $this->extractAirlinesData($response);
-        
+
         if (isset($response['FlightData']['FlightData'])) {
             $flightData = $response['FlightData']['FlightData'];
-            
+
             // Handle both single flight and array of flights
             if (!isset($flightData[0])) {
                 $flightData = [$flightData];
             }
-            
+
             foreach ($flightData as $flight) {
                 $flights[] = $this->transformFlight($flight, $requestData, $airportsData, $airlinesData);
             }
         }
-        
+
         return [
             'success' => true,
             'flights' => $flights
         ];
     }
 
-        private function transformFlight(array $flight, array $requestData, array $airportsData, array $airlinesData): array
+    private function transformFlight(array $flight, array $requestData, array $airportsData, array $airlinesData): array
     {
         $offerInfo = $flight['Offers']['OfferInfo'];
         $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
@@ -118,7 +118,7 @@ class FlightSearchService
         return $transformedFlight;
     }
 
-        private function buildJourneyData(array $segments, array $airportsData, array $airlinesData): array
+    private function buildJourneyData(array $segments, array $airportsData, array $airlinesData): array
     {
         if (empty($segments)) {
             return [];
@@ -136,25 +136,25 @@ class FlightSearchService
         $totalHours = intval($totalMinutes / 60);
         $remainingMinutes = $totalMinutes % 60;
 
-                // Calculate stops
+        // Calculate stops
         $stops = [];
         $stopsCount = count($segments) - 1;
 
         for ($i = 0; $i < count($segments) - 1; $i++) {
             $currentSegment = $segments[$i];
             $nextSegment = $segments[$i + 1];
-            
+
             $arrivalTime = Carbon::createFromFormat('d.m.Y H:i', $currentSegment['Arrival']['Date']['value']);
             $departureTime = Carbon::createFromFormat('d.m.Y H:i', $nextSegment['Departure']['Date']['value']);
-            
+
             // Calculate layover duration correctly (departure - arrival)
             $layoverDuration = $arrivalTime->diffInMinutes($departureTime);
-            
+
             // Ensure we don't have negative durations
             if ($layoverDuration < 0) {
                 $layoverDuration = 0;
             }
-            
+
             $layoverHours = intval($layoverDuration / 60);
             $layoverMinutesRemainder = $layoverDuration % 60;
 
@@ -201,7 +201,7 @@ class FlightSearchService
 
             $airlineCode = $segment['MarketingAirline']['value'];
             $airlineInfo = $this->getAirlineInfo($airlineCode, $airlinesData);
-            
+
             $segmentsData[] = [
                 'FlightNumber' => $segment['FlightNum']['value'],
                 'Airline' => $airlineInfo,
@@ -245,13 +245,13 @@ class FlightSearchService
     private function getBaggageDescription(string $type, $count, string $locale = 'en'): string
     {
         $isRussian = $locale === 'ru';
-        
+
         return match (strtolower($type)) {
             'unknown' => $isRussian ? 'Информация о багаже неизвестна' : 'Baggage information unknown',
             'nil' => $isRussian ? 'Весь багаж за доплату' : 'All baggage for a fee',
             'kilos' => $count . ($isRussian ? ' кг' : ' kg'),
             'pounds' => $count . ($isRussian ? ' фунт' . $this->getRussianPluralEnding($count, 'ов', '', 'а') : ' lbs'),
-            'pieces' => $isRussian 
+            'pieces' => $isRussian
                 ? $count . ' мест' . $this->getRussianPluralEnding($count, '', 'о', 'а')
                 : $count . ' piece' . ($count > 1 ? 's' : ''),
             default => $count . ' ' . $type
@@ -262,11 +262,11 @@ class FlightSearchService
     {
         $lastDigit = $count % 10;
         $lastTwoDigits = $count % 100;
-        
+
         if ($lastTwoDigits >= 11 && $lastTwoDigits <= 19) {
             return $many;
         }
-        
+
         return match ($lastDigit) {
             1 => $one,
             2, 3, 4 => $few,
@@ -277,11 +277,11 @@ class FlightSearchService
     private function extractAirportsData(array $response): array
     {
         $airports = [];
-        
+
         if (isset($response['AirPorts']['AirPortInfo'])) {
             $airportsInfo = $response['AirPorts']['AirPortInfo'];
             $airportsInfo = is_array($airportsInfo) && isset($airportsInfo[0]) ? $airportsInfo : [$airportsInfo];
-            
+
             foreach ($airportsInfo as $airport) {
                 $code = $airport['Iata']['value'] ?? '';
                 if ($code) {
@@ -293,18 +293,18 @@ class FlightSearchService
                 }
             }
         }
-        
+
         return $airports;
     }
 
     private function extractAirlinesData(array $response): array
     {
         $airlines = [];
-        
+
         if (isset($response['AirCompany']['CodeValue'])) {
             $airlinesInfo = $response['AirCompany']['CodeValue'];
             $airlinesInfo = is_array($airlinesInfo) && isset($airlinesInfo[0]) ? $airlinesInfo : [$airlinesInfo];
-            
+
             foreach ($airlinesInfo as $airline) {
                 $code = $airline['Code']['value'] ?? '';
                 if ($code) {
@@ -316,7 +316,7 @@ class FlightSearchService
                 }
             }
         }
-        
+
         return $airlines;
     }
 
@@ -325,7 +325,7 @@ class FlightSearchService
         if (isset($airportsData[$code])) {
             return $airportsData[$code];
         }
-        
+
         // Fallback if airport not found in response data
         return [
             'Code' => $code,
@@ -339,7 +339,7 @@ class FlightSearchService
         if (isset($airlinesData[$code])) {
             return $airlinesData[$code];
         }
-        
+
         // Fallback if airline not found in response data
         return [
             'Code' => $code,

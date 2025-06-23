@@ -28,6 +28,6 @@ class FlightSearchController extends Controller
         $validatedData = $request->validated();
         $result = $this->flightSearchService->search($validatedData);
 
-        return response()->json($result);
+        return response()->json(['data' => $result]);
     }
 }
