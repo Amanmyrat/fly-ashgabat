@@ -248,7 +248,7 @@ class FlightSearchService
 
         return match (strtolower($type)) {
             'unknown' => $isRussian ? 'Информация о багаже неизвестна' : 'Baggage information unknown',
-            'nil' => $isRussian ? 'Весь багаж за доплату' : 'All baggage for a fee',
+            'nil','NilSelect' => $isRussian ? 'Весь багаж за доплату' : 'All baggage for a fee',
             'kilos' => $count . ($isRussian ? ' кг' : ' kg'),
             'pounds' => $count . ($isRussian ? ' фунт' . $this->getRussianPluralEnding($count, 'ов', '', 'а') : ' lbs'),
             'pieces' => $isRussian
