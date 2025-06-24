@@ -180,9 +180,8 @@ class FlightSearchService
                 $outwards = isset($outwardList[0]) ? $outwardList : [$outwardList];
                 $returns = isset($returnList[0]) ? $returnList : [$returnList];
 
-                // Check if single outward and return (price is in group) or multiple (price is in segments)
-                $isSingleCombination = count($outwards) === 1 && (!empty($returns) && count($returns) === 1);
-                $groupPrice = $isSingleCombination ? ($group['Price'] ?? null) : null;
+                // Always pass group price if it exists, regardless of combination count
+                $groupPrice = $group['Price'] ?? null;
 
                 if (empty($returns)) {
                     // No return flights, handle only outward flights
@@ -226,28 +225,28 @@ class FlightSearchService
         ?array $groupPrice = null
     ): array
     {
-        // If we have a group price, use it
+        // Start with group price if it exists (always applicable when present)
+        $totalSum = 0;
+        $currency = '';
+
+        // Add group price if it exists
         if ($groupPrice) {
-            $totalSum = (float)($groupPrice['Amount'] ?? 0);
+            $totalSum += (float)($groupPrice['Amount'] ?? 0);
             $currency = $groupPrice['Currency'] ?? '';
+        }
 
-            // Check if outward has price and add it
-            if (isset($outward['Price']['Amount'])) {
-                $totalSum += (float)$outward['Price']['Amount'];
-                $currency = $outward['Price']['Currency'];
+        // Add outward leg price if it exists
+        if (isset($outward['Price']['Amount'])) {
+            $totalSum += (float)$outward['Price']['Amount'];
+            // Use outward currency if we don't have one from group price
+            if (!$currency) {
+                $currency = $outward['Price']['Currency'] ?? '';
             }
+        }
 
-            // Check if return has price and add it
-            if ($return && isset($return['Price']['Amount'])) {
-                $totalSum += (float)$return['Price']['Amount'];
-            }
-        } else {
-            // Otherwise calculate from segments
-            $totalSum = (float)($outward['Price']['Amount'] ?? 0);
-            $currency = $outward['Price']['Currency'] ?? '';
-            if ($return) {
-                $totalSum += (float)($return['Price']['Amount'] ?? 0);
-            }
+        // Add return leg price if it exists
+        if ($return && isset($return['Price']['Amount'])) {
+            $totalSum += (float)$return['Price']['Amount'];
         }
 
         return [
