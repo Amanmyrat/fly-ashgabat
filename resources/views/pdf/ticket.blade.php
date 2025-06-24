@@ -426,21 +426,29 @@
                                 $refundText = '';
                                 $exchangeText = '';
 
-                                if (is_array($features['Cancellation'])) {
+                                if (isset($features['Cancellation']) && is_array($features['Cancellation'])) {
                                     $refundText = $features['Cancellation']['Bundled'] ? 'Да / Yes' : 'Нет / No';
-                                    $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
-                                } else {
+                                } elseif (isset($features['Cancellation'])) {
                                     $refundText = $features['Cancellation'] ? 'Да / Yes' : 'Нет / No';
+                                } else {
+                                    $refundText = 'Нет / No';
+                                }
+
+                                if (isset($features['FlightChange']) && is_array($features['FlightChange'])) {
+                                    $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                } elseif (isset($features['FlightChange'])) {
                                     $exchangeText = $features['FlightChange'] ? 'Да / Yes' : 'Нет / No';
+                                } else {
+                                    $exchangeText = 'Нет / No';
                                 }
                             @endphp
                             <div style="display: grid; gap: 2px;">
                                 <div>Возврат / Refund: {{ $refundText }}</div>
                                 <div>Обмен / Exchange: {{ $exchangeText }}</div>
-                                @if(is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
+                                @if(isset($features['HoldBag']) && is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
                                     <div>Багаж / Baggage: {{ $features['HoldBag']['Value'] }}</div>
                                 @endif
-                                @if(is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
+                                @if(isset($features['CabinBag']) && is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
                                     <div>Ручная кладь / Hand baggage: {{ $features['CabinBag']['Value'] }}</div>
                                 @endif
                             </div>
@@ -550,21 +558,29 @@
                                     $refundText = '';
                                     $exchangeText = '';
 
-                                    if (is_array($features['Cancellation'])) {
+                                    if (isset($features['Cancellation']) && is_array($features['Cancellation'])) {
                                         $refundText = $features['Cancellation']['Bundled'] ? 'Да / Yes' : 'Нет / No';
-                                        $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
-                                    } else {
+                                    } elseif (isset($features['Cancellation'])) {
                                         $refundText = $features['Cancellation'] ? 'Да / Yes' : 'Нет / No';
+                                    } else {
+                                        $refundText = 'Нет / No';
+                                    }
+
+                                    if (isset($features['FlightChange']) && is_array($features['FlightChange'])) {
+                                        $exchangeText = $features['FlightChange']['Bundled'] ? 'Да / Yes' : 'Нет / No';
+                                    } elseif (isset($features['FlightChange'])) {
                                         $exchangeText = $features['FlightChange'] ? 'Да / Yes' : 'Нет / No';
+                                    } else {
+                                        $exchangeText = 'Нет / No';
                                     }
                                 @endphp
                                 <div style="display: grid; gap: 2px;">
                                     <div>Возврат / Refund: {{ $refundText }}</div>
                                     <div>Обмен / Exchange: {{ $exchangeText }}</div>
-                                    @if(is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
+                                    @if(isset($features['HoldBag']) && is_array($features['HoldBag']) && $features['HoldBag']['Bundled'])
                                         <div>Багаж / Baggage: {{ $features['HoldBag']['Value'] }}</div>
                                     @endif
-                                    @if(is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
+                                    @if(isset($features['CabinBag']) && is_array($features['CabinBag']) && $features['CabinBag']['Bundled'])
                                         <div>Ручная кладь / Hand baggage: {{ $features['CabinBag']['Value'] }}</div>
                                     @endif
                                 </div>
