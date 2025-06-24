@@ -25,7 +25,7 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected FlightBooking $booking;
-    public $tries = 3;
+    public $tries = 1;
     public $maxExceptions = 1;
 
     public function __construct(FlightBooking $booking)
@@ -47,7 +47,7 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
     public function handle(TravelFusionService $travelFusionService)
     {
         Log::info("Generate tickets for: {$this->booking->booking_reference} - Job Attempt: " . $this->attempts());
-        
+
         // Check if tickets already exist to prevent duplicate generation
         if ($this->booking->tickets()->exists()) {
             Log::info("Tickets already exist for booking {$this->booking->booking_reference}, skipping generation");
@@ -93,9 +93,9 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
 
             Log::info("Sending email for booking: {$this->booking->booking_reference}");
             Mail::to($contactData['email'])->send(new BookingTicketMail($tickets, $bookingData));
-            
+
             Log::info("GenerateTicketJob completed successfully for: {$this->booking->booking_reference}");
-            
+
         } catch (\Exception $e) {
             Log::error("GenerateTicketJob failed for: {$this->booking->booking_reference}. Error: " . $e->getMessage());
             Log::error("Stack trace: " . $e->getTraceAsString());
