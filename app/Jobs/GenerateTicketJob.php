@@ -25,6 +25,8 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected FlightBooking $booking;
+    public $tries = 3;
+    public $maxExceptions = 1;
 
     public function __construct(FlightBooking $booking)
     {
@@ -44,7 +46,7 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(TravelFusionService $travelFusionService)
     {
-        Log::info("Generate tickets for: {$this->booking->booking_reference}");
+        Log::info("Generate tickets for: {$this->booking->booking_reference} - Job Attempt: " . $this->attempts());
         
         // Check if tickets already exist to prevent duplicate generation
         if ($this->booking->tickets()->exists()) {
@@ -52,39 +54,53 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $response = $travelFusionService->sendRequest(
-            (new GetBookingDetailsRequestBuilder($this->booking->booking_reference))->build()
-        );
+        try {
+            Log::info("Making GetBookingDetails request for: {$this->booking->booking_reference}");
+            $response = $travelFusionService->sendRequest(
+                (new GetBookingDetailsRequestBuilder($this->booking->booking_reference))->build()
+            );
 
-        if (!isset($response['GetBookingDetails'])) {
-            return;
+            if (!isset($response['GetBookingDetails'])) {
+                Log::error("GetBookingDetails response missing for booking: {$this->booking->booking_reference}");
+                return;
+            }
+
+            $bookingDetails = $response['GetBookingDetails'];
+            Log::info("GetBookingDetails successful for: {$this->booking->booking_reference}");
+
+            $this->booking->update(['supplier_reference' => $bookingDetails['SupplierReference']]);
+            $travelersList = $bookingDetails['BookingProfile']['TravellerList']['Traveller'] ?? [];
+
+            $travelers = is_array($travelersList) && array_keys($travelersList) !== range(0, count($travelersList) - 1)
+                ? [$travelersList]
+                : $travelersList;
+
+            unset($bookingDetails['RouterHistory']['BookingRouter']['RequiredParameterList']);
+            $bookingData = $bookingDetails['RouterHistory']['BookingRouter'];
+            $supplierReference = $bookingDetails['SupplierReference'];
+
+            $contactDetails = $bookingDetails['BookingProfile']['ContactDetails'];
+            $contactData = [
+                'email' => $contactDetails['Email'],
+                'phone' => $contactDetails['MobilePhone']['InternationalCode'] . $contactDetails['MobilePhone']['Number'],
+            ];
+
+            Log::info("Processing travelers for booking: {$this->booking->booking_reference}");
+            // Process travelers and generate tickets
+            $tickets = array_map(function ($traveler) use ($bookingData, $supplierReference, $contactData) {
+                return $this->processTraveler($traveler, $bookingData, $supplierReference, $contactData);
+            }, $travelers);
+
+            Log::info("Sending email for booking: {$this->booking->booking_reference}");
+            Mail::to($contactData['email'])->send(new BookingTicketMail($tickets, $bookingData));
+            
+            Log::info("GenerateTicketJob completed successfully for: {$this->booking->booking_reference}");
+            
+        } catch (\Exception $e) {
+            Log::error("GenerateTicketJob failed for: {$this->booking->booking_reference}. Error: " . $e->getMessage());
+            Log::error("Stack trace: " . $e->getTraceAsString());
+            throw $e; // Re-throw to trigger job retry
         }
-
-        $bookingDetails = $response['GetBookingDetails'];
-
-        $this->booking->update(['supplier_reference' => $bookingDetails['SupplierReference']]);
-        $travelersList = $bookingDetails['BookingProfile']['TravellerList']['Traveller'] ?? [];
-
-        $travelers = is_array($travelersList) && array_keys($travelersList) !== range(0, count($travelersList) - 1)
-            ? [$travelersList]
-            : $travelersList;
-
-        unset($bookingDetails['RouterHistory']['BookingRouter']['RequiredParameterList']);
-        $bookingData = $bookingDetails['RouterHistory']['BookingRouter'];
-        $supplierReference = $bookingDetails['SupplierReference'];
-
-        $contactDetails = $bookingDetails['BookingProfile']['ContactDetails'];
-        $contactData = [
-            'email' => $contactDetails['Email'],
-            'phone' => $contactDetails['MobilePhone']['InternationalCode'] . $contactDetails['MobilePhone']['Number'],
-        ];
-
-        // Process travelers and generate tickets
-        $tickets = array_map(function ($traveler) use ($bookingData, $supplierReference, $contactData) {
-            return $this->processTraveler($traveler, $bookingData, $supplierReference, $contactData);
-        }, $travelers);
-
-        Mail::to($contactData['email'])->send(new BookingTicketMail($tickets, $bookingData));
     }
 
     private function processTraveler(array $traveler, array $bookingData, string $supplierReference, array $contactData): array

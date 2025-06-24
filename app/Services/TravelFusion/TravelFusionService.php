@@ -162,34 +162,53 @@ class TravelFusionService
 
         $xmlContent = $xmlRoot->asXML();
 
+        // Determine if retries should be disabled for this request type
+        $shouldRetry = !$this->isOneTimeRequest($requestData);
+
         try {
-            return $this->makeRequest($this->baseUrl, $xmlContent);
+            return $this->makeRequest($this->baseUrl, $xmlContent, $shouldRetry);
         } catch (Exception $e) {
             // If the request fails, try to login again and retry once
             if (str_contains($e->getMessage(), 'LoginId')) {
                 $this->loginId = $this->login();
                 $this->injectLoginIds($requestData, $this->loginId);
-                return $this->makeRequest($this->baseUrl, $xmlContent);
+                return $this->makeRequest($this->baseUrl, $xmlContent, $shouldRetry);
             }
             throw $e;
         }
     }
 
     /**
+     * Check if this is a request type that should only be called once
+     */
+    private function isOneTimeRequest(array $requestData): bool
+    {
+        return isset($requestData['GetBookingDetails']) || 
+               isset($requestData['CheckBooking']) ||
+               isset($requestData['StartBooking']);
+    }
+
+    /**
      * @throws ConnectionException
      * @throws Exception
      */
-    private function makeRequest(string $endpoint, string $xmlContent): array
+    private function makeRequest(string $endpoint, string $xmlContent, bool $shouldRetry = true): array
     {
         // Log request in beautiful XML format
         $this->logRequest($endpoint, $xmlContent);
 
-        $response = Http::withHeaders([
+        $httpClient = Http::withHeaders([
             'Accept' => 'text/xml',
             'Accept-Encoding' => 'gzip, deflate',
             'Content-Type' => 'text/xml; charset=utf-8'
-        ])
-            ->retry(3, 5000)
+        ]);
+
+        // Only add retry if requested
+        if ($shouldRetry) {
+            $httpClient = $httpClient->retry(3, 5000);
+        }
+
+        $response = $httpClient
             ->withoutVerifying()
             ->timeout(120)
             ->withBody($xmlContent, 'text/xml')->post($endpoint);
