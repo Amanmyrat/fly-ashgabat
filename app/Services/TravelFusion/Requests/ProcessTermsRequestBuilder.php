@@ -68,7 +68,7 @@ class ProcessTermsRequestBuilder
             ],
             [
                 'Name' => 'PointOfSale',
-                'Value' => 'TM',
+                'Value' => 'US',
             ],
             [
                 'Name' => 'CountryOfTheUser',
@@ -266,9 +266,8 @@ class ProcessTermsRequestBuilder
 
     protected function getRequestOrigin(): string
     {
-        $ip = $this->data['meta']['end_user_ip_address'] ?? '';
-        $country = $this->getCountryOfTheUser();
-        return sprintf('%s-flyashgabat.com', $country);
+        // Use business market/point of sale (US) + domain as per TravelFusion definition
+        return 'US-flyashgabat.com';
     }
 
     protected function getCountryOfTheUser(): string
