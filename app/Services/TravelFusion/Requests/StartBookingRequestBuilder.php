@@ -19,12 +19,12 @@ class StartBookingRequestBuilder
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'TFBookingReference' => $this->data['tf_booking_reference'],
                 'ExpectedPrice' => $this->data['price'],
-                'FakeBooking' => [
-                    'EnableFakeBooking' => 'true',
-                    'FakeBookingSimulatedDelaySeconds' => '15',
-                    'FakeBookingStatus' => 'Succeeded',
-                    'EnableFakeCardVerification' => 'false',
-                ],
+//                'FakeBooking' => [
+//                    'EnableFakeBooking' => 'true',
+//                    'FakeBookingSimulatedDelaySeconds' => '15',
+//                    'FakeBookingStatus' => 'Succeeded',
+//                    'EnableFakeCardVerification' => 'false',
+//                ],
             ],
         ];
 
