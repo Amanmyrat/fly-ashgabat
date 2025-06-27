@@ -55,6 +55,7 @@ class Traveller extends Model
         'nationality',
         'firstname',
         'lastname',
+        'middlename',
         'gender',
     ];
 

@@ -204,6 +204,8 @@ class FlightBookController extends BaseController
             $booking = FlightBooking::where('booking_reference', $request->booking_reference)
                 ->with('contactDetail')
                 ->first();
+
+
             $user = $this->getAuthenticatedUser();
 
             if ($booking->payment_type !== PaymentType::STRIPE) {
@@ -239,4 +241,4 @@ class FlightBookController extends BaseController
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
-} 
+}

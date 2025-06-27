@@ -39,7 +39,7 @@ class AeroBookRequestBuilder
     private function buildAeroBookParams(): array
     {
         $contactDetails = $this->validatedData['contact_details'];
-        
+
         return [
             'ClientReference' => $this->generateClientReference(),
             'CustomerFIO' => null, // XMLAgency docs show this can be null
@@ -60,7 +60,7 @@ class AeroBookRequestBuilder
     private function buildPaxList(): array
     {
         $paxList = ['PaxData' => []];
-        
+
         foreach ($this->validatedData['travellers'] as $traveller) {
             $paxList['PaxData'][] = [
                 'AgeType' => $this->getAgeType($traveller['birthdate']),
@@ -73,14 +73,14 @@ class AeroBookRequestBuilder
                 'Surname' => $traveller['lastname'],
             ];
         }
-        
+
         return $paxList;
     }
 
     private function getAgeType(string $birthdate): string
     {
         $age = Carbon::parse($birthdate)->age;
-        
+
         if ($age < 2) {
             return 'Infant';
         } elseif ($age < 12) {
@@ -106,4 +106,4 @@ class AeroBookRequestBuilder
         // Generate a unique client reference (max 40 characters)
         return 'XMLAGENCY_' . time() . '_' . substr(uniqid(), -8);
     }
-} 
+}
