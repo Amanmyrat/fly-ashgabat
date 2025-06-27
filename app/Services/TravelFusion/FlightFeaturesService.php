@@ -26,7 +26,7 @@ class FlightFeaturesService
 
             foreach ($options as $option) {
                 $conditions = $option['Condition'] ?? [];
-                $value = $option['@attributes']['Value'] ?? '';
+                $price = $option['@attributes']['Value'] ?? '';
                 $currency = $option['@attributes']['Currency'] ?? '';
 
                 if (!isset($option['@attributes']['Value'])) {
@@ -83,9 +83,13 @@ class FlightFeaturesService
                     }
 
                     if (in_array($featureType, ['HoldBag', 'SmallCabinBag', 'LargeCabinBag'])) {
-                        $formattedValue = $maxQuantity && $description ? "{$maxQuantity} x ($description)" : null;
+                        if ($isBundled){
+                            $formattedValue = $maxQuantity && $description ? "{$maxQuantity} x ($description)" : null;
+                        }else{
+                            $formattedValue = $price . ' ' . $currency;
+                        }
                     } else {
-                        $formattedValue = $value . ' ' . $currency;
+                        $formattedValue = $price . ' ' . $currency;
                     }
 
                     $relevantFeatures[$featureType] = $formattedValue ? [
@@ -108,6 +112,9 @@ class FlightFeaturesService
 
         unset($relevantFeatures['SmallCabinBag'], $relevantFeatures['LargeCabinBag']);
 
+//        if ($supplierClass == 'Light') {
+//            dd($relevantFeatures, $features, $supplierClass, $operatorCode);
+//        }
         return $relevantFeatures;
 
     }
