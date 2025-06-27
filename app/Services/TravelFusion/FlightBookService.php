@@ -139,6 +139,7 @@ class FlightBookService
         $bookingData = [
             'user_id' => $user?->id ?? null,
             'booking_reference' => $bookingReference,
+            'flight_type' => 'TFusion',
             'origin' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Origin'],
             'destination' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Destination'],
             'outward' => $outward,

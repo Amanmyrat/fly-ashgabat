@@ -9,6 +9,7 @@ use App\Http\Controllers\TFusion\FlightBookController;
 use App\Http\Controllers\TFusion\FlightProcessController;
 use App\Http\Controllers\TFusion\FlightSearchController as TFusionSearchController;
 use App\Http\Controllers\XMLAgency\FlightSearchController as XMLAgencyFlightSearchController;
+use App\Http\Controllers\XMLAgency\FlightBookController as XMLAgencyFlightBookController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -38,6 +39,8 @@ Route::group(['prefix' => 'tfusion'], function () {
 });
 Route::group(['prefix' => 'xmlagency'], function () {
     Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
+    Route::post('bookings/process', [XMLAgencyFlightBookController::class, 'processBooking']);
+    Route::post('bookings/stripe/checkout', [XMLAgencyFlightBookController::class, 'createStripePaymentIntent']);
 });
 
 Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);

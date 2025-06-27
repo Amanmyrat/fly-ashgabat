@@ -2,8 +2,9 @@
 
 namespace App\Services\XMLAgency;
 
-use App\Services\XMLAgency\Requests\AeroSearchRequestBuilder;
+use App\Http\Requests\XMLAgency\AeroSearchRequestBuilder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class FlightSearchService
 {
@@ -21,8 +22,6 @@ class FlightSearchService
     {
         $requestBuilder = new AeroSearchRequestBuilder($validatedData);
         $requestData = $requestBuilder->build();
-//        dd($requestData);
-
         $response = $this->xmlAgencyService->sendRequest($requestData, 'AeroSearch');
 
         return $this->processResponse($response, $validatedData);
@@ -49,8 +48,10 @@ class FlightSearchService
             }
         }
 
+        Cache::put('search_guid' . $response['SearchGuid']['value'], now()->addMinutes(30));
         return [
             'success' => true,
+            'search_guid' => $response['SearchGuid']['value'],
             'flights' => $flights
         ];
     }

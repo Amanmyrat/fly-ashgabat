@@ -61,6 +61,7 @@ class FlightBooking extends Model
         'user_id',
         'booking_reference',
         'supplier_reference',
+        'flight_type',
         'origin',
         'destination',
         'outward',

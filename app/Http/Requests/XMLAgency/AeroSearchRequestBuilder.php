@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\XMLAgency\Requests;
+namespace App\Http\Requests\XMLAgency;
 
 class AeroSearchRequestBuilder
 {
@@ -66,11 +66,11 @@ class AeroSearchRequestBuilder
         $requestData = [
             'AeroSearch' => [
                 'credentials' => [
-                    'ApiLogin' => config('xmlagency.api_login'),
-                    'ApiPassword' => config('xmlagency.api_password'),
+                    'ApiLogin' => config('xmlagency.credentials.login'),
+                    'ApiPassword' => config('xmlagency.credentials.password'),
                     'AuthExtendedData' => null,
-                    'Currency' => config('xmlagency.currency'),
-                    'DeviceId' => config('xmlagency.device_id'),
+                    'Currency' => config('xmlagency.currency', 'EUR'),
+                    'DeviceId' => config('xmlagency.device_id', 'web'),
                     'Language' => strtoupper(app()->getLocale()),
                     'TokenGuid' => '00000000-0000-0000-0000-000000000000',
                 ],

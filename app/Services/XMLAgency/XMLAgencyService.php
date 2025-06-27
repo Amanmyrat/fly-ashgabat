@@ -56,6 +56,9 @@ class XMLAgencyService
                 } elseif ($key === '_flights') {
                     // Handle special flights structure
                     $this->createSearchFlights($value, $parent, $dom);
+                } elseif ($key === 'PaxList') {
+                    // Handle PaxList structure for booking
+                    $this->createPaxList($value, $parent, $dom);
                 } else {
                     $element = $this->createElement($key, $parent, $dom);
                     $this->arrayToXml($value, $element, $dom);
@@ -93,9 +96,19 @@ class XMLAgencyService
             return $element;
         }
 
-        // Handle elements that need 'a:' prefix
-        if ($this->needsPrefix($name, $parent)) {
-            $element = $dom->createElement('a:' . $name);
+        // Handle booking params block
+        if ($name === 'aeroBookParams') {
+            $element = $dom->createElement($name);
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.Avia.Booking');
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
+            $parent->appendChild($element);
+            return $element;
+        }
+
+        // Determine the correct prefix based on parent
+        $prefix = $this->getElementPrefix($name, $parent);
+        if ($prefix) {
+            $element = $dom->createElement($prefix . ':' . $name);
             $parent->appendChild($element);
             return $element;
         }
@@ -117,28 +130,55 @@ class XMLAgencyService
         }
     }
 
-    private function needsPrefix(string $name, DOMElement $parent): bool
+    private function getElementPrefix(string $name, DOMElement $parent): ?string
     {
-        // Elements that need 'a:' prefix based on their parent
+        // Get parent name without namespace prefix for easier comparison
         $parentName = $parent->localName ?? $parent->nodeName;
 
         if ($parentName === 'credentials') {
-            return in_array($name, ['ApiLogin', 'ApiPassword', 'AuthExtendedData', 'Currency', 'DeviceId', 'Language', 'TokenGuid']);
+            if (in_array($name, ['ApiLogin', 'ApiPassword', 'AuthExtendedData', 'Currency', 'DeviceId', 'Language', 'TokenGuid'])) {
+                return 'a';
+            }
         }
 
         if ($parentName === 'aeroSearchParams') {
-            return in_array($name, ['Adults', 'Childs', 'ExtendedParams', 'FlightClass', 'Infants', 'PartnerName', 'SearchFlights']);
+            if (in_array($name, ['Adults', 'Childs', 'ExtendedParams', 'FlightClass', 'Infants', 'PartnerName', 'SearchFlights'])) {
+                return 'a';
+            }
+        }
+
+        if ($parentName === 'aeroBookParams') {
+            if (in_array($name, ['ClientReference', 'CustomerFIO', 'Email', 'ExtendedParams', 'Marker', 'OfferCode', 'Partner', 'PaxList', 'Phone', 'SearchGuid', 'SelectedServices', 'SelectedTariffs', 'Utm'])) {
+                return 'a';
+            }
+        }
+
+        if ($parentName === 'PaxList' || $parentName === 'a:PaxList') {
+            if ($name === 'PaxData') {
+                return 'b';
+            }
+        }
+
+        // Elements within b:PaxData should use 'b:' prefix
+        if ($parentName === 'PaxData' || $parentName === 'b:PaxData') {
+            if (in_array($name, ['AgeType', 'BirthDay', 'BirthISO', 'Document', 'DocumentExDate', 'GenderType', 'MiddleName', 'Name', 'Surname', 'BonusCard'])) {
+                return 'b';
+            }
         }
 
         if ($parentName === 'SearchFlights' || $parentName === 'a:SearchFlights') {
-            return $name === 'SearchFlight';
+            if ($name === 'SearchFlight') {
+                return 'a';
+            }
         }
 
         if ($parentName === 'SearchFlight' || $parentName === 'a:SearchFlight') {
-            return in_array($name, ['Date', 'IATAFrom', 'IATATo']);
+            if (in_array($name, ['Date', 'IATAFrom', 'IATATo'])) {
+                return 'a';
+            }
         }
 
-        return false;
+        return null;
     }
 
     private function createSearchFlights(array $flightData, DOMElement $parent, DOMDocument $dom): void
@@ -159,7 +199,26 @@ class XMLAgencyService
         }
     }
 
-    private function makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
+    private function createPaxList(array $paxData, DOMElement $parent, DOMDocument $dom): void
+    {
+        // Create PaxList element with proper namespace
+        $paxListElement = $this->createElement('PaxList', $parent, $dom);
+        $paxListElement->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:b', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
+
+        // Create PaxData elements
+        if (isset($paxData['PaxData'])) {
+            foreach ($paxData['PaxData'] as $passenger) {
+                $paxDataElement = $this->createElement('PaxData', $paxListElement, $dom);
+                $this->arrayToXml($passenger, $paxDataElement, $dom);
+            }
+        }
+    }
+
+    private function
+
+
+
+    makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
     {
         $actionUrl = config('xmlagency.soap_actions.' . $soapAction);
 
@@ -208,11 +267,14 @@ class XMLAgencyService
             $xpath->registerNamespace('common', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
             $xpath->registerNamespace('b', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
 
-            // Get the main result element
+            // Get the main result element - handle both search and book responses
             $resultNode = $xpath->query('//temp:AeroSearchResult')->item(0);
+            if (!$resultNode) {
+                $resultNode = $xpath->query('//temp:AeroBookResult')->item(0);
+            }
 
             if (!$resultNode) {
-                throw new \Exception('Could not find AeroSearchResult in response');
+                throw new \Exception('Could not find AeroSearchResult or AeroBookResult in response');
             }
 
             return $this->domNodeToArray($resultNode, $xpath);

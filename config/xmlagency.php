@@ -6,8 +6,10 @@ return [
     'search_endpoint' => '/SiteCity',
     
     // Credentials (from env)
-    'api_login' => env('XMLAGENCY_API_LOGIN'),
-    'api_password' => env('XMLAGENCY_API_PASSWORD'),
+    'credentials' => [
+        'login' => env('XMLAGENCY_API_LOGIN'),
+        'password' => env('XMLAGENCY_API_PASSWORD'),
+    ],
     'device_id' => env('XMLAGENCY_DEVICE_ID'),
     
     // Basic settings
