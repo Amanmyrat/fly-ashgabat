@@ -32,6 +32,57 @@ class BookController extends BaseController
         $this->countries = $this->airportDataRepository->getAllCountries();
     }
 
+    /**
+     * Create Stripe checkout session for booking
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function createStripePaymentIntent(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'booking_reference' => 'required|string|exists:flight_bookings,booking_reference'
+            ]);
+
+            $booking = FlightBooking::where('booking_reference', $request->booking_reference)
+                ->with('contactDetail')
+                ->first();
+            $user = $this->getAuthenticatedUser();
+
+            if ($booking->payment_type !== PaymentType::STRIPE) {
+                return $this->errorResponse('This booking is not configured for Stripe payment.', 400);
+            }
+
+            // Allow anonymous payments - only check ownership if user is logged in
+            if ($user && $booking->user_id !== $user->id) {
+                return $this->errorResponse('You can only create checkout session for your own bookings.', 403);
+            }
+
+            // For anonymous bookings, user_id should be null
+            if (!$user && $booking->user_id !== null) {
+                return $this->errorResponse('This booking belongs to a registered user.', 403);
+            }
+
+            $result = $this->stripePaymentService->createCheckoutSession($booking, $user);
+
+            if (!$result['success']) {
+                return $this->errorResponse($result['message'], 400);
+            }
+
+            // Store the session ID in the booking
+            $booking->update(['stripe_session_id' => $result['session_id']]);
+
+            return response()->json([
+                'success' => true,
+                'checkout_url' => $result['checkout_url'],
+                'session_id' => $result['session_id']
+            ]);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+    }
 
     /**
      * Start the actual booking process
@@ -224,55 +275,4 @@ class BookController extends BaseController
         return ['date' => $date, 'time' => $time];
     }
 
-    /**
-     * Create Stripe checkout session for booking
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function createStripePaymentIntent(Request $request): JsonResponse
-    {
-        try {
-            $request->validate([
-                'booking_reference' => 'required|string|exists:flight_bookings,booking_reference'
-            ]);
-
-            $booking = FlightBooking::where('booking_reference', $request->booking_reference)
-                ->with('contactDetail')
-                ->first();
-            $user = $this->getAuthenticatedUser();
-
-            if ($booking->payment_type !== PaymentType::STRIPE) {
-                return $this->errorResponse('This booking is not configured for Stripe payment.', 400);
-            }
-
-            // Allow anonymous payments - only check ownership if user is logged in
-            if ($user && $booking->user_id !== $user->id) {
-                return $this->errorResponse('You can only create checkout session for your own bookings.', 403);
-            }
-
-            // For anonymous bookings, user_id should be null
-            if (!$user && $booking->user_id !== null) {
-                return $this->errorResponse('This booking belongs to a registered user.', 403);
-            }
-
-            $result = $this->stripePaymentService->createCheckoutSession($booking, $user);
-
-            if (!$result['success']) {
-                return $this->errorResponse($result['message'], 400);
-            }
-
-            // Store the session ID in the booking
-            $booking->update(['stripe_session_id' => $result['session_id']]);
-
-            return response()->json([
-                'success' => true,
-                'checkout_url' => $result['checkout_url'],
-                'session_id' => $result['session_id']
-            ]);
-
-        } catch (Exception $e) {
-            return $this->errorResponse($e->getMessage(), 500);
-        }
-    }
 }
