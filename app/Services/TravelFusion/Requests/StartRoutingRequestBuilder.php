@@ -3,6 +3,7 @@
 namespace App\Services\TravelFusion\Requests;
 
 use function Psl\Str\uppercase;
+use App\Enum\FlightType;
 use App\Services\IpGeolocationService;
 use App\Repositories\AirportDataRepositoryInterface;
 
@@ -93,7 +94,7 @@ class StartRoutingRequestBuilder
         }
 
         // Add ReturnDates if flight type is round-trip
-        if ($this->data['flight_type'] === 'round-trip') {
+        if ($this->data['flight_type'] === FlightType::ROUND_TRIP->value) {
             $requestData['StartRouting']['ReturnDates'] = [
                 'DateOfSearch' => date('d/m/Y-H:i', strtotime($this->data['arrival_date'])),
             ];

@@ -3,6 +3,7 @@
 namespace App\Services\TravelFusion;
 
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
@@ -139,7 +140,7 @@ class FlightBookService
         $bookingData = [
             'user_id' => $user?->id ?? null,
             'booking_reference' => $bookingReference,
-            'flight_type' => 'TFusion',
+            'flight_type' => FlightSupplier::TFUSION,
             'origin' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Origin'],
             'destination' => $processTermsResponse['ProcessTerms']['Router']['RequestedLocations']['Destination'],
             'outward' => $outward,

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\XMLAgency;
 
+use App\Enum\FlightType;
+
 class AeroSearchRequestBuilder
 {
     protected array $data;
@@ -33,7 +35,7 @@ class AeroSearchRequestBuilder
         ];
 
         // Add return flight if round-trip
-        if ($this->data['flight_type'] === 'round-trip' && !empty($this->data['arrival_date'])) {
+        if ($this->data['flight_type'] === FlightType::ROUND_TRIP->value && !empty($this->data['arrival_date'])) {
             $returnDate = $this->formatDate($this->data['arrival_date']);
             $flightData['return'] = [
                 'Date' => $returnDate,

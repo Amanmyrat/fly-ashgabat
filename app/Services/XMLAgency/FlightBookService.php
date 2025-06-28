@@ -3,6 +3,7 @@
 namespace App\Services\XMLAgency;
 
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
@@ -29,23 +30,6 @@ class FlightBookService
      */
     public function processBooking(array $validatedData, ?User $user): array
     {
-//        // For XMLAgency, we don't pre-calculate price - it comes from the booking response
-//        // Set a placeholder price that will be updated after booking
-//        $fullPrice = [
-//            'Amount' => 0, // Will be set from booking response
-//            'Currency' => 'EUR'
-//        ];
-//
-//        // Check balance if payment type is balance
-//        if ($validatedData['payment_type'] === PaymentType::BALANCE->value && (!$user || $user->balance < $fullPrice['Amount'])) {
-//            return [
-//                'success' => false,
-//                'message' => 'Insufficient balance.',
-//                'balance' => $user->balance ?? 0,
-//                'price' => $fullPrice['Amount']
-//            ];
-//        }
-
         // Build AeroBook request (no need for flight offer data)
         $aeroBookRequest = (new AeroBookRequestBuilder($validatedData))->build();
 
@@ -130,7 +114,7 @@ class FlightBookService
             'user_id' => $user?->id ?? null,
             'booking_reference' => $bookingResult['BookId']['value'], // Using BookId as booking_reference
             'supplier_reference' => $bookingResult['BookGuid']['value'], // Using BookGuid as supplier_reference
-            'flight_type' => 'XMLAgency',
+            'flight_type' => FlightSupplier::XMLAGENCY,
             'origin' => $origin,
             'destination' => $destination,
             'outward' => $outwardData,
@@ -355,7 +339,7 @@ class FlightBookService
     {
         $booking = FlightBooking::with('tickets')
             ->where('booking_reference', $bookId)
-            ->where('flight_type', 'XMLAgency')
+                            ->where('flight_type', FlightSupplier::XMLAGENCY)
             ->first();
 
         return $booking ? ['success' => true, 'data' => $booking] : ['success' => false, 'message' => 'Booking not found'];

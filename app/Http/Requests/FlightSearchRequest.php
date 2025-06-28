@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enum\FlightType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -44,12 +45,12 @@ class FlightSearchRequest extends FormRequest
                 'date',
                 'date_format:' . self::DATE_FORMAT,
                 'after_or_equal:departure_date',
-                'required_if:flight_type,round-trip'
+                'required_if:flight_type,' . FlightType::ROUND_TRIP->value
             ],
             'flight_type' => [
                 'required',
                 'string',
-                Rule::in(['one-way', 'round-trip'])
+                Rule::enum(FlightType::class)
             ],
             'is_direct_flight' => [
                 'required',

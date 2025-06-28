@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Services\AirportLocatorService;
 use Eloquent;
@@ -79,7 +80,8 @@ class FlightBooking extends Model
         'return' => 'array',
         'price' => 'array',
         'status' => BookingStatus::class,
-        'payment_type' => PaymentType::class
+        'payment_type' => PaymentType::class,
+        'flight_type' => FlightSupplier::class
     ];
 
     public function user(): BelongsTo

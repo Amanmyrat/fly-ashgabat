@@ -2,6 +2,8 @@
 
 namespace App\Services\XMLAgency;
 
+use App\Enum\FlightType;
+
 use App\Http\Requests\XMLAgency\AeroSearchRequestBuilder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -74,7 +76,7 @@ class FlightSearchService
         $segments = $allSegments;
 
         // Determine if it's round-trip based on request
-        $isRoundTrip = ($requestData['flight_type'] ?? 'one-way') === 'round-trip';
+        $isRoundTrip = ($requestData['flight_type'] ?? FlightType::ONE_WAY->value) === FlightType::ROUND_TRIP->value;
 
         // Split segments into outward and return
         $outwardSegments = [];
