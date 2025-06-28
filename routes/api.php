@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\CharterFlightController;
 use App\Http\Controllers\GeoDataController;
 use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchController;
@@ -34,16 +35,18 @@ Route::group(['prefix' => 'tfusion'], function () {
     Route::get('search/test', [TFusionSearchController::class, 'searchTest']);
     Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
-    Route::post('bookings/stripe/checkout', [FlightBookController::class, 'createStripePaymentIntent']);
-    Route::post('bookings/start', [FlightBookController::class, 'startBooking']);
 });
 Route::group(['prefix' => 'xmlagency'], function () {
     Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
     Route::post('bookings/process', [XMLAgencyFlightBookController::class, 'processBooking']);
-    Route::post('bookings/stripe/checkout', [XMLAgencyFlightBookController::class, 'createStripePaymentIntent']);
 });
 
-Route::get('book/{book_id}/details', [FlightBookController::class, 'details']);
+Route::group(['prefix' => 'bookings'], function () {
+    Route::post('stripe/checkout', [BookController::class, 'createStripePaymentIntent']);
+    Route::post('start', [BookController::class, 'startBooking']);
+    Route::get('{book_id}/details', [BookController::class, 'details']);
+});
+
 
 Route::group(['prefix' => 'user'], function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -55,11 +58,10 @@ Route::group(['prefix' => 'user'], function () {
 });
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
-
     Route::get('/user', [UserController::class, 'show']);
     Route::post('/user', [UserController::class, 'update']);
 
-    Route::get('bookings', [FlightBookController::class, 'getBookings']);
+    Route::get('bookings', [BookController::class, 'getBookings']);
 });
 
 // Charter Flights API Routes
@@ -68,9 +70,4 @@ Route::prefix('charter-flights')->group(function () {
     Route::get('/destination-cities', [CharterFlightController::class, 'getDestinationCities']);
     Route::get('/available-dates', [CharterFlightController::class, 'getAvailableDates']);
     Route::get('/available-flights', [CharterFlightController::class, 'getAvailableFlights']);
-});
-
-// Temporary test route for debugging - remove after testing
-Route::get('test/debug-error', function () {
-    throw new \Exception('Test exception with undefined array key "options"');
 });
