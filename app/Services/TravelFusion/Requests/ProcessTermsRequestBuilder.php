@@ -96,7 +96,7 @@ class ProcessTermsRequestBuilder
             ],
             'TravellerList' => $this->buildTravellerList(),
             'ContactDetails' => $this->buildContactDetails(),
-            'BillingDetails' => $this->buildBillingDetails(),
+//            'BillingDetails' => $this->buildBillingDetails(),
         ];
     }
 
