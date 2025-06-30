@@ -75,7 +75,7 @@ class XMLAgencyService
     private function createElement(string $name, DOMElement $parent, DOMDocument $dom): DOMElement
     {
         // Handle special XML Agency methods with proper namespaces
-        if (in_array($name, ['AeroSearch', 'AeroBook', 'ConfirmBook'])) {
+        if (in_array($name, ['AeroSearch', 'AeroBook', 'ConfirmBook', 'OrderInfo'])) {
             $element = $dom->createElementNS('http://tempuri.org/', $name);
             $parent->appendChild($element);
             return $element;
@@ -112,6 +112,15 @@ class XMLAgencyService
         if ($name === 'confirmParams') {
             $element = $dom->createElement($name);
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.BookInfo.ConfirmBook');
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
+            $parent->appendChild($element);
+            return $element;
+        }
+
+        // Handle order info params block
+        if ($name === 'orderInfoParams') {
+            $element = $dom->createElement($name);
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.BookInfo.OrderInfo');
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
             $parent->appendChild($element);
             return $element;
@@ -164,7 +173,7 @@ class XMLAgencyService
             }
         }
 
-        if ($parentName === 'confirmParams') {
+        if ($parentName === 'confirmParams' || $parentName === 'orderInfoParams') {
             if (in_array($name, ['BookGuid', 'BookId', 'Price'])) {
                 return 'a';
             }
@@ -198,6 +207,9 @@ class XMLAgencyService
         return null;
     }
 
+    /**
+     * @throws \DOMException
+     */
     private function createSearchFlights(array $flightData, DOMElement $parent, DOMDocument $dom): void
     {
         // Create SearchFlights element
