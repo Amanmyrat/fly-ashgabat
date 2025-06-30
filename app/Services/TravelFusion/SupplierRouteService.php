@@ -2,7 +2,7 @@
 
 namespace App\Services\TravelFusion;
 
-use App\Jobs\CacheSupplierRoutesJob;
+use App\Jobs\TFusion\CacheSupplierRoutesJob;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 

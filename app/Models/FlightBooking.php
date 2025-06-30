@@ -48,6 +48,8 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|FlightBooking whereUpdatedAt($value)
  * @method static Builder<static>|FlightBooking whereUserId($value)
  * @property string $payment_type
+ * @property string $flight_type
+ * @property string $stripe_session_id
  * @property-read ContactDetail|null $contactDetail
  * @property-read Collection<int, Traveller> $travellers
  * @property-read int|null $travellers_count

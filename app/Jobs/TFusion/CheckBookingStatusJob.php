@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\TFusion;
 
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\InteractsWithQueue;
@@ -43,24 +44,26 @@ class CheckBookingStatusJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(TravelFusionService $travelFusionService): void
     {
-        Log::info("Checking booking status for: {$this->booking->booking_reference}. Try {$this->attempts()}");
+        if($this->booking->flight_type == FlightSupplier::TFUSION->value){
+            Log::info("Checking booking status for: {$this->booking->booking_reference}. Try {$this->attempts()}");
 
-        $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
-        $response = $travelFusionService->sendRequest($checkBookingRequest);
+            $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();
+            $response = $travelFusionService->sendRequest($checkBookingRequest);
 
-        $status = $response['CheckBooking']['Status'] ?? null;
+            $status = $response['CheckBooking']['Status'] ?? null;
 
-        Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
+            Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
-        match ($status) {
-            'Succeeded' => $this->handleSucceededStatus(),
-            'Failed' => $this->handleFailedStatus(),
-            'Unconfirmed' => $this->handleUnconfirmedStatus(),
-            'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
-            'BookingInProgress' => $this->handleBookingInProgressStatus(),
-            'Duplicate' => $this->handleDuplicateStatus(),
-            default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
-        };
+            match ($status) {
+                'Succeeded' => $this->handleSucceededStatus(),
+                'Failed' => $this->handleFailedStatus(),
+                'Unconfirmed' => $this->handleUnconfirmedStatus(),
+                'UnconfirmedBySupplier' => $this->handleUnconfirmedBySupplierStatus(),
+                'BookingInProgress' => $this->handleBookingInProgressStatus(),
+                'Duplicate' => $this->handleDuplicateStatus(),
+                default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
+            };
+        }
     }
 
     private function handleSucceededStatus(): void

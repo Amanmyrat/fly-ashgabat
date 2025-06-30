@@ -69,17 +69,20 @@ class XMLAgencyService
         }
     }
 
+    /**
+     * @throws \DOMException
+     */
     private function createElement(string $name, DOMElement $parent, DOMDocument $dom): DOMElement
     {
         // Handle special XML Agency methods with proper namespaces
-        if (in_array($name, ['AeroSearch', 'AeroBook', 'ConfirmBook', 'AeroCancel', 'AeroTicket'])) {
+        if (in_array($name, ['AeroSearch', 'AeroBook', 'ConfirmBook'])) {
             $element = $dom->createElementNS('http://tempuri.org/', $name);
             $parent->appendChild($element);
             return $element;
         }
 
         // Handle credentials block
-        if ($name === 'credentials') {
+        if ($name === 'credentials' || $name === 'authInfo') {
             $element = $dom->createElement($name);
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
@@ -105,6 +108,15 @@ class XMLAgencyService
             return $element;
         }
 
+        // Handle confirm booking params block
+        if ($name === 'confirmParams') {
+            $element = $dom->createElement($name);
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.BookInfo.ConfirmBook');
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
+            $parent->appendChild($element);
+            return $element;
+        }
+
         // Determine the correct prefix based on parent
         $prefix = $this->getElementPrefix($name, $parent);
         if ($prefix) {
@@ -121,11 +133,10 @@ class XMLAgencyService
 
     private function createTextElement(string $name, $value, DOMElement $parent, DOMDocument $dom): void
     {
+        $element = $this->createElement($name, $parent, $dom);
         if ($value === null) {
-            $element = $this->createElement($name, $parent, $dom);
             $element->setAttributeNS('http://www.w3.org/2001/XMLSchema-instance', 'i:nil', 'true');
         } else {
-            $element = $this->createElement($name, $parent, $dom);
             $element->textContent = $value;
         }
     }
@@ -135,7 +146,7 @@ class XMLAgencyService
         // Get parent name without namespace prefix for easier comparison
         $parentName = $parent->localName ?? $parent->nodeName;
 
-        if ($parentName === 'credentials') {
+        if ($parentName === 'credentials' || $parentName === 'authInfo') {
             if (in_array($name, ['ApiLogin', 'ApiPassword', 'AuthExtendedData', 'Currency', 'DeviceId', 'Language', 'TokenGuid'])) {
                 return 'a';
             }
@@ -149,6 +160,12 @@ class XMLAgencyService
 
         if ($parentName === 'aeroBookParams') {
             if (in_array($name, ['ClientReference', 'CustomerFIO', 'Email', 'ExtendedParams', 'Marker', 'OfferCode', 'Partner', 'PaxList', 'Phone', 'SearchGuid', 'SelectedServices', 'SelectedTariffs', 'Utm'])) {
+                return 'a';
+            }
+        }
+
+        if ($parentName === 'confirmParams') {
+            if (in_array($name, ['BookGuid', 'BookId', 'Price'])) {
                 return 'a';
             }
         }
@@ -214,11 +231,7 @@ class XMLAgencyService
         }
     }
 
-    private function
-
-
-
-    makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
+    private function makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
     {
         $actionUrl = config('xmlagency.soap_actions.' . $soapAction);
 
@@ -257,7 +270,6 @@ class XMLAgencyService
             $dom = new DOMDocument();
             $dom->loadXML($xmlString);
 
-            // Remove the dd() and use proper XML parsing
             $xpath = new \DOMXPath($dom);
 
             // Register namespaces
@@ -267,15 +279,14 @@ class XMLAgencyService
             $xpath->registerNamespace('common', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
             $xpath->registerNamespace('b', 'http://schemas.datacontract.org/2004/07/SiteCity.Common');
 
-            // Get the main result element - handle both search and book responses
-            $resultNode = $xpath->query('//temp:AeroSearchResult')->item(0);
-            if (!$resultNode) {
-                $resultNode = $xpath->query('//temp:AeroBookResult')->item(0);
+            // Get the main result element - dynamically find any Result element in temp namespace
+            $resultNodes = $xpath->query("//*[namespace-uri()='http://tempuri.org/' and contains(local-name(), 'Result')]");
+
+            if ($resultNodes->length === 0) {
+                throw new \Exception('Could not find any Result element in temp namespace in response');
             }
 
-            if (!$resultNode) {
-                throw new \Exception('Could not find AeroSearchResult or AeroBookResult in response');
-            }
+            $resultNode = $resultNodes->item(0);
 
             return $this->domNodeToArray($resultNode, $xpath);
 

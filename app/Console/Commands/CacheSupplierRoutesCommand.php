@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\CacheSupplierRoutesJob;
+use App\Jobs\TFusion\CacheSupplierRoutesJob;
 use Illuminate\Console\Command;
 
 class CacheSupplierRoutesCommand extends Command
@@ -16,4 +16,4 @@ class CacheSupplierRoutesCommand extends Command
         CacheSupplierRoutesJob::dispatch();
         $this->info('Job dispatched successfully!');
     }
-} 
+}

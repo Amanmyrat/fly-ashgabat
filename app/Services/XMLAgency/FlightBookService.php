@@ -4,15 +4,12 @@ namespace App\Services\XMLAgency;
 
 use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
-use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
-
 use App\Http\Requests\XMLAgency\AeroBookRequestBuilder;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FlightBookService
@@ -30,10 +27,7 @@ class FlightBookService
      */
     public function processBooking(array $validatedData, ?User $user): array
     {
-        // Build AeroBook request (no need for flight offer data)
         $aeroBookRequest = (new AeroBookRequestBuilder($validatedData))->build();
-
-        // Send booking request to XMLAgency
         $aeroBookResponse = $this->xmlAgencyService->sendRequest($aeroBookRequest, 'AeroBook');
 
         if ($aeroBookResponse['ErrorCode']['value'] != "-1" || $aeroBookResponse['Success']['value'] != "true") {
@@ -47,24 +41,19 @@ class FlightBookService
 
         $bookingResult = $aeroBookResponse;
 
-        // Extract actual price from booking response
         $actualPrice = [
             'Amount' => $bookingResult['FullPrice']['value'],
             'Currency' => config('xmlagency.currency', 'EUR')
         ];
 
-        // Extract flight data from booking response
         $offers = $bookingResult['Offers']['OfferInfo'] ?? [];
         $firstOffer = is_array($offers) && isset($offers[0]) ? $offers[0] : $offers;
 
-        // Get all segments from the booking response
         $segments = $firstOffer['Segments']['OfferSegment'] ?? [];
-        // Ensure segments is an array
         if (!is_array($segments) || !isset($segments[0])) {
             $segments = [$segments];
         }
 
-        // Split segments into outward and return based on Rph
         $outwardSegments = [];
         $returnSegments = [];
 
@@ -76,10 +65,6 @@ class FlightBookService
             }
         }
 
-        // Determine if it's round-trip based on the presence of return segments
-        $isRoundTrip = !empty($returnSegments);
-
-        // Calculate origin and destination from segments
         $origin = ['Code' => 'Unknown'];
         $destination = ['Code' => 'Unknown'];
 
@@ -97,7 +82,6 @@ class FlightBookService
             ];
         }
 
-        // Build outward and return data using the same structure as FlightSearchService
         $outwardData = null;
         $returnData = null;
 
@@ -109,11 +93,10 @@ class FlightBookService
             $returnData = $this->buildJourneyData($returnSegments);
         }
 
-        // Create booking record
         $bookingData = [
             'user_id' => $user?->id ?? null,
-            'booking_reference' => $bookingResult['BookId']['value'], // Using BookId as booking_reference
-            'supplier_reference' => $bookingResult['BookGuid']['value'], // Using BookGuid as supplier_reference
+            'booking_reference' => $bookingResult['BookId']['value'],
+            'supplier_reference' => $bookingResult['BookGuid']['value'],
             'flight_type' => FlightSupplier::XMLAGENCY,
             'origin' => $origin,
             'destination' => $destination,
@@ -130,33 +113,29 @@ class FlightBookService
             throw new \Exception('Failed to create booking');
         }
 
-        // Create contact details (XMLAgency only needs email and phone)
         if (!empty($validatedData['contact_details'])) {
             $contactData = [
                 'email' => $validatedData['contact_details']['email'],
                 'phone' => $validatedData['contact_details']['phone'],
-                // Set nullable fields to null for XMLAgency
                 'gender' => null,
-                'firstname' => null,  
+                'firstname' => null,
                 'lastname' => null,
                 'address' => null,
             ];
             $booking->contactDetail()->create($contactData);
         }
 
-        // Create travellers (map XMLAgency fields to model)
         if (!empty($validatedData['travellers'])) {
             $travellersData = [];
             foreach ($validatedData['travellers'] as $traveller) {
                 $travellersData[] = [
                     'birthdate' => $traveller['birthdate'],
                     'passport_number' => $traveller['passport_number'],
-                    'nationality' => $traveller['nationality'], // XMLAgency uses 3-letter codes
+                    'nationality' => $traveller['nationality'],
                     'firstname' => $traveller['firstname'],
                     'lastname' => $traveller['lastname'],
                     'middlename' => $traveller['middlename'] ?? null,
                     'gender' => $traveller['gender'],
-                    // Set XMLAgency-unnecessary fields to null
                     'passport_expiry_date' => null,
                     'passport_country' => null,
                 ];
@@ -176,8 +155,6 @@ class FlightBookService
         ];
     }
 
-
-
     /**
      * Build journey data from segments (similar to FlightSearchService)
      */
@@ -194,12 +171,10 @@ class FlightBookService
         $departureDateTime = Carbon::createFromFormat('d.m.Y H:i', $firstSegment['Departure']['Date']['value']);
         $arrivalDateTime = Carbon::createFromFormat('d.m.Y H:i', $lastSegment['Arrival']['Date']['value']);
 
-        // Calculate total duration using actual departure and arrival times
         $totalMinutes = $departureDateTime->diffInMinutes($arrivalDateTime);
         $totalHours = intval($totalMinutes / 60);
         $remainingMinutes = $totalMinutes % 60;
 
-        // Calculate stops
         $stops = [];
         $stopsCount = count($segments) - 1;
 
@@ -237,10 +212,8 @@ class FlightBookService
             ];
         }
 
-        // Build segments data
         $segmentsData = [];
         foreach ($segments as $segment) {
-            // Handle baggage information (might not be present)
             $checkedBaggage = null;
             if (isset($segment['Baggage'])) {
                 $baggageType = $segment['Baggage']['BaggageType']['value'] ?? 'Unknown';
@@ -253,7 +226,6 @@ class FlightBookService
                 ];
             }
 
-            // Handle cabin baggage information (might not be present)
             $cabinBaggage = null;
             if (isset($segment['CabinBaggage'])) {
                 $cabinBaggageType = $segment['CabinBaggage']['BaggageType']['value'] ?? 'Unknown';
@@ -330,18 +302,5 @@ class FlightBookService
             'pieces' => $count . ' piece' . ($count > 1 ? 's' : ''),
             default => $count . ' ' . $type
         };
-    }
-
-    /**
-     * Get booking details
-     */
-    public function getBookingDetails(string $bookId): array
-    {
-        $booking = FlightBooking::with('tickets')
-            ->where('booking_reference', $bookId)
-                            ->where('flight_type', FlightSupplier::XMLAGENCY)
-            ->first();
-
-        return $booking ? ['success' => true, 'data' => $booking] : ['success' => false, 'message' => 'Booking not found'];
     }
 }

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\TFusion;
 
+use App\Enum\FlightSupplier;
 use App\Models\FlightBooking;
 use App\Services\TravelFusion\Requests\StartBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
@@ -29,14 +30,16 @@ class StartBookingJob implements ShouldQueue
      */
     public function handle(TravelFusionService $travelFusionService)
     {
-        Log::info("Start booking for: {$this->booking->booking_reference}");
+        if ($this->booking->flight_type == FlightSupplier::TFUSION->value) {
+            Log::info("Start booking for: {$this->booking->booking_reference}");
 
-        $startBookingRequest = (new StartBookingRequestBuilder([
-            'tf_booking_reference' => $this->booking->booking_reference,
-            'price' => $this->booking->price
-        ]))->build();
+            $startBookingRequest = (new StartBookingRequestBuilder([
+                'tf_booking_reference' => $this->booking->booking_reference,
+                'price' => $this->booking->price
+            ]))->build();
 
-        $startBookingResponse = $travelFusionService->sendRequest($startBookingRequest);
-        Log::info($startBookingResponse);
+            $startBookingResponse = $travelFusionService->sendRequest($startBookingRequest);
+            Log::info($startBookingResponse);
+        }
     }
 }

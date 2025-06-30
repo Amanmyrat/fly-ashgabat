@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\TFusion;
 
 use App\Services\TravelFusion\Requests\GetBranchSupplierListRequestBuilder;
 use App\Services\TravelFusion\Requests\ListSupplierRoutesRequestBuilder;

@@ -5,12 +5,15 @@ namespace App\Filament\Resources;
 use App;
 use App\Enum\BookingStatus;
 use App\Filament\Resources\BookingResource\Pages;
-use App\Jobs\CheckBookingStatusJob;
-use App\Jobs\GenerateTicketJob;
-use App\Jobs\StartBookingJob;
+use App\Jobs\TFusion\CheckBookingStatusJob;
+use App\Jobs\TFusion\GenerateTicketJob;
+use App\Jobs\TFusion\StartBookingJob;
+use App\Services\AirportLocatorService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Actions;
+use Filament\Infolists\Components\Actions\Action;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
@@ -20,12 +23,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use App\Services\AirportLocatorService;
 use Illuminate\Database\Eloquent\Builder;
-
-use Filament\Infolists\Components\Actions;
-use Filament\Infolists\Components\Actions\Action;
-use function VeeWee\Xml\Xslt\Configurator\functions;
 
 
 class FlightBookingResource extends Resource

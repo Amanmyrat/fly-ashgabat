@@ -24,9 +24,18 @@ class FlightSearchService
     {
         $requestBuilder = new AeroSearchRequestBuilder($validatedData);
         $requestData = $requestBuilder->build();
-        $response = $this->xmlAgencyService->sendRequest($requestData, 'AeroSearch');
+        $searchResponse = $this->xmlAgencyService->sendRequest($requestData, 'AeroSearch');
 
-        return $this->processResponse($response, $validatedData);
+        if ($searchResponse['Success']['value'] != "true") {
+            $errorMessage = $searchResponse['AeroSearchResult']['ErrorString'] ?? 'Search failed';
+            return [
+                'success' => false,
+                'message' => $errorMessage,
+                'data' => $searchResponse
+            ];
+        }
+
+        return $this->processResponse($searchResponse, $validatedData);
     }
 
     private function processResponse(array $response, array $requestData): array

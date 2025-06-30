@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Http\Requests\StartBookingRequest;
-use App\Jobs\CheckBookingStatusJob;
-use App\Jobs\StartBookingJob;
+use App\Jobs\TFusion\CheckBookingStatusJob;
+use App\Jobs\TFusion\StartBookingJob;
+use App\Jobs\XmlAgency\ConfirmBookingJob;
 use App\Models\FlightBooking;
 use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\StripePaymentService;
@@ -24,10 +26,11 @@ class BookController extends BaseController
     private array $countries;
 
     public function __construct(
-        protected FlightBookService $flightBookService,
+        protected FlightBookService              $flightBookService,
         protected AirportDataRepositoryInterface $airportDataRepository,
-        protected StripePaymentService $stripePaymentService
-    ) {
+        protected StripePaymentService           $stripePaymentService
+    )
+    {
         $this->airports = $this->airportDataRepository->getAllAirports();
         $this->countries = $this->airportDataRepository->getAllCountries();
     }
@@ -107,7 +110,7 @@ class BookController extends BaseController
 
             // Handle Stripe payment verification
             if ($booking->payment_type == PaymentType::STRIPE) {
-                    $sessionId = $request->validated('session_id');
+                $sessionId = $request->validated('session_id');
 
                 // Validate session ID is provided
                 if (empty($sessionId)) {
@@ -141,12 +144,17 @@ class BookController extends BaseController
                 ]);
             }
 
-            // Start booking process for BALANCE, STRIPE, or POST_PAY
-            if (in_array($booking->payment_type, [PaymentType::BALANCE, PaymentType::STRIPE, PaymentType::POST_PAY])) {
-                StartBookingJob::dispatch($booking);
-                CheckBookingStatusJob::dispatch($booking);
+            if (in_array($booking->payment_type, [PaymentType::BALANCE, PaymentType::STRIPE])) {
+                switch ($booking->flight_type) {
+                    case FlightSupplier::TFUSION:
+                        StartBookingJob::dispatch($booking);
+                        CheckBookingStatusJob::dispatch($booking);
+                        break;
+                    case FlightSupplier::XMLAGENCY:
+                        ConfirmBookingJob::dispatch($booking);
+                        break;
+                }
             }
-
             return response()->json([
                 'success' => true,
                 'message' => 'Booking process started successfully'
@@ -253,8 +261,8 @@ class BookController extends BaseController
             'code' => $code,
             'airport' => $airportData['airportName'][$locale]
                 ?? $airportData['cityName'][$locale]
-                ?? $airportData['airportName']['en']
-                ?? $airportData['cityName']['en'],
+                    ?? $airportData['airportName']['en']
+                    ?? $airportData['cityName']['en'],
             'country' => isset($this->countries[$countryCode])
                 ? ($this->countries[$countryCode]['name'][$locale]
                     ?? $this->countries[$countryCode]['name']['en'])
