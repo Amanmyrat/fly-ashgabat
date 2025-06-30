@@ -78,6 +78,10 @@ class ProcessTermsRequestBuilder
                 'Name' => 'UserData',
                 'Value' => $this->buildUserData(),
             ],
+            [
+                'Name' => 'UseTFPrepay',
+                'Value' => 'Always',
+            ],
         ];
 
         // Add general booking options to BookingProfile
