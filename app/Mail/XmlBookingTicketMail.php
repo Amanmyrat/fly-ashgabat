@@ -6,30 +6,19 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
-
-class BookingTicketMail extends Mailable
+class XmlBookingTicketMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public array $tickets;
-    public array $bookingData;
-
-    public function __construct(array $tickets, array $bookingData)
+    public function __construct(protected array $tickets, protected array $ticketData)
     {
-        $this->tickets = $tickets;
-        $this->bookingData = $bookingData;
     }
 
-    public function build(): BookingTicketMail
+    public function build(): XmlBookingTicketMail
     {
         $email = $this->subject('Вы оплатили заказ на Fly-Ashgabat!')
-            ->view('emails.booking_ticket')
-            ->with([
-                'bookingData' => $this->bookingData,
-            ]);
+            ->view('emails.xml_booking_ticket')
+            ->with($this->ticketData);
 
         // Process each ticket and attach the corresponding PDF
         foreach ($this->tickets as $ticket) {

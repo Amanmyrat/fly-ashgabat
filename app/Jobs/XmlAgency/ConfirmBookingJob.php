@@ -5,7 +5,6 @@ namespace App\Jobs\XmlAgency;
 use App\Enum\BookingStatus;
 use App\Enum\PaymentType;
 use App\Http\Requests\XMLAgency\ConfirmBookRequestBuilder;
-use App\Jobs\TFusion\GenerateTicketJob;
 use App\Models\FlightBooking;
 use App\Services\XMLAgency\XMLAgencyService;
 use Illuminate\Bus\Queueable;
@@ -20,11 +19,8 @@ class ConfirmBookingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected FlightBooking $booking;
-
-    public function __construct(FlightBooking $booking)
+    public function __construct(protected FlightBooking $booking)
     {
-        $this->booking = $booking;
     }
 
     /**
@@ -37,31 +33,32 @@ class ConfirmBookingJob implements ShouldQueue
         $confirmBookResponse = $xmlAgencyService->sendRequest($confirmBookRequest, 'ConfirmBook');
 
         if ($confirmBookResponse['Success']['value'] != "true") {
-            $errorMessage = $aeroBookResponse['ConfirmBookResult']['ErrorString'] ?? 'Search failed';
+            $errorMessage = $aeroBookResponse['ConfirmBookResult']['ErrorString'] ?? 'Confirm failed';
 
             \Log::info($errorMessage);
+
+            GetBookingDetailsJob::dispatch($this->booking);
             return;
         }
-
-        $status = $response['OrderInfoData']['BookingStatus']['value'] ?? null;
+        $status = $confirmBookResponse['OrderInfoData']['BookingStatus']['value'];
 
         Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
         match ($status) {
-            'Booked' => $this->handleSucceededStatus(),
+            'Booked' => $this->handleSucceededStatus($confirmBookResponse),
             'Cancelled' => $this->handleFailedStatus(),
             'WaitToBooking' => $this->handleBookingInProgressStatus(),
             default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
         };
     }
 
-    private function handleSucceededStatus(): void
+    private function handleSucceededStatus(array $bookingInfo): void
     {
         // Check if booking is already succeeded to prevent duplicate ticket generation
-        if ($this->booking->status === BookingStatus::SUCCEEDED) {
-            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
-            return;
-        }
+//        if ($this->booking->status === BookingStatus::SUCCEEDED) {
+//            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
+//            return;
+//        }
 
         $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 
@@ -69,6 +66,8 @@ class ConfirmBookingJob implements ShouldQueue
             $amountToDeduct = $this->booking->price['Amount'];
             $this->booking->user->decrement('balance', $amountToDeduct);
         }
+
+        GenerateTicketJob::dispatch($this->booking, $bookingInfo);
     }
 
     private function handleFailedStatus(): void

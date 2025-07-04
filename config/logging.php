@@ -138,6 +138,17 @@ return [
             ],
         ],
 
+        'stripe' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/stripe/stripe.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
     ],
 
 ];

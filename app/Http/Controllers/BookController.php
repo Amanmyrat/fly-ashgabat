@@ -99,9 +99,9 @@ class BookController extends BaseController
             $booking = $request->getBooking();
             $user = $this->getAuthenticatedUser();
 
-            if ($booking->status != BookingStatus::PENDING) {
-                return $this->errorResponse('Booking is not in pending status', 400);
-            }
+//            if ($booking->status != BookingStatus::PENDING) {
+//                return $this->errorResponse('Booking is not in pending status', 400);
+//            }
 
             // Check ownership for registered users
             if ($user && $booking->user_id !== $user->id) {

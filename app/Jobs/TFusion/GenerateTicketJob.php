@@ -47,7 +47,7 @@ class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(TravelFusionService $travelFusionService)
     {
-        if ($this->booking->flight_type == FlightSupplier::TFUSION->value) {
+        if ($this->booking->flight_type == FlightSupplier::TFUSION) {
             Log::info("Generate tickets for: {$this->booking->booking_reference} - Job Attempt: " . $this->attempts());
 
             // Check if tickets already exist to prevent duplicate generation

@@ -44,7 +44,7 @@ class CheckBookingStatusJob implements ShouldQueue, ShouldBeUnique
      */
     public function handle(TravelFusionService $travelFusionService): void
     {
-        if($this->booking->flight_type == FlightSupplier::TFUSION->value){
+        if($this->booking->flight_type == FlightSupplier::TFUSION){
             Log::info("Checking booking status for: {$this->booking->booking_reference}. Try {$this->attempts()}");
 
             $checkBookingRequest = (new CheckBookingRequestBuilder($this->booking->booking_reference))->build();

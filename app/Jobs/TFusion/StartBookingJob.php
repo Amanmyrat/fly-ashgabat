@@ -30,7 +30,7 @@ class StartBookingJob implements ShouldQueue
      */
     public function handle(TravelFusionService $travelFusionService)
     {
-        if ($this->booking->flight_type == FlightSupplier::TFUSION->value) {
+        if ($this->booking->flight_type == FlightSupplier::TFUSION) {
             Log::info("Start booking for: {$this->booking->booking_reference}");
 
             $startBookingRequest = (new StartBookingRequestBuilder([
