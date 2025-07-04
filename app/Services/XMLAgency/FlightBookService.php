@@ -73,8 +73,6 @@ class FlightBookService
             }
         }
 
-        dd($outwardSegments,  $returnSegments);
-
         $origin = ['Code' => 'Unknown'];
         $destination = ['Code' => 'Unknown'];
 
