@@ -72,38 +72,35 @@ class FlightSearchService
         $offerInfo = $flight['Offers']['OfferInfo'];
         $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
 
-        $allSegments = [];
-
-        foreach ($offerInfo as $offer) {
-            if (isset($offer['Segments']['OfferSegment'])) {
-                $segments = $offer['Segments']['OfferSegment'];
-                $segments = is_array($segments) && isset($segments[0]) ? $segments : [$segments];
-                $allSegments = array_merge($allSegments, $segments);
-            }
-        }
-
-        $segments = $allSegments;
-
-        // Determine if it's round-trip based on request
-        $isRoundTrip = ($requestData['flight_type'] ?? FlightType::ONE_WAY->value) === FlightType::ROUND_TRIP->value;
-
-        // Split segments into outward and return
+        // Split segments into outward and return based on offer-level or segment-level Rph
         $outwardSegments = [];
         $returnSegments = [];
 
-        if ($isRoundTrip) {
-            // For round-trip, split segments by Rph (assuming Rph=1 for outward, Rph=2 for return)
-            foreach ($segments as $segment) {
-                if ($segment['Rph']['value'] == '1') {
-                    $outwardSegments[] = $segment;
+        foreach ($offerInfo as $index => $offer) {
+            if (isset($offer['Segments']['OfferSegment'])) {
+                $segments = $offer['Segments']['OfferSegment'];
+                $segments = is_array($segments) && isset($segments[0]) ? $segments : [$segments];
+
+                // Check if there's an Rph at the offer level
+                if (isset($offer['Rph']['value'])) {
+                    // Use offer-level Rph to determine journey type
+                    if ($offer['Rph']['value'] == '1') {
+                        $outwardSegments = array_merge($outwardSegments, $segments);
+                    } else {
+                        $returnSegments = array_merge($returnSegments, $segments);
+                    }
                 } else {
-                    $returnSegments[] = $segment;
+                    // Fall back to segment-level Rph checking
+                    foreach ($segments as $segment) {
+                        if (isset($segment['Rph']['value']) && $segment['Rph']['value'] == '1') {
+                            $outwardSegments[] = $segment;
+                        } else {
+                            $returnSegments[] = $segment;
+                        }
+                    }
                 }
             }
-        } else {
-            $outwardSegments = $segments;
         }
-
         // Get origin and destination
         $origin = $outwardSegments[0]['Departure']['Iata']['value'];
         $destination = end($outwardSegments)['Arrival']['Iata']['value'];
@@ -119,6 +116,8 @@ class FlightSearchService
             ],
             'Outward' => $this->buildJourneyData($outwardSegments, $airportsData, $airlinesData),
         ];
+
+        $isRoundTrip = ($requestData['flight_type'] ?? FlightType::ONE_WAY->value) === FlightType::ROUND_TRIP->value;
 
         // Add return journey if round-trip
         if ($isRoundTrip && !empty($returnSegments)) {
