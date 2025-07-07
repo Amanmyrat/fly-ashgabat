@@ -138,6 +138,17 @@ return [
             ],
         ],
 
+        'xmlagency' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/xmlagency/xmlagency.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
         'stripe' => [
             'driver' => 'daily',
             'path' => storage_path('logs/stripe/stripe.log'),

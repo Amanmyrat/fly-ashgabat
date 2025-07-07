@@ -282,13 +282,15 @@ class XMLAgencyService
      */
     private function makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
     {
+        $this->logRequest($endpoint, $xmlContent);
+
         $actionUrl = config('xmlagency.soap_actions.' . $soapAction);
 
         if (!$actionUrl) {
             throw new Exception("Unknown SOAP action: {$soapAction}");
         }
 
-        Log::info('XML Agency Request', ['xml' => $xmlContent, 'action' => $soapAction, 'action_url' => $actionUrl]);
+//        Log::info('XML Agency Request', ['xml' => $xmlContent, 'action' => $soapAction, 'action_url' => $actionUrl]);
 
         $response = Http::timeout(config('xmlagency.timeout'))
             ->withHeaders([
@@ -301,8 +303,9 @@ class XMLAgencyService
                 'body' => $xmlContent
             ]);
 
-        Log::info('XML Agency Response', ['body' => $response->body()]);
+//        Log::info('XML Agency Response', ['body' => $response->body()]);
 
+        $this->logResponse($endpoint, $response->body());
         if ($response->successful()) {
             return $this->parseXmlResponse($response->body());
         }
@@ -402,5 +405,40 @@ class XMLAgencyService
         }
 
         return $result;
+    }
+
+    private function logRequest(string $endpoint, string $xmlContent): void
+    {
+        // Parse and format the request XML
+        $requestXml = new \SimpleXMLElement($xmlContent);
+        $dom = dom_import_simplexml($requestXml)->ownerDocument;
+        $dom->formatOutput = true;
+        $dom->preserveWhiteSpace = false;
+        $formattedRequestXml = $dom->saveXML();
+
+        // Clean up excessive newlines and spaces
+        $formattedRequestXml = preg_replace('/\n\s*\n/', "\n", $formattedRequestXml);
+        $formattedRequestXml = preg_replace('/\s{2,}/', ' ', $formattedRequestXml);
+
+        Log::channel('xmlagency')->info("Request to {$endpoint}");
+        Log::channel('xmlagency')->info($formattedRequestXml);
+    }
+
+    private function logResponse(string $endpoint, string $responseBody): void
+    {
+        try {
+            // Try to parse and format the XML response
+            $xml = new \SimpleXMLElement($responseBody);
+            $dom = dom_import_simplexml($xml)->ownerDocument;
+            $dom->formatOutput = true;
+            $formattedXml = $dom->saveXML();
+
+            Log::channel('xmlagency')->info("Response from {$endpoint}");
+            Log::channel('xmlagency')->info($formattedXml);
+        } catch (\Exception $e) {
+            // If response is not valid XML, log it as is
+            Log::channel('xmlagency')->info("Response from {$endpoint}");
+            Log::channel('xmlagency')->info($responseBody);
+        }
     }
 }
