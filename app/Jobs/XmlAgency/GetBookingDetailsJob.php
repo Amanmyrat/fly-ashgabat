@@ -44,10 +44,11 @@ class GetBookingDetailsJob implements ShouldQueue
 
         $status = $orderInfoResponse['OrderInfoData']['BookingStatus']['value'];
 
-        Log::info("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
+        Log::warning("Booking Reference: {$this->booking->booking_reference}, Status: {$status}");
 
         match ($status) {
             'Booked' => $this->handleSucceededStatus($orderInfoResponse),
+            'Cancelled' => $this->handleFailedStatus(),
             'WaitToBooking' => $this->handleBookingInProgressStatus(),
             default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
         };
@@ -56,12 +57,6 @@ class GetBookingDetailsJob implements ShouldQueue
 
     private function handleSucceededStatus(array $bookingInfo): void
     {
-        // Check if booking is already succeeded to prevent duplicate ticket generation
-        if ($this->booking->status === BookingStatus::SUCCEEDED) {
-            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
-            return;
-        }
-
         $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 
         if ($this->booking->payment_type == PaymentType::BALANCE && $this->booking->user) {
@@ -70,6 +65,11 @@ class GetBookingDetailsJob implements ShouldQueue
         }
 
         GenerateTicketJob::dispatch($this->booking, $bookingInfo);
+    }
+
+    private function handleFailedStatus(): void
+    {
+        $this->booking->update(['status' => BookingStatus::FAILED->value]);
     }
 
     /**
