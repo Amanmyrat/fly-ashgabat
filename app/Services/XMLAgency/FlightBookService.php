@@ -30,7 +30,7 @@ class FlightBookService
         $aeroBookRequest = (new AeroBookRequestBuilder($validatedData))->build();
         $aeroBookResponse = $this->xmlAgencyService->sendRequest($aeroBookRequest, 'AeroBook');
 
-        if ($aeroBookResponse['ErrorCode']['value'] != "-1" || $aeroBookResponse['Success']['value'] != "true") {
+        if ($aeroBookResponse['Success']['value'] != "true") {
             $errorMessage = $aeroBookResponse['AeroBookResult']['ErrorString'] ?? 'Booking failed';
             return [
                 'success' => false,

@@ -22,5 +22,6 @@ return [
         'AeroBook' => 'http://tempuri.org/ISiteAvia/AeroBook',
         'ConfirmBook' => 'http://tempuri.org/ISiteBookInfo/ConfirmBook',
         'OrderInfo' => 'http://tempuri.org/ISiteBookInfo/OrderInfo',
+        'AeroPrebook' => 'http://tempuri.org/ISiteAvia/AeroPrebook',
     ],
 ];

@@ -4,6 +4,11 @@ namespace App\Services\XMLAgency;
 
 use DOMDocument;
 use DOMElement;
+use DOMException;
+use DOMNode;
+use DOMXPath;
+use Exception;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -17,7 +22,7 @@ class XMLAgencyService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendRequest(array $requestData, string $soapAction): array
     {
@@ -27,7 +32,7 @@ class XMLAgencyService
     }
 
     /**
-     * @throws \DOMException
+     * @throws DOMException
      */
     private function buildSoapXml(array $requestData): string
     {
@@ -47,6 +52,9 @@ class XMLAgencyService
         return $dom->saveXML();
     }
 
+    /**
+     * @throws DOMException
+     */
     private function arrayToXml(array $data, DOMElement $parent, DOMDocument $dom): void
     {
         foreach ($data as $key => $value) {
@@ -70,12 +78,12 @@ class XMLAgencyService
     }
 
     /**
-     * @throws \DOMException
+     * @throws DOMException
      */
     private function createElement(string $name, DOMElement $parent, DOMDocument $dom): DOMElement
     {
         // Handle special XML Agency methods with proper namespaces
-        if (in_array($name, ['AeroSearch', 'AeroBook', 'ConfirmBook', 'OrderInfo'])) {
+        if (in_array($name, ['AeroSearch', 'AeroPrebook', 'AeroBook', 'ConfirmBook', 'OrderInfo'])) {
             $element = $dom->createElementNS('http://tempuri.org/', $name);
             $parent->appendChild($element);
             return $element;
@@ -94,6 +102,15 @@ class XMLAgencyService
         if ($name === 'aeroSearchParams') {
             $element = $dom->createElement($name);
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.Avia.Search');
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
+            $parent->appendChild($element);
+            return $element;
+        }
+
+        // Handle pre booking params block
+        if ($name === 'aeroPrebookParams') {
+            $element = $dom->createElement($name);
+            $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:a', 'http://schemas.datacontract.org/2004/07/SiteCity.Avia.Prebook');
             $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:i', 'http://www.w3.org/2001/XMLSchema-instance');
             $parent->appendChild($element);
             return $element;
@@ -140,6 +157,9 @@ class XMLAgencyService
         return $element;
     }
 
+    /**
+     * @throws DOMException
+     */
     private function createTextElement(string $name, $value, DOMElement $parent, DOMDocument $dom): void
     {
         $element = $this->createElement($name, $parent, $dom);
@@ -167,7 +187,7 @@ class XMLAgencyService
             }
         }
 
-        if ($parentName === 'aeroBookParams') {
+        if ($parentName === 'aeroPrebookParams' || $parentName === 'orderInfoParams') {
             if (in_array($name, ['ClientReference', 'CustomerFIO', 'Email', 'ExtendedParams', 'Marker', 'OfferCode', 'Partner', 'PaxList', 'Phone', 'SearchGuid', 'SelectedServices', 'SelectedTariffs', 'Utm'])) {
                 return 'a';
             }
@@ -208,7 +228,7 @@ class XMLAgencyService
     }
 
     /**
-     * @throws \DOMException
+     * @throws DOMException
      */
     private function createSearchFlights(array $flightData, DOMElement $parent, DOMDocument $dom): void
     {
@@ -228,6 +248,9 @@ class XMLAgencyService
         }
     }
 
+    /**
+     * @throws DOMException
+     */
     private function createPaxList(array $paxData, DOMElement $parent, DOMDocument $dom): void
     {
         // Create PaxList element with proper namespace
@@ -243,12 +266,16 @@ class XMLAgencyService
         }
     }
 
+    /**
+     * @throws ConnectionException
+     * @throws Exception
+     */
     private function makeRequest(string $endpoint, string $xmlContent, string $soapAction): array
     {
         $actionUrl = config('xmlagency.soap_actions.' . $soapAction);
 
         if (!$actionUrl) {
-            throw new \Exception("Unknown SOAP action: {$soapAction}");
+            throw new Exception("Unknown SOAP action: {$soapAction}");
         }
 
         Log::info('XML Agency Request', ['xml' => $xmlContent, 'action' => $soapAction, 'action_url' => $actionUrl]);
@@ -270,7 +297,7 @@ class XMLAgencyService
             return $this->parseXmlResponse($response->body());
         }
 
-        throw new \Exception('XML Agency request failed: ' . $response->body());
+        throw new Exception('XML Agency request failed: ' . $response->body());
     }
 
     /**
@@ -282,7 +309,7 @@ class XMLAgencyService
             $dom = new DOMDocument();
             $dom->loadXML($xmlString);
 
-            $xpath = new \DOMXPath($dom);
+            $xpath = new DOMXPath($dom);
 
             // Register namespaces
             $xpath->registerNamespace('s', 'http://www.w3.org/2003/05/soap-envelope');
@@ -295,23 +322,23 @@ class XMLAgencyService
             $resultNodes = $xpath->query("//*[namespace-uri()='http://tempuri.org/' and contains(local-name(), 'Result')]");
 
             if ($resultNodes->length === 0) {
-                throw new \Exception('Could not find any Result element in temp namespace in response');
+                throw new Exception('Could not find any Result element in temp namespace in response');
             }
 
             $resultNode = $resultNodes->item(0);
 
             return $this->domNodeToArray($resultNode, $xpath);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to parse XML response', ['error' => $e->getMessage(), 'xml' => $xmlString]);
-            throw new \Exception('Failed to parse XML response: ' . $e->getMessage());
+            throw new Exception('Failed to parse XML response: ' . $e->getMessage());
         }
     }
 
     /**
      * Convert DOM node to array recursively
      */
-    private function domNodeToArray(\DOMNode $node, \DOMXPath $xpath): array
+    private function domNodeToArray(DOMNode $node, DOMXPath $xpath): array
     {
         $result = [];
 

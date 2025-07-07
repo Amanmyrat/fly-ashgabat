@@ -7,9 +7,10 @@ use App\Http\Controllers\CharterFlightController;
 use App\Http\Controllers\GeoDataController;
 use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchController;
 use App\Http\Controllers\TFusion\FlightBookController;
-use App\Http\Controllers\TFusion\FlightProcessController;
+use App\Http\Controllers\TFusion\FlightProcessController as TFusionFlightProcessController;
 use App\Http\Controllers\TFusion\FlightSearchController as TFusionSearchController;
 use App\Http\Controllers\XMLAgency\FlightSearchController as XMLAgencyFlightSearchController;
+use App\Http\Controllers\XMLAgency\FlightProcessController as XMLAgencyFlightProcessController;
 use App\Http\Controllers\XMLAgency\FlightBookController as XMLAgencyFlightBookController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
@@ -34,12 +35,13 @@ Route::group(['prefix' => 'nemo'], function () {
 Route::group(['prefix' => 'tfusion'], function () {
     Route::get('search/flights', [TFusionSearchController::class, 'search']);
     Route::get('search/test', [TFusionSearchController::class, 'searchTest']);
-    Route::post('process/flights', [FlightProcessController::class, 'processDetails']);
+    Route::post('process/flights', [TFusionFlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [FlightBookController::class, 'processBooking']);
 });
 
 Route::group(['prefix' => 'xmlagency'], function () {
     Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
+    Route::post('process/flights', [XMLAgencyFlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [XMLAgencyFlightBookController::class, 'processBooking']);
 });
 

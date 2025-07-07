@@ -23,7 +23,7 @@ class FlightBookRequest extends FormRequest
             abort(400, 'The search session has expired. Please start a new search.');
         }
 
-        $rules = [
+        return [
             'search_guid' => [
                 'required',
                 'string',
@@ -94,8 +94,6 @@ class FlightBookRequest extends FormRequest
                 'max:20', // Full phone number with country code
             ],
         ];
-
-        return $rules;
     }
 
     /**
