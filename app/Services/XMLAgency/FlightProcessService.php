@@ -43,9 +43,59 @@ class FlightProcessService
         $tariffs = [];
 
         if(isset($preBookResponse['Tariffs'])){
-            $tariffs = $preBookResponse['Tariffs'];
-
-            dd($tariffs);
+            $tariffsData = $preBookResponse['Tariffs'];
+            
+            if(isset($tariffsData['ServiceInfo'])){
+                foreach($tariffsData['ServiceInfo'] as $tariff){
+                    $features = [];
+                    
+                    // Parse the text to extract features
+                    if(isset($tariff['Text']['value'])){
+                        $textLines = explode("\n", trim($tariff['Text']['value']));
+                        
+                        foreach($textLines as $line){
+                            $line = trim($line);
+                            if(empty($line)) continue;
+                            
+                            $enabled = true;
+                            $withCharge = false;
+                            $text = '';
+                            
+                            if(str_starts_with($line, '+')){
+                                // Included feature
+                                $enabled = true;
+                                $withCharge = false;
+                                $text = trim(substr($line, 1));
+                            } elseif(str_starts_with($line, '-')){
+                                // Not included feature
+                                $enabled = false;
+                                $withCharge = false;
+                                $text = trim(substr($line, 1));
+                            } elseif(str_starts_with($line, '!')){
+                                // Feature with charge
+                                $enabled = true;
+                                $withCharge = true;
+                                $text = trim(substr($line, 1));
+                            }
+                            
+                            if(!empty($text)){
+                                $features[] = [
+                                    'text' => $text,
+                                    'enabled' => $enabled,
+                                    'withCharge' => $withCharge
+                                ];
+                            }
+                        }
+                    }
+                    
+                    $tariffs[] = [
+                        'id' => $tariff['Id']['value'] ?? null,
+                        'name' => $tariff['Name']['value'] ?? null,
+                        'price' => isset($tariff['Price']['value']) ? (float)$tariff['Price']['value'] : 0,
+                        'features' => $features
+                    ];
+                }
+            }
         }
 
         return [

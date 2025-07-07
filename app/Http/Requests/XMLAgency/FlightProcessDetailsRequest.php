@@ -16,12 +16,12 @@ class FlightProcessDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
-//        $searchGuid = $this->input('search_guid');
-//
-//        // Check if search session exists in XMLAgency format
-//        if ($searchGuid && !Cache::has('search_guid' . $searchGuid)) {
-//            abort(400, 'The search session has expired. Please start a new search.');
-//        }
+        $searchGuid = $this->input('search_guid');
+
+        // Check if search session exists in XMLAgency format
+        if ($searchGuid && !Cache::has('search_guid' . $searchGuid)) {
+            abort(400, 'The search session has expired. Please start a new search.');
+        }
 
         return [
             'search_guid' => [

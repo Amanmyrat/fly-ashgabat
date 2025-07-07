@@ -40,6 +40,14 @@ class AeroBookRequestBuilder
     {
         $contactDetails = $this->validatedData['contact_details'];
 
+        $selectedTariff = null;
+
+        if (isset($this->validatedData['selected_tariff'])){
+            $selectedTariff = [
+                'int' => $this->validatedData['selected_tariff']
+            ];
+        }
+
         return [
             'ClientReference' => $this->generateClientReference(),
             'CustomerFIO' => null, // XMLAgency docs show this can be null
@@ -52,7 +60,7 @@ class AeroBookRequestBuilder
             'Phone' => $contactDetails['phone'], // Already full phone with country code
             'SearchGuid' => $this->validatedData['search_guid'],
             'SelectedServices' => null,
-            'SelectedTariffs' => null,
+            'SelectedTariffs' => $selectedTariff,
             'Utm' => null,
         ];
     }

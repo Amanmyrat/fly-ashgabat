@@ -145,8 +145,13 @@ class XMLAgencyService
 
         // Determine the correct prefix based on parent
         $prefix = $this->getElementPrefix($name, $parent);
+
         if ($prefix) {
             $element = $dom->createElement($prefix . ':' . $name);
+
+            if ($name === 'SelectedTariffs') {
+                $element->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:b', 'http://schemas.microsoft.com/2003/10/Serialization/Arrays');
+            }
             $parent->appendChild($element);
             return $element;
         }
@@ -187,7 +192,8 @@ class XMLAgencyService
             }
         }
 
-        if ($parentName === 'aeroPrebookParams' || $parentName === 'orderInfoParams') {
+        if ($parentName === 'aeroPrebookParams' || $parentName === 'aeroBookParams') {
+//            dump($name);
             if (in_array($name, ['ClientReference', 'CustomerFIO', 'Email', 'ExtendedParams', 'Marker', 'OfferCode', 'Partner', 'PaxList', 'Phone', 'SearchGuid', 'SelectedServices', 'SelectedTariffs', 'Utm'])) {
                 return 'a';
             }
@@ -197,6 +203,10 @@ class XMLAgencyService
             if (in_array($name, ['BookGuid', 'BookId', 'Price'])) {
                 return 'a';
             }
+        }
+
+        if ($parentName === 'SelectedTariffs' || $parentName === 'a:SelectedTariffs') {
+            return 'b';
         }
 
         if ($parentName === 'PaxList' || $parentName === 'a:PaxList') {

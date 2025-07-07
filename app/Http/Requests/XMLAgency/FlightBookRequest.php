@@ -37,6 +37,9 @@ class FlightBookRequest extends FormRequest
                 'string',
                 Rule::in([PaymentType::BALANCE->value, PaymentType::POST_PAY->value, PaymentType::STRIPE->value]),
             ],
+            'selected_tariff' => [
+                'string',
+            ],
             // XMLAgency passenger data (minimal requirements)
             'travellers' => [
                 'required',
