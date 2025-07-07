@@ -46,13 +46,21 @@ class FlightBookService
             'Currency' => config('xmlagency.currency', 'EUR')
         ];
 
-        $offers = $bookingResult['Offers']['OfferInfo'] ?? [];
-        $firstOffer = is_array($offers) && isset($offers[0]) ? $offers[0] : $offers;
 
-        $segments = $firstOffer['Segments']['OfferSegment'] ?? [];
-        if (!is_array($segments) || !isset($segments[0])) {
-            $segments = [$segments];
+        $offerInfo = $bookingResult['Offers']['OfferInfo'];
+        $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
+
+        $allSegments = [];
+
+        foreach ($offerInfo as $offer) {
+            if (isset($offer['Segments']['OfferSegment'])) {
+                $segments = $offer['Segments']['OfferSegment'];
+                $segments = is_array($segments) && isset($segments[0]) ? $segments : [$segments];
+                $allSegments = array_merge($allSegments, $segments);
+            }
         }
+
+        $segments = $allSegments;
 
         $outwardSegments = [];
         $returnSegments = [];

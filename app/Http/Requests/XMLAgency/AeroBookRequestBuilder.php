@@ -50,14 +50,15 @@ class AeroBookRequestBuilder
 
         return [
             'ClientReference' => $this->generateClientReference(),
-            'CustomerFIO' => null, // XMLAgency docs show this can be null
+            'CustomerFIO' => null,
             'Email' => $contactDetails['email'],
             'ExtendedParams' => null,
             'Marker' => null,
             'OfferCode' => $this->validatedData['offer_code'],
             'Partner' => null,
             'PaxList' => $this->buildPaxList(),
-            'Phone' => $contactDetails['phone'], // Already full phone with country code
+            'Phone' => $contactDetails['phone']['code'].$contactDetails['phone']['number'],
+//            'Phone' => '+79871234567',
             'SearchGuid' => $this->validatedData['search_guid'],
             'SelectedServices' => null,
             'SelectedTariffs' => $selectedTariff,

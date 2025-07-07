@@ -57,10 +57,10 @@ class GetBookingDetailsJob implements ShouldQueue
     private function handleSucceededStatus(array $bookingInfo): void
     {
         // Check if booking is already succeeded to prevent duplicate ticket generation
-//        if ($this->booking->status === BookingStatus::SUCCEEDED) {
-//            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
-//            return;
-//        }
+        if ($this->booking->status === BookingStatus::SUCCEEDED) {
+            Log::info("Booking {$this->booking->booking_reference} already succeeded, skipping ticket generation");
+            return;
+        }
 
         $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 

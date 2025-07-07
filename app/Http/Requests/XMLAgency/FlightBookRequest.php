@@ -91,10 +91,11 @@ class FlightBookRequest extends FormRequest
                 'email',
                 'max:100',
             ],
-            'contact_details.phone' => [
+            'contact_details.phone.code' => [
                 'required',
-                'string',
-                'max:20', // Full phone number with country code
+            ],
+            'contact_details.phone.number' => [
+                'required',
             ],
         ];
     }

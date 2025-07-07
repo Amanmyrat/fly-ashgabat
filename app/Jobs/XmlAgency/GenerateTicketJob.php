@@ -45,10 +45,10 @@ class GenerateTicketJob implements ShouldQueue
             Log::info("Generate XMLAgency tickets for: {$this->booking->booking_reference} - Job Attempt: " . $this->attempts());
 
             // Check if tickets already exist to prevent duplicate generation
-//            if ($this->booking->tickets()->exists()) {
-//                Log::info("Tickets already exist for booking {$this->booking->booking_reference}, skipping generation");
-//                return;
-//            }
+            if ($this->booking->tickets()->exists()) {
+                Log::info("Tickets already exist for booking {$this->booking->booking_reference}, skipping generation");
+                return;
+            }
 
             try {
                 // Extract data from XML response
