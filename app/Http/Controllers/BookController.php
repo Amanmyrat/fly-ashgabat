@@ -99,7 +99,7 @@ class BookController extends BaseController
             $booking = $request->getBooking();
             $user = $this->getAuthenticatedUser();
 
-            if ($booking->status != BookingStatus::PENDING) {
+            if ($booking->status != BookingStatus::PENDING && $booking->status != BookingStatus::BOOKING_IN_PROGRESS) {
                 return $this->errorResponse('Booking is not in pending status', 400);
             }
 
