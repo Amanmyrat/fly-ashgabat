@@ -1,2 +1,4 @@
 *
+!airline_logos/
+!airline_logos/**
 !.gitignore
