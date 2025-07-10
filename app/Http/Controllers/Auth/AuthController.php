@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ChangePasswordRequest;
-use App\Http\Requests\EmailVerificationRequest;
-use App\Http\Requests\LoginRequest;
-use App\Http\Requests\RegistrationRequest;
+use App\Http\Requests\User\ChangePasswordRequest;
+use App\Http\Requests\User\EmailVerificationRequest;
+use App\Http\Requests\User\LoginRequest;
+use App\Http\Requests\User\RegistrationRequest;
 use App\Models\User;
 use App\Notifications\CustomEmailVerification;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {

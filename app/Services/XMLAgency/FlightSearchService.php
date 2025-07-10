@@ -3,8 +3,7 @@
 namespace App\Services\XMLAgency;
 
 use App\Enum\FlightType;
-
-use App\Http\Requests\XMLAgency\AeroSearchRequestBuilder;
+use App\Services\XMLAgency\RequestBuilder\AeroSearchRequestBuilder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 

@@ -6,21 +6,16 @@ class FlightFilterService
 {
     public function getFilterValues(array $flightsData): array
     {
-        $minFare = PHP_INT_MAX;
-        $maxFare = PHP_INT_MIN;
         $uniqueAirlines = [];
         $uniqueStopCounts = [];
 
         foreach ($flightsData as $flight) {
             $this->processFlightSegmentsForAirlines($flight, $uniqueAirlines);
-            $this->processFlightFaresForMinMax($flight, $minFare, $maxFare);
             $this->processFlightStopCounts($flight, $uniqueStopCounts);
         }
         sort($uniqueStopCounts);
 
         return [
-            'min_price' => $minFare === PHP_INT_MAX ? null : $minFare,
-            'max_price' => $maxFare === PHP_INT_MIN ? null : $maxFare,
             'airlines' => $uniqueAirlines,
             'stops' => $uniqueStopCounts,
         ];
@@ -44,16 +39,6 @@ class FlightFilterService
             }
         }
 
-    }
-
-    private function processFlightFaresForMinMax($flight, &$minFare, &$maxFare): void
-    {
-        $totalSumAmount = $flight->TotalSum->Amount ?? null;
-
-        if ($totalSumAmount !== null) {
-            $minFare = min($minFare, $totalSumAmount);
-            $maxFare = max($maxFare, $totalSumAmount);
-        }
     }
 
     private function processFlightStopCounts($flight, &$uniqueStopCounts): void
@@ -84,82 +69,6 @@ class FlightFilterService
         });
     }
 
-    public function markCheapestAndFastestFlights(array $flightsData): array
-    {
-        if (empty($flightsData)) {
-            return $flightsData;
-        }
-
-        foreach ($flightsData as &$flight) {
-            $segments = $flight->Segments->Segment;
-            $segments = is_array($segments) ? $segments : [$segments];
-
-            $totalDuration = 0;
-            foreach ($segments as $segment) {
-                $totalDuration += $segment->FlightTime;
-            }
-
-            $totalDuration += $this->calculateStopDurations($flight->Outward ?? null);
-
-            $totalDuration += $this->calculateStopDurations($flight->Return ?? null);
-
-            $flight->TotalDuration = $totalDuration;
-
-            $flight->isCheapest = false;
-            $flight->isFastest = false;
-        }
-
-        $cheapestFlight = null;
-        $lowestPrice = PHP_INT_MAX;
-
-        $fastestFlight = null;
-        $shortestDuration = PHP_INT_MAX;
-
-        foreach ($flightsData as $flight) {
-
-            if ($flight->TotalSum->Amount < $lowestPrice) {
-                $lowestPrice = $flight->TotalSum->Amount;
-                $cheapestFlight = $flight;
-            }
-
-
-            if ($flight->TotalDuration < $shortestDuration) {
-                $shortestDuration = $flight->TotalDuration;
-                $fastestFlight = $flight;
-            }
-        }
-
-
-        if ($cheapestFlight) {
-            $cheapestFlight->isCheapest = true;
-        }
-
-        if ($fastestFlight) {
-            $fastestFlight->isFastest = true;
-        }
-
-        return $flightsData;
-    }
-
-    private function calculateStopDurations($direction): int
-    {
-        if (!$direction || !isset($direction->Stops)) {
-            return 0;
-        }
-        $stops = is_array($direction->Stops) ? $direction->Stops : [$direction->Stops];
-        $totalStopDuration = 0;
-
-        foreach ($stops as $stop) {
-            if (isset($stop['Duration'])) {
-                $hours = $stop['Duration']['Hours'] ?? 0;
-                $minutes = $stop['Duration']['Minutes'] ?? 0;
-                $totalStopDuration += ($hours * 60) + $minutes;
-            }
-        }
-
-        return $totalStopDuration;
-    }
-
     private function calculateTotalSum($flight): object
     {
         $prices = $flight->PriceInfo->Price;
@@ -186,25 +95,10 @@ class FlightFilterService
 
     private function meetsFlightCriteria($flight, $filters): bool
     {
-        return $this->meetsPriceCriteria($flight->TotalSum->Amount, $filters) &&
+        return
             $this->meetsBaggageCriteria($flight, $filters) &&
             $this->meetsAirlinesCriteria($flight, $filters['airlines'] ?? null) &&
             $this->meetsStopsCriteria($flight, $filters);
-    }
-
-    private function meetsPriceCriteria($totalFare, $filters): bool
-    {
-        return (!isset($filters['min_price']) || (float)$totalFare >= (float)$filters['min_price']) &&
-            (!isset($filters['max_price']) || (float)$totalFare <= (float)$filters['max_price']);
-    }
-
-    private function meetsCurrencyCriteria($currency, $filters): bool
-    {
-        if (!isset($filters['currency'])) {
-            return true;
-        }
-
-        return $filters['currency'] === $currency;
     }
 
     private function meetsBaggageCriteria($flight, $filters): bool

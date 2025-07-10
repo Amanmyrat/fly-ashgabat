@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\TravelFusion\Requests;
+namespace App\Services\TravelFusion\RequestBuilder;
 
 use Illuminate\Support\Facades\Cache;
 

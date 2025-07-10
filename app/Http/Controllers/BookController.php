@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
-use App\Http\Requests\StartBookingRequest;
+use App\Http\Requests\Tfusion\StartBookingRequest;
 use App\Jobs\TFusion\CheckBookingStatusJob;
 use App\Jobs\TFusion\StartBookingJob;
 use App\Jobs\XmlAgency\ConfirmBookingJob;

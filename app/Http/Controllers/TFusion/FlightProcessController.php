@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\TFusion;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Requests\FlightProcessDetailsRequest;
+use App\Http\Requests\Tfusion\FlightProcessDetailsRequest;
 use App\Services\TravelFusion\FlightProcessService;
 use Illuminate\Http\JsonResponse;
 

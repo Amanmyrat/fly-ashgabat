@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Tfusion;
 
 use App\Models\FlightBooking;
 use Illuminate\Foundation\Http\FormRequest;

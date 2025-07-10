@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Http\Requests\XMLAgency;
+namespace App\Services\XMLAgency\RequestBuilder;
 
-use App\Models\FlightBooking;
-
-class OrderInfoRequestBuilder
+class PreBookRequestBuilder
 {
-    private FlightBooking $booking;
+    private array $validatedData;
 
-    public function __construct(FlightBooking $booking)
+    public function __construct(array $validatedData)
     {
-        $this->booking = $booking;
+        $this->validatedData = $validatedData;
     }
 
     public function build(): array
     {
         return [
-            'OrderInfo' => [
+            'AeroPrebook' => [
                 'credentials' => $this->buildCredentials(),
-                'orderInfoParams' => $this->buildConfirmBookParams(),
+                'aeroPrebookParams' => $this->buildAeroBookParams(),
             ]
         ];
     }
@@ -36,11 +34,11 @@ class OrderInfoRequestBuilder
         ];
     }
 
-    private function buildConfirmBookParams(): array
+    private function buildAeroBookParams(): array
     {
         return [
-            'BookGuid' =>  $this->booking->supplier_reference,
-            'BookId' =>  $this->booking->booking_reference,
+            'OfferCode' => $this->validatedData['offer_code'],
+            'SearchGuid' => $this->validatedData['search_guid'],
         ];
     }
 }

@@ -3,11 +3,12 @@
 namespace App\Services\Nemo;
 
 use App\Services\GeoDataService;
+use App\Services\Nemo\RequestGenerate\SearchRequestGenerateService;
 
 class FlightSearchService
 {
     public function __construct(
-        protected RequestGenerate   $requestGenerate,
+        protected SearchRequestGenerateService $searchRequestGenerateService,
         protected SoapService       $soapService,
         protected GeoDataService    $geoDataService,
     )
@@ -22,7 +23,7 @@ class FlightSearchService
      */
     public function search(array $requestData): array
     {
-        $generatedRequest = $this->requestGenerate->generateSearchRequest($requestData);
+        $generatedRequest = $this->searchRequestGenerateService->generateSearchRequest($requestData);
 
         $result = $this->soapService->callSoap($generatedRequest, 'Search_1_2');
 
@@ -51,7 +52,7 @@ class FlightSearchService
      *
      * @param mixed $result
      */
-    private function unsetWarningsAndSearchData(mixed &$result)
+    private function unsetWarningsAndSearchData(mixed &$result): void
     {
         unset($result->Search_1_2Result->Warnings);
         unset($result->Search_1_2Result->ResponseBody->SearchData);
@@ -64,7 +65,7 @@ class FlightSearchService
      * @param int $flight_count
      * @param array $requestData
      */
-    private function processPlaneFlights(mixed &$planeFlights, int &$flight_count, array $requestData)
+    private function processPlaneFlights(mixed &$planeFlights, int &$flight_count, array $requestData): void
     {
         if (is_array($planeFlights->Flight)) {
             foreach ($planeFlights->Flight as &$item) {
@@ -103,38 +104,15 @@ class FlightSearchService
             $item->Return->Segments = [];
         }
 
-        $returnStartIndex = null;
-        for ($i = 0; $i < count($segmentsToProcess); $i++) {
-            $segment = $segmentsToProcess[$i];
-            $segmentDate = new \DateTime($segment->DepDateTime);
-
-            if (isset($requestData['departure_date_to'])) {
-                $returnDate = new \DateTime($requestData['departure_date_to']);
-
-                if ($segmentDate->format('Y-m-d') >= $returnDate->format('Y-m-d') && $returnStartIndex === null) {
-                    $returnStartIndex = $i;
-                    break;
-                }
-            } else {
-                if ($segment->ArrAirp->AirportCode['code'] === $requestData['arrival_city_code'] ||
-                    $segment->ArrAirp->CityCode === $requestData['arrival_city_code']) {
-                    $returnStartIndex = $i + 1;
-                    break;
-                }
+        foreach ($segmentsToProcess as $segment) {
+            if ($segment->RequestedSegment == 0) {
+                $item->Outward->Segments[] = $segment;
+            } elseif ($segment->RequestedSegment == 1 && $item->Return) {
+                $item->Return->Segments[] = $segment;
             }
         }
 
-        if ($returnStartIndex !== null) {
-            for ($i = 0; $i < $returnStartIndex; $i++) {
-                $item->Outward->Segments[] = $segmentsToProcess[$i];
-            }
-
-            if ($item->Return && $returnStartIndex < count($segmentsToProcess)) {
-                for ($i = $returnStartIndex; $i < count($segmentsToProcess); $i++) {
-                    $item->Return->Segments[] = $segmentsToProcess[$i];
-                }
-            }
-        } else {
+        if (empty($item->Outward->Segments)) {
             $item->Outward->Segments = $segmentsToProcess;
         }
 
@@ -146,8 +124,10 @@ class FlightSearchService
             $item->Return->StopsCount = count($item->Return->Stops);
         }
 
-        $flight_count++;
+        unset($item->SourceID);
+        unset($item->MandatoryLatinNames);
 
+        $flight_count++;
     }
 
     /**
@@ -189,7 +169,7 @@ class FlightSearchService
      *
      * @param mixed $segment
      */
-    private function processSegmentData(mixed &$segment)
+    private function processSegmentData(mixed &$segment): void
     {
         $data = $this->geoDataService->getInfo(
             $segment->DepAirp->AirportCode,

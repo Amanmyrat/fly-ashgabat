@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\XMLAgency;
+namespace App\Services\XMLAgency\RequestBuilder;
 
 use App\Enum\FlightType;
 
@@ -65,7 +65,7 @@ class AeroSearchRequestBuilder
         $aeroSearchParams['PartnerName'] = null;
         $aeroSearchParams['_flights'] = $flightData;
 
-        $requestData = [
+        return [
             'AeroSearch' => [
                 'credentials' => [
                     'ApiLogin' => config('xmlagency.credentials.login'),
@@ -79,14 +79,11 @@ class AeroSearchRequestBuilder
                 'aeroSearchParams' => $aeroSearchParams,
             ],
         ];
-
-        return $requestData;
     }
 
     private function mapFlightClass(string $classType): string
     {
         return match (strtolower($classType)) {
-            'economy' => 'Econom',
             'business' => 'Business',
             'first' => 'First',
             default => 'Econom'

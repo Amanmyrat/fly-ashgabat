@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Nemo;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\SearchRequest;
+use App\Http\Requests\Nemo\FlightSearchRequest;
 use App\Services\Nemo\FlightFilterService;
-use App\Services\Nemo\FlightSortService;
 use App\Services\Nemo\FlightSearchService;
+use App\Services\Nemo\FlightSortService;
 use Cache;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -14,9 +14,9 @@ use Illuminate\Http\JsonResponse;
 class FlightSearchController extends Controller
 {
     public function __construct(
-        protected FlightSearchService       $searchFlightService,
-        protected FlightFilterService       $flightFilterService,
-        protected FlightSortService         $flightSortService
+        protected FlightSearchService $searchFlightService,
+        protected FlightFilterService $flightFilterService,
+        protected FlightSortService   $flightSortService
     )
     {
     }
@@ -24,18 +24,16 @@ class FlightSearchController extends Controller
     /**
      * Search for flights
      *
-     * @param SearchRequest $request The HTTP request object containing search parameters.
+     * @param FlightSearchRequest $request The HTTP request object containing search parameters.
      * @return JsonResponse JSON response containing search results.
      * @throws Exception
      */
-    public function search(SearchRequest $request): JsonResponse
+    public function search(FlightSearchRequest $request): JsonResponse
     {
-        $page = $request->input('page', 1);
-        $perPage = $request->input('per_page', 10);
         $filters = $request->input('filters', []);
         $sort = $request->input('sort', 'default');
 
-        $queryParams = $request->except(['page', 'per_page', 'filters', 'sort', 'currency']);
+        $queryParams = $request->except(['filters', 'sort']);
         $cacheKey = $this->getCacheKey($queryParams);
 
         $result = Cache::remember($cacheKey, 60 * 5, function () use ($request) {
@@ -55,25 +53,22 @@ class FlightSearchController extends Controller
 
         $filterValues = $this->flightFilterService->getFilterValues($flightsData);
 
-        $data = $this->flightFilterService->markCheapestAndFastestFlights($data);
-
         if ($sort != 'default') {
             $this->flightSortService->sortFlights($data, $sort);
-        } else {
-            usort($data, function ($a, $b) {
-                // Sort logic: cheapest and fastest first, then normal order
-                if ($a->isCheapest && !$b->isCheapest) return -1;
-                if (!$a->isCheapest && $b->isCheapest) return 1;
-                if ($a->isFastest && !$b->isFastest) return -1;
-                if (!$a->isFastest && $b->isFastest) return 1;
-                return 0;
-            });
         }
 
         $transformedFareFamilies = $this->transformFareFamilies($result['fare_families_description']);
-        $paginatedData = $this->paginateFlights($data, $transformedFareFamilies, $page, $perPage, $filterValues, $request->all());
 
-        return response()->json($paginatedData);
+        return response()->json(
+            [
+                'data' => [
+                    'flights' => $data,
+                    'filters' => $filterValues,
+                    'fare_families_description' => $transformedFareFamilies,
+                    'requested_values' => $request->all()
+                ]
+            ]
+        );
     }
 
     /**
@@ -85,39 +80,6 @@ class FlightSearchController extends Controller
     private function getCacheKey(array $queryParams): string
     {
         return 'flights_search_' . md5(serialize($queryParams));
-    }
-
-    /**
-     * Paginate the flights' data.
-     *
-     * @param array $flightsData
-     * @param array $fareFamilies
-     * @param int $page
-     * @param int $perPage
-     * @param array $filterValues
-     * @param array $requestValues
-     * @return array
-     */
-    private function paginateFlights(array $flightsData, array $fareFamilies, int $page, int $perPage, array $filterValues, array $requestValues): array
-    {
-        $totalItems = count($flightsData);
-        $startIndex = ($page - 1) * $perPage;
-        $pagedFlights = array_slice($flightsData, $startIndex, $perPage);
-
-        return [
-            'data' => [
-                'pagination' => [
-                    'current_page' => $page,
-                    'last_page' => ceil($totalItems / $perPage),
-                    'per_page' => $perPage,
-                    'total' => $totalItems
-                ],
-                'flights' => $pagedFlights,
-                'filters' => $filterValues,
-                'fare_families_description' => $fareFamilies,
-                'requested_values' => $requestValues,
-            ]
-        ];
     }
 
     /**

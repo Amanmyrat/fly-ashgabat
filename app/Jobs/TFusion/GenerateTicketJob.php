@@ -6,7 +6,7 @@ use App\Enum\FlightSupplier;
 use App\Mail\BookingTicketMail;
 use App\Models\FlightBooking;
 use App\Models\FlightTicket;
-use App\Services\TravelFusion\Requests\GetBookingDetailsRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\GetBookingDetailsRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Barryvdh\Snappy\Facades\SnappyPdf;
 use Illuminate\Bus\Queueable;

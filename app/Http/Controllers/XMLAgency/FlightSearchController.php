@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\XMLAgency;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\FlightSearchRequest;
-use App\Http\Requests\XMLAgencyFlightSearchRequest;
+use App\Http\Requests\XMLAgency\FlightSearchRequest;
 use App\Services\XMLAgency\FlightSearchService;
 use Illuminate\Http\JsonResponse;
 
@@ -19,11 +18,11 @@ class FlightSearchController extends Controller
      *
      * @localizationHeader
      *
-     * @param XMLAgencyFlightSearchRequest $request
+     * @param FlightSearchRequest $request
      * @return JsonResponse
      * @throws \Exception
      */
-    public function search(XMLAgencyFlightSearchRequest $request): JsonResponse
+    public function search(FlightSearchRequest $request): JsonResponse
     {
         $validatedData = $request->validated();
         $result = $this->flightSearchService->search($validatedData);

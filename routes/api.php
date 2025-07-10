@@ -28,10 +28,6 @@ Route::get('/visas/all', [VisaController::class, 'getAllVisas']);
 Route::get('/visas', [VisaController::class, 'getVisas']);
 Route::get('/visas/{visa}/details', [VisaController::class, 'getVisaDetails']);
 
-Route::group(['prefix' => 'nemo'], function () {
-    Route::get('search/flights', [NemoFlightSearchController::class, 'search']);
-});
-
 Route::group(['prefix' => 'tfusion'], function () {
     Route::get('search/flights', [TFusionSearchController::class, 'search']);
     Route::get('search/test', [TFusionSearchController::class, 'searchTest']);
@@ -43,6 +39,10 @@ Route::group(['prefix' => 'xmlagency'], function () {
     Route::get('search/flights', [XMLAgencyFlightSearchController::class, 'search']);
     Route::post('process/flights', [XMLAgencyFlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [XMLAgencyFlightBookController::class, 'processBooking']);
+});
+
+Route::group(['prefix' => 'nemo'], function () {
+    Route::get('search/flights', [NemoFlightSearchController::class, 'search']);
 });
 
 Route::group(['prefix' => 'bookings'], function () {

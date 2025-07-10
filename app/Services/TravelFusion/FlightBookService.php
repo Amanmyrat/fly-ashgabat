@@ -8,7 +8,7 @@ use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
 use App\Services\IpGeolocationService;
-use App\Services\TravelFusion\Requests\ProcessTermsRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\ProcessTermsRequestBuilder;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;

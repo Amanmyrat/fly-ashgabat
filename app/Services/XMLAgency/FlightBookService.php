@@ -6,7 +6,7 @@ use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
 use App\Models\FlightBooking;
 use App\Models\User;
-use App\Http\Requests\XMLAgency\AeroBookRequestBuilder;
+use App\Services\XMLAgency\RequestBuilder\AeroBookRequestBuilder;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;

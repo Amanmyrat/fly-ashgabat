@@ -4,7 +4,7 @@ namespace App\Http\Controllers\TFusion;
 
 use App\Enum\PaymentType;
 use App\Http\Controllers\BaseController;
-use App\Http\Requests\FlightBookRequest;
+use App\Http\Requests\Tfusion\FlightBookRequest;
 use App\Http\Resources\FlightBookingResource;
 use App\Services\TravelFusion\FlightBookService;
 use Exception;

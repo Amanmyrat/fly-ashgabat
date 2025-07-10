@@ -4,7 +4,7 @@ namespace App\Jobs\TFusion;
 
 use App\Enum\FlightSupplier;
 use App\Models\FlightBooking;
-use App\Services\TravelFusion\Requests\StartBookingRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\StartBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

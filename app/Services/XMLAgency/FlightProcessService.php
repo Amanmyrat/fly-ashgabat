@@ -2,16 +2,9 @@
 
 namespace App\Services\XMLAgency;
 
-use App\Enum\BookingStatus;
-use App\Enum\FlightSupplier;
-use App\Http\Requests\XMLAgency\PreBookRequestBuilder;
-use App\Models\FlightBooking;
-use App\Models\User;
-use App\Http\Requests\XMLAgency\AeroBookRequestBuilder;
-use Carbon\Carbon;
+use App\Services\XMLAgency\RequestBuilder\PreBookRequestBuilder;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Log;
 
 class FlightProcessService
 {
@@ -44,23 +37,23 @@ class FlightProcessService
 
         if(isset($preBookResponse['Tariffs'])){
             $tariffsData = $preBookResponse['Tariffs'];
-            
+
             if(isset($tariffsData['ServiceInfo'])){
                 foreach($tariffsData['ServiceInfo'] as $tariff){
                     $features = [];
-                    
+
                     // Parse the text to extract features
                     if(isset($tariff['Text']['value'])){
                         $textLines = explode("\n", trim($tariff['Text']['value']));
-                        
+
                         foreach($textLines as $line){
                             $line = trim($line);
                             if(empty($line)) continue;
-                            
+
                             $enabled = true;
                             $withCharge = false;
                             $text = '';
-                            
+
                             if(str_starts_with($line, '+')){
                                 // Included feature
                                 $enabled = true;
@@ -77,7 +70,7 @@ class FlightProcessService
                                 $withCharge = true;
                                 $text = trim(substr($line, 1));
                             }
-                            
+
                             if(!empty($text)){
                                 $features[] = [
                                     'text' => $text,
@@ -87,7 +80,7 @@ class FlightProcessService
                             }
                         }
                     }
-                    
+
                     $tariffs[] = [
                         'id' => $tariff['Id']['value'] ?? null,
                         'name' => $tariff['Name']['value'] ?? null,

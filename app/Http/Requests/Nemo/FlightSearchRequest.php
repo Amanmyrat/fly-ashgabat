@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Nemo;
 
 use App\Enum\FlightType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class XMLAgencyFlightSearchRequest extends FormRequest
+class FlightSearchRequest extends FormRequest
 {
     protected const DATE_FORMAT = 'Y-m-d';
 
@@ -17,6 +17,17 @@ class XMLAgencyFlightSearchRequest extends FormRequest
      */
     public function rules(): array
     {
+        $allowedSortOptions = [
+            'default',
+            'price',
+            '-price',
+            'duration',
+            '-duration',
+            'departure_time',
+            '-departure_time',
+        ];
+        $allowedSortOptionsString = implode(',', $allowedSortOptions);
+
         return [
             'departure_code' => [
                 'required',
@@ -72,8 +83,14 @@ class XMLAgencyFlightSearchRequest extends FormRequest
             'class_type' => [
                 'required',
                 'string',
-                Rule::in(['economy', 'business', 'first'])
+                Rule::in(['economy', 'business', 'first', 'all'])
             ],
+            'filters' => 'sometimes|array',
+            'filters.baggage_included' => 'sometimes|boolean',
+            'filters.airlines' => 'sometimes|array',
+            'filters.airlines.*' => 'sometimes|string',
+            'filters.stops' => 'sometimes|integer|min:0',
+            'sort' => ['filled', 'in:'.$allowedSortOptionsString],
         ];
     }
 }

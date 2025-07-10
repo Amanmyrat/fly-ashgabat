@@ -1,11 +1,9 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Tfusion;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Cache;
 
 class FlightProcessDetailsRequest extends FormRequest
 {

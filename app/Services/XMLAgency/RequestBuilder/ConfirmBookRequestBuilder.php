@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\XMLAgency;
+namespace App\Services\XMLAgency\RequestBuilder;
 
 use App\Models\FlightBooking;
 

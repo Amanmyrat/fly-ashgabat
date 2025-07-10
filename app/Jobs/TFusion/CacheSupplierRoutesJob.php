@@ -2,8 +2,8 @@
 
 namespace App\Jobs\TFusion;
 
-use App\Services\TravelFusion\Requests\GetBranchSupplierListRequestBuilder;
-use App\Services\TravelFusion\Requests\ListSupplierRoutesRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\GetBranchSupplierListRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\ListSupplierRoutesRequestBuilder;
 use App\Services\TravelFusion\SupplierRouteService;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;

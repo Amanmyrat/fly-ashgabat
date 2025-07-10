@@ -2,6 +2,9 @@
 
 namespace App\Services\Nemo\RequestGenerate;
 
+use App\Enum\FlightType;
+use function Psl\Str\uppercase;
+
 class SearchRequestGenerateService
 {
     /**
@@ -54,16 +57,14 @@ class SearchRequestGenerateService
      * @param array $searchRequest The search request to update.
      * @param array $postRequest The input data for the search request.
      */
-    private function setFlightInformation(array &$searchRequest, array $postRequest)
+    private function setFlightInformation(array &$searchRequest, array $postRequest): void
     {
-        // Set flight type (0 - transit, 1 - direct)
-//        $searchRequest['Search_1_2']['Request']['RequestBody']['RequestedFlightInfo']['Direct'] = $postRequest['is_direct_flight'];
         $searchRequest['Search_1_2']['Request']['RequestBody']['RequestedFlightInfo']['Direct'] = 0;
         $flightInfo =& $searchRequest['Search_1_2']['Request']['RequestBody']['RequestedFlightInfo'];
 
-        $departureDate = date("Y-m-d\TH:i:s", strtotime($postRequest['departure_date_from']));
-        $departureCityCode = $postRequest['departure_city_code'];
-        $arrivalCityCode = $postRequest['arrival_city_code'];
+        $departureDate = date("Y-m-d\TH:i:s", strtotime($postRequest['departure_date']));
+        $departureCityCode = $postRequest['departure_code'];
+        $arrivalCityCode = $postRequest['arrival_code'];
 
         $odPair = [
             'DepatureDateTime' => $departureDate,
@@ -73,7 +74,7 @@ class SearchRequestGenerateService
 
         $flightInfo['ODPairs']['ODPair'][0] = $odPair;
 
-        if (isset($postRequest['departure_date_to'])) {
+        if ($postRequest['flight_type'] === FlightType::ROUND_TRIP->value && !empty($postRequest['arrival_date'])) {
             $this->addReturnDate($searchRequest, $postRequest);
         }
     }
@@ -84,11 +85,11 @@ class SearchRequestGenerateService
      * @param array $searchRequest The search request to update.
      * @param array $postRequest The input data for the search request.
      */
-    private function addReturnDate(array &$searchRequest, array $postRequest)
+    private function addReturnDate(array &$searchRequest, array $postRequest): void
     {
-        $returnDate = date("Y-m-d\TH:i:s", strtotime($postRequest['departure_date_to']));
-        $departureCityCode = $postRequest['departure_city_code'];
-        $arrivalCityCode = $postRequest['arrival_city_code'];
+        $returnDate = date("Y-m-d\TH:i:s", strtotime($postRequest['arrival_date']));
+        $departureCityCode = $postRequest['departure_code'];
+        $arrivalCityCode = $postRequest['arrival_code'];
 
         $returnDateInfo = [
             'DepatureDateTime' => $returnDate,
@@ -105,26 +106,21 @@ class SearchRequestGenerateService
      * @param array $searchRequest The search request to update.
      * @param array $postRequest The input data for the search request.
      */
-    private function addPassengerInfo(array &$searchRequest, array $postRequest)
+    private function addPassengerInfo(array &$searchRequest, array $postRequest): void
     {
         if ($postRequest['adults_count'] > 0) {
             $adults = ['Type' => 'ADT', 'Count' => $postRequest['adults_count']];
             $searchRequest['Search_1_2']['Request']['RequestBody']['Passengers'][] = $adults;
         }
 
-        if ($postRequest['childs_count'] > 0) {
-            $childs = ['Type' => 'CNN', 'Count' => $postRequest['childs_count']];
+        if ($postRequest['children_count'] > 0) {
+            $childs = ['Type' => 'CNN', 'Count' => $postRequest['children_count']];
             $searchRequest['Search_1_2']['Request']['RequestBody']['Passengers'][] = $childs;
         }
 
-        if ($postRequest['baby_without_a_seat'] > 0) {
-            $babyWithoutASeat = ['Type' => 'INF', 'Count' => $postRequest['baby_without_a_seat']];
+        if ($postRequest['infants_count'] > 0) {
+            $babyWithoutASeat = ['Type' => 'INF', 'Count' => $postRequest['infants_count']];
             $searchRequest['Search_1_2']['Request']['RequestBody']['Passengers'][] = $babyWithoutASeat;
-        }
-
-        if ($postRequest['baby_with_seat'] > 0) {
-            $babyWithSeat = ['Type' => 'INS', 'Count' => $postRequest['baby_with_seat']];
-            $searchRequest['Search_1_2']['Request']['RequestBody']['Passengers'][] = $babyWithSeat;
         }
     }
 
@@ -134,13 +130,13 @@ class SearchRequestGenerateService
      * @param array $searchRequest The search request to update.
      * @param array $postRequest The input data for the search request.
      */
-    private function setFlightRestrictions(array &$searchRequest, array $postRequest)
+    private function setFlightRestrictions(array &$searchRequest, array $postRequest): void
     {
         if (isset($postRequest['class_type'])) {
-            if ($postRequest['class_type'] === 'Economy') {
+            if ($postRequest['class_type'] === 'economy') {
                 $classType = ['ClassOfService' => ['Economy', 'PremiumEconomy']];
             } else {
-                $classType = ['ClassOfService' => [$postRequest['class_type']]];
+                $classType = ['ClassOfService' => [ucfirst($postRequest['class_type'])]];
             }
             $searchRequest['Search_1_2']['Request']['RequestBody']['Restrictions']['ClassPreference'] = $classType;
         }

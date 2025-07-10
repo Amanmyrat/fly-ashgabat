@@ -5,8 +5,8 @@ namespace App\Services\TravelFusion;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
-use App\Services\TravelFusion\Requests\LoginRequestBuilder;
-use App\Services\TravelFusion\Requests\NewPasswordRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\LoginRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\NewPasswordRequestBuilder;
 use App\Models\TravelFusionPassword;
 use SimpleXMLElement;
 use Illuminate\Support\Facades\Log;
@@ -183,7 +183,7 @@ class TravelFusionService
      */
     private function isOneTimeRequest(array $requestData): bool
     {
-        return isset($requestData['GetBookingDetails']) || 
+        return isset($requestData['GetBookingDetails']) ||
                isset($requestData['CheckBooking']) ||
                isset($requestData['StartBooking']);
     }

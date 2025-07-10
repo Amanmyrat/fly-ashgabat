@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\TFusion;
 
 use App\Http\Controllers\BaseController;
-use App\Http\Requests\FlightSearchRequest;
+use App\Http\Requests\Tfusion\FlightSearchRequest;
 use App\Services\TravelFusion\FlightSearchService;
-use App\Services\TravelFusion\Requests\GetBranchSupplierListRequestBuilder;
-use App\Services\TravelFusion\Requests\ListSupplierRoutesRequestBuilder;
 use App\Services\TravelFusion\SupplierRouteService;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 class FlightSearchController extends BaseController
 {

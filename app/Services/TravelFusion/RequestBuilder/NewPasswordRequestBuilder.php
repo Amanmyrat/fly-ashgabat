@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\TravelFusion\Requests;
+namespace App\Services\TravelFusion\RequestBuilder;
 
 class NewPasswordRequestBuilder
 {
@@ -25,4 +25,4 @@ class NewPasswordRequestBuilder
             ],
         ];
     }
-} 
+}

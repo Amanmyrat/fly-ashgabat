@@ -6,7 +6,7 @@ use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
-use App\Services\TravelFusion\Requests\CheckBookingRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\CheckBookingRequestBuilder;
 use App\Services\TravelFusion\TravelFusionService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;

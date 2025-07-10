@@ -4,8 +4,8 @@ namespace App\Services\TravelFusion;
 
 use App\Repositories\AirportDataRepositoryInterface;
 use App\Services\IpGeolocationService;
-use App\Services\TravelFusion\Requests\CheckRoutingRequestBuilder;
-use App\Services\TravelFusion\Requests\StartRoutingRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\CheckRoutingRequestBuilder;
+use App\Services\TravelFusion\RequestBuilder\StartRoutingRequestBuilder;
 use DateTime;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\App;

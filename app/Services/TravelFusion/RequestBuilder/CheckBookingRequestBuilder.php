@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services\TravelFusion\Requests;
+namespace App\Services\TravelFusion\RequestBuilder;
 
-class GetBookingDetailsRequestBuilder
+class CheckBookingRequestBuilder
 {
     public function __construct(protected string $bookId)
     {
@@ -11,7 +11,7 @@ class GetBookingDetailsRequestBuilder
     public function build(): array
     {
         return [
-            'GetBookingDetails' => [
+            'CheckBooking' => [
                 'XmlLoginId' => '', // Placeholder, will be added dynamically
                 'LoginId' => '',   // Placeholder, will be added dynamically
                 'TFBookingReference' => $this->bookId,

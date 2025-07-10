@@ -4,8 +4,8 @@ namespace App\Jobs\XmlAgency;
 
 use App\Enum\BookingStatus;
 use App\Enum\PaymentType;
-use App\Http\Requests\XMLAgency\ConfirmBookRequestBuilder;
 use App\Models\FlightBooking;
+use App\Services\XMLAgency\RequestBuilder\ConfirmBookRequestBuilder;
 use App\Services\XMLAgency\XMLAgencyService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
