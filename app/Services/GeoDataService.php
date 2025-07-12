@@ -100,7 +100,6 @@ class GeoDataService
      *
      * @param string $DepAirportCode The IATA code for the departure airport.
      * @param string $ArrAirportCode The IATA code for the arrival airport.
-     * @param string $AircraftType The code representing the type of aircraft used for the flight.
      * @param string $OpAirline The IATA or ICAO code of the operating airline.
      * @param string $MarkAirline The IATA or ICAO code of the marketing airline.
      * @return array An associative array containing detailed information about the flight route. The structure includes:
@@ -108,28 +107,26 @@ class GeoDataService
      *               - 'arrCode': Array containing 'code' for the arrival airport and 'airport' name.
      *               - 'opAirline': Array containing 'code' of the operating airline and nested 'airline' info with 'name' and 'logo'.
      *               - 'markAirline': Array containing 'code' of the marketing airline and nested 'airline' info with 'name' and 'logo'.
-     *               - 'aircraftType': Array containing 'code' of the aircraft type and 'aircraft' name.
      */
-    public function getInfo(string $DepAirportCode, string $ArrAirportCode, string $AircraftType, string $OpAirline, string $MarkAirline): array
+    public function getInfo(string $DepAirportCode, string $ArrAirportCode, string $OpAirline, string $MarkAirline): array
     {
         $airports = $this->airportDataRepository->getAllAirports();
-        $airCrafts = $this->airportDataRepository->getAllAirCrafts();
         $airlines = $this->airportDataRepository->getAllAirlines();
 
         return [
             'data' => [
                 'depCode' => [
                     'code' => $DepAirportCode,
-                    'airport' => $airports[$DepAirportCode]['airportName'] ?? $airports[$DepAirportCode]['cityName']
+                    'airport' => $this->formatAirportName($airports[$DepAirportCode])
                 ],
                 'arrCode' => [
                     'code' => $ArrAirportCode,
-                    'airport' => $airports[$ArrAirportCode]['airportName'] ?? $airports[$ArrAirportCode]['cityName']
+                    'airport' => $this->formatAirportName($airports[$ArrAirportCode])
                 ],
                 'opAirline' => [
                     'code' => $OpAirline,
                     'airline' => [
-                        'name' => isset($airlines[$OpAirline]) ? $airlines[$OpAirline]['name'] : null,
+                        'name' => isset($airlines[$OpAirline]) ? $this->translateFromArray($airlines[$OpAirline]['name']) : null,
                         'logo' => isset($airlines[$OpAirline]['logo']['file'])
                             ? asset('storage/airline_logos/' . $airlines[$OpAirline]['logo']['file'])
                             : null
@@ -138,17 +135,46 @@ class GeoDataService
                 'markAirline' => [
                     'code' => $MarkAirline,
                     'airline' => [
-                        'name' => isset($airlines[$MarkAirline]) ? $airlines[$MarkAirline]['name'] : null,
+                        'name' => isset($airlines[$MarkAirline]) ? $this->translateFromArray($airlines[$MarkAirline]['name']) : null,
                         'logo' => isset($airlines[$MarkAirline]['logo']['file'])
                             ? asset('storage/airline_logos/' . $airlines[$MarkAirline]['logo']['file'])
                             : null
                     ]
-                ],
-                'aircraftType' => [
-                    'code' => $AircraftType,
-                    'aircraft' => $airCrafts[$AircraftType]['name'] ?? null
                 ]
             ]
         ];
     }
+
+    private function formatAirportName(array $airport): string
+    {
+        $city = $this->translateFromArray($airport['cityName'] ?? null);
+        $name = $this->translateFromArray($airport['airportName'] ?? null);
+
+        if ($city && $name) {
+            return "{$city}, {$name}";
+        }
+
+        return $city ?: $name ?: 'Unknown Airport';
+    }
+
+    private function translateFromArray(array|string|null $input): string
+    {
+        if (is_string($input)) {
+            return $input;
+        }
+
+        if (!is_array($input)) {
+            return '';
+        }
+
+        $locale = app()->getLocale();
+        $fallbackLocale = 'en';
+
+        return $input[$locale]
+            ?? $input[$fallbackLocale]
+            ?? reset($input)
+            ?? '';
+    }
+
+
 }

@@ -51,6 +51,7 @@ class FlightSearchController extends Controller
 
         $data = $this->flightFilterService->filterFlights($flightsData, $filters);
 
+        $data = array_values($data);
         $filterValues = $this->flightFilterService->getFilterValues($flightsData);
 
         if ($sort != 'default') {

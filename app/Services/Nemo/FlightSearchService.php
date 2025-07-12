@@ -174,7 +174,6 @@ class FlightSearchService
         $data = $this->geoDataService->getInfo(
             $segment->DepAirp->AirportCode,
             $segment->ArrAirp->AirportCode,
-            $segment->AircraftType,
             $segment->OpAirline,
             $segment->MarkAirline
         );
@@ -183,7 +182,6 @@ class FlightSearchService
         $segment->ArrAirp->AirportCode = $data['data']['arrCode'];
         $segment->OpAirline = $data['data']['opAirline'];
         $segment->MarkAirline = $data['data']['markAirline'];
-        $segment->AircraftType = $data['data']['aircraftType'];
     }
 
 }

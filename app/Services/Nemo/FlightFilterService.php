@@ -62,11 +62,44 @@ class FlightFilterService
     {
         foreach ($flightsData as &$flight) {
             $flight->TotalSum = $this->calculateTotalSum($flight);
+
+            $segments = $flight->Segments->Segment;
+            $segments = is_array($segments) ? $segments : [$segments];
+
+            $totalDuration = 0;
+            foreach ($segments as $segment) {
+                $totalDuration += $segment->FlightTime;
+            }
+
+            $totalDuration += $this->calculateStopDurations($flight->Outward ?? null);
+
+            $totalDuration += $this->calculateStopDurations($flight->Return ?? null);
+
+            $flight->TotalDuration = $totalDuration;
         }
 
         return array_filter($flightsData, function ($flight) use ($filters) {
             return $this->meetsFlightCriteria($flight, $filters);
         });
+    }
+
+    private function calculateStopDurations($direction): int
+    {
+        if (!$direction || !isset($direction->Stops)) {
+            return 0;
+        }
+        $stops = is_array($direction->Stops) ? $direction->Stops : [$direction->Stops];
+        $totalStopDuration = 0;
+
+        foreach ($stops as $stop) {
+            if (isset($stop['Duration'])) {
+                $hours = $stop['Duration']['Hours'] ?? 0;
+                $minutes = $stop['Duration']['Minutes'] ?? 0;
+                $totalStopDuration += ($hours * 60) + $minutes;
+            }
+        }
+
+        return $totalStopDuration;
     }
 
     private function calculateTotalSum($flight): object
