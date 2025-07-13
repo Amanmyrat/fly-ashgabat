@@ -176,5 +176,68 @@ class GeoDataService
             ?? '';
     }
 
+    /**
+     * Get information about airports for booking purposes.
+     *
+     * @param string $depCode Departure airport code.
+     * @param string $arrCode Arrival airport code.
+     * @param bool $isTicket Indicates if it's for ticket booking.
+     * @return array An array of information.
+     */
+    public function getInfoBooking(string $depCode, string $arrCode, bool $isTicket = true): array
+    {
+        return $isTicket ? $this->getTicketBookingInfo($depCode, $arrCode) : $this->getGeneralAirportInfo($depCode, $arrCode);
+    }
+
+    /**
+     * Get ticket booking specific information about airports.
+     *
+     * @param string $depCode Departure airport code.
+     * @param string $arrCode Arrival airport code.
+     * @return array An array of information for ticket booking.
+     */
+    private function getTicketBookingInfo(string $depCode, string $arrCode): array
+    {
+        $airports = $this->airportDataRepository->getAllAirports();
+        return [
+            'data' => [
+                'depCode' => [
+                    'code' => $depCode,
+                    'airport' => $airports[$depCode]['airportName']['en'] ?? $airports[$depCode]['cityName']['en']
+                ],
+                'arrCode' => [
+                    'code' => $arrCode,
+                    'airport' => $airports[$arrCode]['airportName']['en'] ?? $airports[$arrCode]['cityName']['en']
+                ],
+            ]
+        ];
+    }
+
+    /**
+     * Get general information about airports.
+     *
+     * @param string $depCode Departure airport code.
+     * @param string $arrCode Arrival airport code.
+     * @return array An array of general information about airports.
+     */
+    private function getGeneralAirportInfo(string $depCode, string $arrCode): array
+    {
+        $airports = $this->airportDataRepository->getAllAirports();
+        $countries = $this->airportDataRepository->getAllCountries();
+        return [
+            'data' => [
+                'depCode' => [
+                    'code' => $depCode,
+                    'airport' => $airports[$depCode]['airportName']['en'] ?? $airports[$depCode]['cityName']['en'],
+                    'country' => $countries[$airports[$depCode]['country']]['name']['en'],
+                ],
+                'arrCode' => [
+                    'code' => $arrCode,
+                    'airport' => $airports[$arrCode]['airportName']['en'] ?? $airports[$arrCode]['cityName']['en'],
+                    'country' => $countries[$airports[$arrCode]['country']]['name']['en'],
+                ],
+            ]
+        ];
+    }
 
 }
