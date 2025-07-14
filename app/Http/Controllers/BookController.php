@@ -46,7 +46,7 @@ class BookController extends BaseController
     {
         try {
             $request->validate([
-                'booking_reference' => 'required|string|exists:flight_bookings,booking_reference'
+                'booking_reference' => 'required|exists:flight_bookings,booking_reference'
             ]);
 
             $booking = FlightBooking::where('booking_reference', $request->booking_reference)
