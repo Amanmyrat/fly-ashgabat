@@ -13,6 +13,7 @@ use App\Http\Controllers\XMLAgency\FlightProcessController as XMLAgencyFlightPro
 use App\Http\Controllers\XMLAgency\FlightBookController as XMLAgencyFlightBookController;
 use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchController;
 use App\Http\Controllers\Nemo\FlightProcessController as NemoFlightProcessController;
+use App\Http\Controllers\Nemo\FlightBookController as NemoFlightBookController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -44,6 +45,7 @@ Route::group(['prefix' => 'xmlagency'], function () {
 Route::group(['prefix' => 'nemo'], function () {
     Route::get('search/flights', [NemoFlightSearchController::class, 'search']);
     Route::post('process/flights', [NemoFlightProcessController::class, 'processDetails']);
+    Route::post('bookings/process', [NemoFlightBookController::class, 'processBooking']);
 });
 
 Route::group(['prefix' => 'bookings'], function () {

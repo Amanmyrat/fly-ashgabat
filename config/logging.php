@@ -149,6 +149,18 @@ return [
             ],
         ],
 
+
+        'nemo' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/nemo/xmlagency.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
         'stripe' => [
             'driver' => 'daily',
             'path' => storage_path('logs/stripe/stripe.log'),

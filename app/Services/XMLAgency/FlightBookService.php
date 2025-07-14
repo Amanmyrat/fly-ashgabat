@@ -4,6 +4,7 @@ namespace App\Services\XMLAgency;
 
 use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
+use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
 use App\Services\XMLAgency\RequestBuilder\AeroBookRequestBuilder;
@@ -46,6 +47,9 @@ class FlightBookService
             'Currency' => config('xmlagency.currency', 'EUR')
         ];
 
+        if ($validatedData['payment_type'] === PaymentType::BALANCE->value && (!$user || $user->balance < $actualPrice['Amount'])) {
+            return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $actualPrice ['Amount']];
+        }
 
         $offerInfo = $bookingResult['Offers']['OfferInfo'];
         $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
