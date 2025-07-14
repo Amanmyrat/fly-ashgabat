@@ -117,7 +117,15 @@ class FlightProcessController
         $tariffs = [];
         $locale = app()->getLocale();
 
-        foreach ($flightsByFareFamily->Flight as $flight) {
+        $flights = $flightsByFareFamily->Flight;
+
+        $flights = is_array($flights) ? $flights : [$flights];
+        foreach ($flights as $flight) {
+            // Skip flights without FareFamiliesDescription
+            if (!isset($flight->FareFamiliesDescription) || !isset($flight->FareFamiliesDescription->Description)) {
+                continue;
+            }
+
             $tariff = [
                 'id' => $flight->ID,
                 'name' => $this->extractLocalizedFareName($flight->FareFamiliesDescription->Description, $locale),
@@ -126,10 +134,16 @@ class FlightProcessController
             ];
 
             // Transform fare family parameters to features
-            foreach ($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter as $parameter) {
-                $feature = $this->transformParameterToFeature($parameter, $locale);
-                if ($feature) {
-                    $tariff['features'][] = $feature;
+            if (isset($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter)) {
+                $parameters = is_array($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter) 
+                    ? $flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter 
+                    : [$flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter];
+
+                foreach ($parameters as $parameter) {
+                    $feature = $this->transformParameterToFeature($parameter, $locale);
+                    if ($feature) {
+                        $tariff['features'][] = $feature;
+                    }
                 }
             }
 
@@ -150,23 +164,23 @@ class FlightProcessController
     {
         // First try to get localized name from description parameter
         if (isset($description->UniversalParameters->FareFamilyParameter)) {
-            $parameters = is_array($description->UniversalParameters->FareFamilyParameter) 
-                ? $description->UniversalParameters->FareFamilyParameter 
+            $parameters = is_array($description->UniversalParameters->FareFamilyParameter)
+                ? $description->UniversalParameters->FareFamilyParameter
                 : [$description->UniversalParameters->FareFamilyParameter];
-            
+
             foreach ($parameters as $parameter) {
                 if ($parameter->Code === 'description') {
                     $localizedName = $this->getLocalizedText($parameter->ShortDescription, $locale);
                     if (!empty($localizedName)) {
                         return $localizedName;
                     }
-                    
+
                     // If current locale not found, try to get any available language from description parameter
                     if (isset($parameter->ShortDescription->LangItem)) {
-                        $langItems = is_array($parameter->ShortDescription->LangItem) 
-                            ? $parameter->ShortDescription->LangItem 
+                        $langItems = is_array($parameter->ShortDescription->LangItem)
+                            ? $parameter->ShortDescription->LangItem
                             : [$parameter->ShortDescription->LangItem];
-                        
+
                         foreach ($langItems as $langItem) {
                             if (!empty($langItem->Value)) {
                                 return $langItem->Value;
@@ -227,7 +241,7 @@ class FlightProcessController
         }
 
         $langItems = is_array($description->LangItem) ? $description->LangItem : [$description->LangItem];
-        
+
         // First try to find the requested locale
         foreach ($langItems as $langItem) {
             if (strtolower($langItem->Code) === strtolower($locale)) {
