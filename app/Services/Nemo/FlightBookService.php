@@ -351,7 +351,7 @@ class FlightBookService
 
                 if (!empty($matchingFlights) && $hasAeroflotSegment) {
                     return [
-                        'error' => true,
+                        'success' => false,
                         'status_code' => 409,
                         'message' => 'Aeroflot restriction: One or more travelers have a booking that cannot be rebooked due to Aeroflot restrictions.'
                     ];
@@ -363,7 +363,7 @@ class FlightBookService
 
                     if ($bookingAge < $maxBookingHours) {
                         return [
-                            'error' => true,
+                            'success' => false,
                             'status_code' => 409,
                             'message' => 'One or more travelers have an unpaid booking that hasn\'t expired yet.'
                         ];

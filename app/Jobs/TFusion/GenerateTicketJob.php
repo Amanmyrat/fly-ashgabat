@@ -24,14 +24,11 @@ use Illuminate\Support\Str;
 class GenerateTicketJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    protected FlightBooking $booking;
     public $tries = 1;
     public $maxExceptions = 1;
 
-    public function __construct(FlightBooking $booking)
+    public function __construct(protected FlightBooking $booking)
     {
-        $this->booking = $booking;
     }
 
     /**

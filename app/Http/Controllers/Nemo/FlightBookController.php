@@ -36,6 +36,7 @@ class FlightBookController extends BaseController
 
         try {
             $response = $this->flightBookService->processBooking($validatedData, $user);
+
             if (!$response['success']) {
                 return response()->json($response, 400);
             }
