@@ -60,12 +60,12 @@ class BookFlightRequestGenerateService
     {
         // Store original travellers data for passport information access
         $this->originalTravellers = $travellers;
-        
+
         $travellerIndex = 1;
-        
+
         foreach ($travellers as $traveller) {
             $passengerType = $this->determinePassengerType($traveller['birthdate']);
-            
+
             $request['BookFlight_2_2']['Request']['RequestBody']['Travellers'][] = [
                 'ID' => $travellerIndex,
                 'Type' => $passengerType,
@@ -75,7 +75,7 @@ class BookFlightRequestGenerateService
                 'Nationality' => $traveller['nationality'],
                 'Gender' => $traveller['gender'] === 'male' ? 'M' : 'F',
             ];
-            
+
             $travellerIndex++;
         }
     }
@@ -89,26 +89,34 @@ class BookFlightRequestGenerateService
     private function populateContactDetails(array &$request, array $contactDetails): void
     {
         $dataItemIndex = 1;
-        
-        // Add contact info data item
-        $request['BookFlight_2_2']['Request']['RequestBody']['DataItems'][] = [
-            'ID' => $dataItemIndex,
-            'Type' => 'ContactInfo',
-            'TravellerRef' => ['Ref' => 1], // Reference to first traveller
-            'ContactInfo' => [
-                'EmailID' => $contactDetails['email'],
-                'Telephone' => [
-                    'Type' => 'M', // Mobile
-                    'PhoneNumber' => $contactDetails['phone']['code'] . $contactDetails['phone']['number'],
-                ]
-            ]
-        ];
-        
-        $dataItemIndex++;
-        
-        // Add passport document data items for each traveller
+
         $travellerIndex = 1;
-        
+
+        foreach ($this->originalTravellers as $traveller) {
+            $passengerType = $this->determinePassengerType($traveller['birthdate']);
+
+            if ($passengerType !== 'INF') {
+                $request['BookFlight_2_2']['Request']['RequestBody']['DataItems'][] = [
+                    'ID' => $dataItemIndex,
+                    'Type' => 'ContactInfo',
+                    'TravellerRef' => ['Ref' => $travellerIndex],
+                    'ContactInfo' => [
+                        'EmailID' => $contactDetails['email'],
+                        'Telephone' => [
+                            'Type' => 'M',
+                            'PhoneNumber' => $contactDetails['phone']['code'] . $contactDetails['phone']['number'],
+                        ]
+                    ]
+                ];
+
+                $dataItemIndex++;
+            }
+
+            $travellerIndex++;
+        }
+
+        $travellerIndex = 1;
+
         foreach ($this->originalTravellers as $traveller) {
             $request['BookFlight_2_2']['Request']['RequestBody']['DataItems'][] = [
                 'ID' => $dataItemIndex,
@@ -121,7 +129,7 @@ class BookFlightRequestGenerateService
                     'ElapsedTime' => Carbon::parse($traveller['passport_expiry_date'])->format('d.m.Y'),
                 ]
             ];
-            
+
             $dataItemIndex++;
             $travellerIndex++;
         }
@@ -137,7 +145,7 @@ class BookFlightRequestGenerateService
     private function determinePassengerType(string $birthdate): string
     {
         $age = Carbon::parse($birthdate)->age;
-        
+
         if ($age < 2) {
             return 'INF'; // Infant - under 2 years old
         } elseif ($age < 12) {

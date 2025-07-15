@@ -3,13 +3,17 @@
 namespace App\Jobs\Nemo;
 
 use App;
+use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
 use App\Mail\XmlBookingTicketMail;
 use App\Models\FlightBooking;
 use App\Models\FlightTicket;
+use App\Services\GeoDataService;
 use App\Services\Nemo\RequestGenerate\TicketFlightRequestGenerateService;
 use App\Services\Nemo\SoapService;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+use Cache;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,6 +34,7 @@ class GenerateTicketJob implements ShouldQueue
     public $maxExceptions = 1;
 
     private array $ticketData;
+    private ?object $responseBody = null;
 
     public function __construct(protected FlightBooking $booking)
     {
@@ -41,7 +46,8 @@ class GenerateTicketJob implements ShouldQueue
      */
     public function handle(
         SoapService                        $soapService,
-        TicketFlightRequestGenerateService $ticketFlightRequestGenerateService
+        TicketFlightRequestGenerateService $ticketFlightRequestGenerateService,
+        GeoDataService                     $geoDataService
     ): void
     {
         Log::info("DEBUG: GenerateTicketJob handle() called for booking {$this->booking->booking_reference}");
@@ -60,43 +66,57 @@ class GenerateTicketJob implements ShouldQueue
                     'book_id' => $this->booking->booking_reference,
                 ]);
 
+//                $result = Cache::remember('flights_ticket_' . $this->booking->booking_reference, 60 * 55, function () use ($soapService, $generatedRequest) {
+//                    return $soapService->callSoap($generatedRequest, 'Ticket_2_2');
+//                });
+
                 $result = $soapService->callSoap($generatedRequest, 'Ticket_2_2');
 
                 if (isset($result->Ticket_2_2Result->Errors)) {
+                    $this->booking->update(['status' => BookingStatus::FAILED->value]);
                     $this->handleErrors($result);
                     return;
                 }
 
-                dd($result);
-                // Extract data from XML response
-                $orderInfo = $this->xmlBookingData['OrderInfoData'];
-                $multiGatesInfo = $orderInfo['MultiGatesInfo'];
+                $responseBody = $result->Ticket_2_2Result->ResponseBody;
 
-                // Extract passengers from PaxDataList (corrected structure based on logs)
-                $passengersData = $orderInfo['PaxDataList']['PaxData'] ?? [];
-                $passengers = isset($passengersData[0]) ? $passengersData : [$passengersData];
+                $this->responseBody = $responseBody;
 
-                // Extract contact information
-                $contactData = [
-                    'email' => $orderInfo['Email']['value'],
-                    'phone' => $orderInfo['Phone']['value'],
-                ];
+                $travellers = $responseBody->Travellers->Traveller;
 
-                // Build flight data using XMLAgency logic
-                $flightData = $this->buildFlightData($multiGatesInfo);
+                if (!is_array($travellers)) {
+                    $travellers = [$travellers];
+                }
 
-                Log::info("Processing passengers for XMLAgency booking: {$this->booking->booking_reference}");
+                $service = $responseBody->Services->Service;
+                $flightSegments = $service->Segments->FlightSegment;
 
-                $tickets = array_map(function ($passenger) use ($flightData, $contactData) {
-                    return $this->processPassenger($passenger, $flightData, $contactData);
-                }, $passengers);
+                if (!is_array($flightSegments)) {
+                    $flightSegments = [$flightSegments];
+                }
+
+
+                $contactData = $this->extractContactInfo($responseBody->DataItems->DataItem);
+
+
+                $flightData = $this->buildNemoFlightData($flightSegments, $service, $geoDataService);
+
+                Log::info("Processing passengers for Nemo booking: {$this->booking->booking_reference}");
+
+                $tickets = [];
+                foreach ($travellers as $traveller) {
+                    $ticket = $this->processNemoPassenger($traveller, $flightData, $contactData, $responseBody);
+                    $tickets[] = $ticket;
+                }
+
+                $this->booking->update(['status' => BookingStatus::SUCCEEDED->value]);
 
                 Mail::to($contactData['email'])->send(new XmlBookingTicketMail($tickets, $this->ticketData));
 
-                Log::info("GenerateTicketJob completed successfully for XMLAgency booking: {$this->booking->booking_reference}");
+                Log::info("GenerateTicketJob completed successfully for Nemo booking: {$this->booking->booking_reference}");
 
             } catch (Exception $e) {
-                Log::error("XMLAgency GenerateTicketJob failed for: {$this->booking->booking_reference}. Error: " . $e->getMessage());
+                Log::error("Nemo GenerateTicketJob failed for: {$this->booking->booking_reference}. Error: " . $e->getMessage());
                 Log::error("Stack trace: " . $e->getTraceAsString());
                 throw $e; // Re-throw to trigger job retry
             }
@@ -121,110 +141,272 @@ class GenerateTicketJob implements ShouldQueue
     }
 
     /**
-     * Build flight data from XMLAgency MultiGatesInfo
+     * Extract contact information from DataItems
      */
-    private function buildFlightData(array $multiGatesInfo): array
+    private function extractContactInfo(array $dataItems): array
     {
-        $offerInfo = $multiGatesInfo['OfferInfo'];
-        $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
-
-        $allSegments = [];
-
-        foreach ($offerInfo as $offer) {
-            if (isset($offer['Segments']['OfferSegment'])) {
-                $segments = $offer['Segments']['OfferSegment'];
-                $segments = is_array($segments) && isset($segments[0]) ? $segments : [$segments];
-                $allSegments = array_merge($allSegments, $segments);
-            }
-        }
-
-        $segments = $allSegments;
-
-        $outwardSegments = [];
-        $returnSegments = [];
-
-        foreach ($segments as $segment) {
-            if ($segment['Rph']['value'] == '1') {
-                $outwardSegments[] = $segment;
-            } else if ($segment['Rph']['value'] == '2') {
-                $returnSegments[] = $segment;
-            }
-        }
-
-        $outwardData = null;
-        $returnData = null;
-
-        if (!empty($outwardSegments)) {
-            $outwardData = $this->buildJourneyData($outwardSegments);
-        }
-
-        if (!empty($returnSegments)) {
-            $returnData = $this->buildJourneyData($returnSegments);
-        }
-
-        return [
-            'Outward' => $outwardData,
-            'Return' => $returnData
+        $contactData = [
+            'email' => '',
+            'phone' => '',
         ];
+
+        foreach ($dataItems as $dataItem) {
+            if (isset($dataItem->Type) && $dataItem->Type === 'ContactInfo') {
+                $contactInfo = $dataItem->ContactInfo;
+                $contactData['email'] = $contactInfo->EmailID ?? '';
+                $contactData['phone'] = $contactInfo->Telephone->PhoneNumber ?? '';
+                break;
+            }
+        }
+
+        return $contactData;
     }
 
     /**
-     * Build journey data from segments (adapted from XMLAgency FlightBookService)
+     * Build flight data from Nemo flight segments
      */
-    private function buildJourneyData(array $segments): array
+    private function buildNemoFlightData(array $flightSegments, object $service, GeoDataService $geoDataService): array
     {
-        if (empty($segments)) {
-            return [];
-        }
-
-        // Build segment data
         $segmentList = [];
-        foreach ($segments as $segment) {
+
+        foreach ($flightSegments as $segment) {
+
+            $departureInfo = $geoDataService->getAirportInfo([
+                'Type' => 'airport',
+                'Code' => $segment->DepatureAirport->Code
+            ]);
+
+
+            $arrivalInfo = $geoDataService->getAirportInfo([
+                'Type' => 'airport',
+                'Code' => $segment->ArrivalAirport->Code
+            ]);
+
+
+            $departureDateTime = Carbon::createFromFormat('Y-m-d\TH:i:s', $segment->DepatureDateTime);
+            $arrivalDateTime = Carbon::createFromFormat('Y-m-d\TH:i:s', $segment->ArrivalDateTime);
+
             $segmentList[] = [
-                'FlightNum' => $segment['FlightNum']['value'],
-                'FlightClass' => $segment['FlightClass']['value'],
-                'FlightMinutes' => $segment['FlightMinutes']['value'],
-                'FlightTime' => $segment['FlightTime']['value'],
-                'OperatingAirlineName' => $segment['OperatingAirlineName']['value'],
+                'FlightNum' => $segment->FlightNumber,
+                'FlightClass' => $segment->BookingClassCode,
+                'FlightMinutes' => $segment->FlightTime,
+                'FlightTime' => $this->convertMinutesToHHMMSS($segment->FlightTime),
+                'OperatingAirlineName' => $segment->OperatingAirline,
                 'Departure' => [
-                    'City' => $segment['Departure']['City']['value'],
-                    'Airport' => $segment['Departure']['Name']['value'],
-                    'Code' => $segment['Departure']['Iata']['value'],
-                    'Date' => $segment['Departure']['Date']['value']
+                    'City' => $departureInfo['cityName'] ?: $segment->DepatureAirport->CityCode,
+                    'Airport' => $departureInfo['airportName'] ?: $segment->DepatureAirport->Code,
+                    'Code' => $segment->DepatureAirport->Code,
+                    'Date' => $departureDateTime->format('d.m.Y H:i')
                 ],
                 'Arrival' => [
-                    'City' => $segment['Arrival']['City']['value'],
-                    'Airport' => $segment['Arrival']['Name']['value'],
-                    'Code' => $segment['Arrival']['Iata']['value'],
-                    'Date' => $segment['Arrival']['Date']['value']
+                    'City' => $arrivalInfo['cityName'] ?: $segment->ArrivalAirport->CityCode,
+                    'Airport' => $arrivalInfo['airportName'] ?: $segment->ArrivalAirport->Code,
+                    'Code' => $segment->ArrivalAirport->Code,
+                    'Date' => $arrivalDateTime->format('d.m.Y H:i')
                 ],
-                'Baggage' => $segment['Baggage'] ?? null,
-                'CabinBaggage' => $segment['CabinBaggage'] ?? null
+                'Baggage' => $this->extractBaggageForSegment($segment->ID),
+                'CabinBaggage' => $this->extractCabinBaggageForSegment($segment->ID),
+                'SegmentID' => $segment->ID,
+                'RequestedSegment' => $segment->RequestedSegment ?? 0
             ];
         }
 
-        return $segmentList;
+        return $this->separateSegmentsByDirection($segmentList, $service->DirectionType);
     }
 
     /**
-     * Process individual passenger and generate ticket
+     * Convert minutes to HH:MM:SS format
      */
-    private function processPassenger(array $passenger, array $flightData, array $contactData): array
+    private function convertMinutesToHHMMSS(int $minutes): string
     {
-        // Build full name from passenger data using correct XMLAgency structure
-        $firstName = $passenger['Name']['value'];
-        $lastName = $passenger['Surname']['value'];
+        $hours = floor($minutes / 60);
+        $remainingMinutes = $minutes % 60;
+
+        return sprintf('%02d:%02d:00', $hours, $remainingMinutes);
+    }
+
+    /**
+     * Separate segments into outward and return based on DirectionType
+     */
+    private function separateSegmentsByDirection(array $segmentList, string $directionType): array
+    {
+        switch ($directionType) {
+            case 'OW':
+                return [
+                    'Outward' => $segmentList,
+                    'Return' => null
+                ];
+
+            case 'RT':
+            case 'SingleOJ':
+            case 'DoubleOJ':
+                $outwardSegments = [];
+                $returnSegments = [];
+
+
+                foreach ($segmentList as $segment) {
+                    if ($segment['RequestedSegment'] === 0) {
+                        $outwardSegments[] = $segment;
+                    } else {
+                        $returnSegments[] = $segment;
+                    }
+                }
+
+                return [
+                    'Outward' => $outwardSegments,
+                    'Return' => !empty($returnSegments) ? $returnSegments : null
+                ];
+
+            default:
+
+                return [
+                    'Outward' => $segmentList,
+                    'Return' => null
+                ];
+        }
+    }
+
+    /**
+     * Extract baggage information for a specific segment
+     */
+    private function extractBaggageForSegment(int $segmentId): ?string
+    {
+        return $this->extractBaggageInfo($segmentId, 'baggage', 'CheckedBaggage');
+    }
+
+    /**
+     * Extract cabin baggage information for a specific segment
+     */
+    private function extractCabinBaggageForSegment(int $segmentId): ?string
+    {
+        return $this->extractBaggageInfo($segmentId, 'carry_on', 'CabinBaggage');
+    }
+
+    /**
+     * Universal baggage extraction method
+     */
+    private function extractBaggageInfo(int $segmentId, string $fareFamilyCode, string $baggageType): ?string
+    {
+        if (!isset($this->responseBody)) {
+            return null;
+        }
+
+        $price = $this->responseBody->Price;
+
+        if (isset($price->FareFamiliesDescriptions->Description->UniversalParameters->FareFamilyParameter)) {
+            $parameters = $price->FareFamiliesDescriptions->Description->UniversalParameters->FareFamilyParameter;
+
+            if (!is_array($parameters)) {
+                $parameters = [$parameters];
+            }
+
+            foreach ($parameters as $parameter) {
+                if (isset($parameter->Code) && $parameter->Code === $fareFamilyCode) {
+                    if (isset($parameter->ShortDescription->LangItem)) {
+                        $langItems = $parameter->ShortDescription->LangItem;
+                        if (!is_array($langItems)) {
+                            $langItems = [$langItems];
+                        }
+
+                        $ruText = '';
+                        $enText = '';
+
+                        // Extract both Russian and English descriptions
+                        foreach ($langItems as $langItem) {
+                            if ($langItem->Code === 'RU') {
+                                $ruText = $langItem->Value;
+                            } elseif ($langItem->Code === 'EN') {
+                                $enText = $langItem->Value;
+                            }
+                        }
+
+
+                        if ($ruText && $enText) {
+                            return $ruText . ' / ' . $enText;
+                        } elseif ($ruText) {
+                            return $ruText;
+                        } elseif ($enText) {
+                            return $enText;
+                        }
+
+                        // Fallback to first available language
+                        if (!empty($langItems)) {
+                            return $langItems[0]->Value;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        if (isset($price->PriceBreakdown->PricePart->PassengerTypePriceBreakdown->PassengerTypePrice->Tariffs->Tariff)) {
+            $tariffs = $price->PriceBreakdown->PricePart->PassengerTypePriceBreakdown->PassengerTypePrice->Tariffs->Tariff;
+
+
+            if (!is_array($tariffs)) {
+                $tariffs = [$tariffs];
+            }
+
+            foreach ($tariffs as $tariff) {
+                if (isset($tariff->SegmentID) && $tariff->SegmentID == $segmentId) {
+                    if (isset($tariff->BaggageDetailsList->Baggage)) {
+                        $baggage = $tariff->BaggageDetailsList->Baggage;
+
+
+                        if ($baggageType === 'CheckedBaggage') {
+                            if ($baggage->Weight && $baggage->Weight !== '0') {
+                                return $baggage->Weight . ' ' . $baggage->WeightUnit;
+                            }
+                            if ($baggage->Count && $baggage->Count > 0) {
+                                return $baggage->Count . ' piece(s)';
+                            }
+                        }
+
+                        elseif ($baggageType === 'CabinBaggage') {
+                            if ($baggage->Type === 'CabinBaggage' && $baggage->Weight && $baggage->Weight !== '0') {
+                                return $baggage->Weight . ' ' . $baggage->WeightUnit;
+                            }
+                        }
+                    }
+
+
+                    if ($baggageType === 'CheckedBaggage' && isset($tariff->FreeBaggage->Value) && $tariff->FreeBaggage->Value !== '0') {
+                        $value = $tariff->FreeBaggage->Value;
+                        $measure = $tariff->FreeBaggage->Measure;
+                        return $value . ' ' . $measure;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Process individual Nemo passenger and generate ticket
+     */
+    private function processNemoPassenger(object $traveller, array $flightData, array $contactData, object $responseBody): array
+    {
+
+        $firstName = $traveller->Name;
+        $lastName = $traveller->LastName;
         $fullName = trim($firstName . ' ' . $lastName);
 
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
-        // Prepare data for XML ticket template in the new format
+
+        $passportNumber = $this->extractPassportNumber($responseBody->DataItems->DataItem, $traveller->ID);
+
+
+        $bookingDate = Carbon::parse($responseBody->DateInfo->Created);
+
+
         $ticketData = [
             'bookingReference' => $this->booking->booking_reference,
-            'bookingDate' => $this->xmlBookingData['OrderInfoData']['Date']['value'],
+            'bookingDate' => $bookingDate->format('d.m.Y H:i'),
             'fullName' => $fullName,
-            'passportNumber' => $passenger['Document']['value'],
-            'dateOfBirth' => $passenger['BirthDay']['value'],
+            'passportNumber' => $passportNumber,
+            'dateOfBirth' => $traveller->DateOfBirth,
             'contactEmail' => $contactData['email'],
             'contactPhone' => $contactData['phone'],
             'flightData' => $flightData,
@@ -250,6 +432,19 @@ class GenerateTicketJob implements ShouldQueue
         ];
     }
 
+    /**
+     * Extract passport number from DataItems for specific traveller
+     */
+    private function extractPassportNumber(array $dataItems, int $travellerId): string
+    {
+        foreach ($dataItems as $dataItem) {
+            if (isset($dataItem->Type) && $dataItem->Type === 'IDDocument' &&
+                isset($dataItem->TravellerRef) && $dataItem->TravellerRef->Ref == $travellerId) {
+                return $dataItem->Document->Number ?? '';
+            }
+        }
+        return '';
+    }
 
     /**
      * Handle job failure

@@ -356,8 +356,9 @@
                                 $baggageText = 'Нет / No';
                                 $cabinBagText = 'Нет / No';
 
-                                // Check for checked baggage (raw XMLAgency structure)
+                                // Check for checked baggage - handle both XMLAgency and Nemo formats
                                 if (isset($segment['Baggage']['BaggageType']['value'])) {
+                                    // XMLAgency format - checked baggage
                                     $baggageType = $segment['Baggage']['BaggageType']['value'];
                                     $baggageCount = 0;
                                     
@@ -382,10 +383,14 @@
                                         default:
                                             $baggageText = $baggageCount . ' ' . $baggageType;
                                     }
+                                } elseif (isset($segment['Baggage']) && is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
+                                    // Nemo format - use the string as is (already formatted)
+                                    $baggageText = $segment['Baggage'];
                                 }
 
-                                // Check for cabin baggage (raw XMLAgency structure)
+                                // Check for cabin baggage - handle both XMLAgency and Nemo formats
                                 if (isset($segment['CabinBaggage']['BaggageType']['value'])) {
+                                    // XMLAgency format - cabin baggage
                                     $cabinBaggageType = $segment['CabinBaggage']['BaggageType']['value'];
                                     $cabinBaggageCount = 0;
                                     
@@ -410,6 +415,9 @@
                                         default:
                                             $cabinBagText = $cabinBaggageCount . ' ' . $cabinBaggageType;
                                     }
+                                } elseif (isset($segment['CabinBaggage']) && is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
+                                    // Nemo format - use the string as is (already formatted)
+                                    $cabinBagText = $segment['CabinBaggage'];
                                 }
                             @endphp
                             <div class="flex items-center gap-10">
@@ -531,8 +539,9 @@
                                     $baggageText = 'Нет / No';
                                     $cabinBagText = 'Нет / No';
 
-                                    // Check for checked baggage (raw XMLAgency structure)
+                                    // Check for checked baggage - handle both XMLAgency and Nemo formats
                                     if (isset($segment['Baggage']['BaggageType']['value'])) {
+                                        // XMLAgency format - checked baggage
                                         $baggageType = $segment['Baggage']['BaggageType']['value'];
                                         $baggageCount = 0;
                                         
@@ -557,10 +566,14 @@
                                             default:
                                                 $baggageText = $baggageCount . ' ' . $baggageType;
                                         }
+                                    } elseif (isset($segment['Baggage']) && is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
+                                        // Nemo format - use the string as is (already formatted)
+                                        $baggageText = $segment['Baggage'];
                                     }
 
-                                    // Check for cabin baggage (raw XMLAgency structure)
+                                    // Check for cabin baggage - handle both XMLAgency and Nemo formats
                                     if (isset($segment['CabinBaggage']['BaggageType']['value'])) {
+                                        // XMLAgency format - cabin baggage
                                         $cabinBaggageType = $segment['CabinBaggage']['BaggageType']['value'];
                                         $cabinBaggageCount = 0;
                                         
@@ -585,6 +598,9 @@
                                             default:
                                                 $cabinBagText = $cabinBaggageCount . ' ' . $cabinBaggageType;
                                         }
+                                    } elseif (isset($segment['CabinBaggage']) && is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
+                                        // Nemo format - use the string as is (already formatted)
+                                        $cabinBagText = $segment['CabinBaggage'];
                                     }
                                 @endphp
                                 <div class="flex items-center gap-10">

@@ -36,7 +36,7 @@ class FlightSearchService
         $flightCount = 0;
 
         if (isset($result->Search_1_2Result->ResponseBody->PlaneFlights)) {
-            $this->processPlaneFlights($result->Search_1_2Result->ResponseBody->PlaneFlights, $flightCount, $requestData);
+            $this->processPlaneFlights($result->Search_1_2Result->ResponseBody->PlaneFlights, $flightCount);
         }
 
         return [
@@ -63,17 +63,16 @@ class FlightSearchService
      *
      * @param mixed $planeFlights
      * @param int $flight_count
-     * @param array $requestData
      */
-    private function processPlaneFlights(mixed &$planeFlights, int &$flight_count, array $requestData): void
+    private function processPlaneFlights(mixed &$planeFlights, int &$flight_count): void
     {
         if (is_array($planeFlights->Flight)) {
             foreach ($planeFlights->Flight as &$item) {
-                $this->processFlightItem($item, $flight_count, $requestData);
+                $this->processFlightItem($item, $flight_count);
             }
         } else {
             $item = $planeFlights->Flight;
-            $this->processFlightItem($item, $flight_count, $requestData);
+            $this->processFlightItem($item, $flight_count);
         }
     }
 
@@ -82,9 +81,8 @@ class FlightSearchService
      *
      * @param mixed $item
      * @param int $flight_count
-     * @param array $requestData
      */
-    private function processFlightItem(mixed &$item, int &$flight_count, array $requestData): void
+    private function processFlightItem(mixed &$item, int &$flight_count): void
     {
         $segmentsToProcess = is_array($item->Segments->Segment) ? $item->Segments->Segment : [$item->Segments->Segment];
 
