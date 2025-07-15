@@ -120,7 +120,7 @@ class FlightBookService
             'user_id' => $user?->id ?? null,
             'booking_reference' => $responseBody['ID'],
             'supplier_reference' => $responseBody['OwnerID'],
-            'flight_type' => FlightSupplier::Nemo,
+            'flight_type' => FlightSupplier::NEMO,
             'origin' => $origin,
             'destination' => $destination,
             'outward' => $outwardData,

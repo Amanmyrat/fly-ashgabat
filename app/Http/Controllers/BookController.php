@@ -154,7 +154,7 @@ class BookController extends BaseController
                     case FlightSupplier::XMLAGENCY:
                         ConfirmBookingJob::dispatch($booking);
                         break;
-                    case FlightSupplier::Nemo:
+                    case FlightSupplier::NEMO:
                         GenerateTicketJob::dispatch($booking);
                 }
             }
