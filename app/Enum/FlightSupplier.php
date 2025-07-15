@@ -9,21 +9,21 @@ enum FlightSupplier: string implements HasLabel, HasColor
 {
     case TFUSION = 'TFusion';
     case XMLAGENCY = 'XMLAgency';
-    case Nemo = 'Nemo';
+    case NEMO = 'Nemo';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::TFUSION => 'Travel Fusion',
             self::XMLAGENCY => 'XML Agency',
-            self::Nemo => 'Nemo',
+            self::NEMO => 'Nemo',
         };
     }
 
     public function getColor(): string | array | null
     {
         return match ($this) {
-            self::TFUSION, self::Nemo => 'info',
+            self::TFUSION, self::NEMO => 'info',
             self::XMLAGENCY => 'warning',
         };
     }

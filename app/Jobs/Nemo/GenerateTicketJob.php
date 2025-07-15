@@ -52,7 +52,7 @@ class GenerateTicketJob implements ShouldQueue
     {
         Log::info("DEBUG: GenerateTicketJob handle() called for booking {$this->booking->booking_reference}");
 
-        if ($this->booking->flight_type == FlightSupplier::Nemo) {
+        if ($this->booking->flight_type == FlightSupplier::NEMO) {
             Log::info("Generate Nemo tickets for: {$this->booking->booking_reference} - Job Attempt: " . $this->attempts());
 
             // Check if tickets already exist to prevent duplicate generation
