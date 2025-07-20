@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CharterFlightController;
+use App\Http\Controllers\GetBookingsController;
 use App\Http\Controllers\GeoDataController;
 use App\Http\Controllers\TFusion\FlightBookController;
 use App\Http\Controllers\TFusion\FlightProcessController as TFusionFlightProcessController;
@@ -67,7 +68,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/user', [UserController::class, 'show']);
     Route::post('/user', [UserController::class, 'update']);
 
-    Route::get('bookings', [BookController::class, 'getBookings']);
+    Route::get('bookings', GetBookingsController::class);
 });
 
 // Charter Flights API Routes

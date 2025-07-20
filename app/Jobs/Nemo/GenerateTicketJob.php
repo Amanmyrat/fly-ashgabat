@@ -95,9 +95,7 @@ class GenerateTicketJob implements ShouldQueue
                     $flightSegments = [$flightSegments];
                 }
 
-
                 $contactData = $this->extractContactInfo($responseBody->DataItems->DataItem);
-
 
                 $flightData = $this->buildNemoFlightData($flightSegments, $service, $geoDataService);
 
