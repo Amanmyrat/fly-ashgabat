@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 class FlightSearchController extends Controller
 {
     public function __construct(
-        private FlightSearchService $flightSearchService
+        private readonly FlightSearchService $flightSearchService
     ) {}
 
     /**

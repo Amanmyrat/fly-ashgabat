@@ -74,7 +74,7 @@ class AeroSearchRequestBuilder
                     'Currency' => config('xmlagency.currency', 'EUR'),
                     'DeviceId' => config('xmlagency.device_id', 'web'),
                     'Language' => strtoupper(app()->getLocale()),
-                    'TokenGuid' => '00000000-0000-0000-0000-000000000000',
+                    'TokenGuid' => config('xmlagency.token_guid'),
                 ],
                 'aeroSearchParams' => $aeroSearchParams,
             ],

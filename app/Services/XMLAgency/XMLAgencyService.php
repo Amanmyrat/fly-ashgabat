@@ -14,11 +14,9 @@ use Illuminate\Support\Facades\Log;
 
 class XMLAgencyService
 {
-    private string $baseUrl;
-
     public function __construct()
     {
-        $this->baseUrl = config('xmlagency.base_url');
+        // No longer storing a single base URL - we'll determine it dynamically
     }
 
     /**
@@ -27,8 +25,8 @@ class XMLAgencyService
     public function sendRequest(array $requestData, string $soapAction): array
     {
         $xmlContent = $this->buildSoapXml($requestData);
-//        dd($xmlContent);
-        return $this->makeRequest($this->baseUrl . config('xmlagency.search_endpoint'), $xmlContent, $soapAction);
+        $endpoint = $this->getEndpointForAction($soapAction);
+        return $this->makeRequest($endpoint, $xmlContent, $soapAction);
     }
 
     /**
@@ -274,6 +272,24 @@ class XMLAgencyService
                 $this->arrayToXml($passenger, $paxDataElement, $dom);
             }
         }
+    }
+
+    /**
+     * Get the appropriate endpoint URL based on the SOAP action
+     *
+     * As per XML Agency requirements:
+     * - Search operations (AeroSearch) use: http://search-api.xml.agency/SiteCity
+     * - All other operations (AeroBook, AeroPrebook, ConfirmBook, OrderInfo) use: http://api.city.travel/SiteCity
+     */
+    private function getEndpointForAction(string $soapAction): string
+    {
+        if ($soapAction === 'AeroSearch') {
+            $baseUrl = config('xmlagency.search_url');
+        } else {
+            $baseUrl = config('xmlagency.main_url');
+        }
+
+        return $baseUrl . config('xmlagency.endpoint');
     }
 
     /**
