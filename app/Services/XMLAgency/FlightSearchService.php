@@ -215,7 +215,6 @@ class FlightSearchService
             $segmentsData[] = [
                 'FlightNumber' => $segment['FlightNum']['value'],
                 'Airline' => $airlineInfo,
-                'Aircraft' => $segment['AirCraft']['value'],
                 'Departure' => array_merge(
                     $this->getAirportInfo($segment['Departure']['Iata']['value'], $airportsData),
                     ['Date' => $segment['Departure']['Date']['value']]
