@@ -28,6 +28,10 @@ class PasswordResetToken extends Model
 
     const UPDATED_AT = null;
 
+    protected $primaryKey = 'email';
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = ['email', 'token'];
 
 }

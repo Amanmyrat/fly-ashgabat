@@ -30,10 +30,10 @@ class PasswordResetService
     {
         $code = mt_rand(10000, 99999);
 
-        PasswordResetToken::create([
-            'email' => $email,
-            'token' => $code
-        ]);
+        PasswordResetToken::updateOrCreate(
+            ['email' => $email],
+            ['token' => $code, 'created_at' => now()]
+        );
 
         return $code;
     }

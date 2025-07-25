@@ -47,7 +47,7 @@
                         <p style="font-size: 16px; font-weight: 400; color: #1E2133;">С уважением,<br>Команда по поддержке клиентов flyashgabat.com</p>
 
                         <!-- Support Link -->
-                        <p style="font-size: 14px; font-weight: 400; color: #80849A;">В случае, если вам не удается нажать кнопку «Активировать», то перейдите по ссылке <a href="http://flyashgabat.com" style="color: #3F5CFF; text-decoration: none;">http://flyashgabat.com/</a>.</p>
+                        <p style="font-size: 14px; font-weight: 400; color: #80849A;">В случае, если вам не удается нажать кнопку «Активировать», то перейдите по ссылке <a href="https://flyashgabat.com" style="color: #3F5CFF; text-decoration: none;">https://flyashgabat.com/</a>.</p>
                     </td>
                 </tr>
             </table>
