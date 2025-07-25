@@ -80,18 +80,29 @@ class FlightSearchService
                 $segments = $offer['Segments']['OfferSegment'];
                 $segments = is_array($segments) && isset($segments[0]) ? $segments : [$segments];
 
-                // Check if there's an Rph at the offer level
-                if (isset($offer['Rph']['value'])) {
-                    // Use offer-level Rph to determine journey type
-                    if ($offer['Rph']['value'] == '1') {
-                        $outwardSegments = array_merge($outwardSegments, $segments);
-                    } else {
-                        $returnSegments = array_merge($returnSegments, $segments);
-                    }
-                } else {
-                    // Fall back to segment-level Rph checking
-                    foreach ($segments as $segment) {
-                        if (isset($segment['Rph']['value']) && $segment['Rph']['value'] == '1') {
+                // Determine journey type based on both segment and offer Rph
+                foreach ($segments as $segment) {
+                    $segmentRph = $segment['Rph']['value'] ?? null;
+                    $offerRph = $offer['Rph']['value'] ?? null;
+                    
+                    // Only outward if both segment=1 AND offer=1, otherwise return
+                    if ($segmentRph && $offerRph) {
+                        // Both exist - outward only if both are 1
+                        if ($segmentRph == '1' && $offerRph == '1') {
+                            $outwardSegments[] = $segment;
+                        } else {
+                            $returnSegments[] = $segment;
+                        }
+                    } elseif ($segmentRph) {
+                        // Only segment Rph exists
+                        if ($segmentRph == '1') {
+                            $outwardSegments[] = $segment;
+                        } else {
+                            $returnSegments[] = $segment;
+                        }
+                    } elseif ($offerRph) {
+                        // Only offer Rph exists
+                        if ($offerRph == '1') {
                             $outwardSegments[] = $segment;
                         } else {
                             $returnSegments[] = $segment;
