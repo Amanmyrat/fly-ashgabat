@@ -15,11 +15,11 @@ class BookFlightRequestGenerateService
      * @return array The generated book flight request.
      */
     #[ArrayShape(['BookFlight_2_2' => "array[]"])]
-    public function generateBookFlightRequest(array $postRequest): array
+    public function generateBookFlightRequest(array $postRequest, string $flightId): array
     {
         $bookFlightRequest = $this->initializeRequest();
 
-        $bookFlightRequest['BookFlight_2_2']['Request']['RequestBody']['FlightID'] = $postRequest['flight_id'];
+        $bookFlightRequest['BookFlight_2_2']['Request']['RequestBody']['FlightID'] = $flightId;
 
         $this->populateTravellers($bookFlightRequest, $postRequest['travellers']);
         $this->populateContactDetails($bookFlightRequest, $postRequest['contact_details']);

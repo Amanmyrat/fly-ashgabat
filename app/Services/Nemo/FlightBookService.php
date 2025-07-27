@@ -39,7 +39,7 @@ class FlightBookService
 
         $validatedData = $requestData;
 
-        $generatedRequest = $this->bookFlightRequestGenerateService->generateBookFlightRequest($requestData);
+        $generatedRequest = $this->bookFlightRequestGenerateService->generateBookFlightRequest($requestData, $validationResult['actualizedFlightId']);
 
         $result = $this->soapService->callSoap($generatedRequest, 'BookFlight_2_2');
 
@@ -372,7 +372,7 @@ class FlightBookService
             }
         }
 
-        return ['success' => true];
+        return ['success' => true, 'actualizedFlightId' => $actualizeFlightResult->AdditionalOperations_1_2Result->ResponseBody->ActualizedFlight->ID];
     }
 
     private function logErrors($result): void
