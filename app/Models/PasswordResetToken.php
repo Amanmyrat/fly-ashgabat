@@ -32,6 +32,10 @@ class PasswordResetToken extends Model
     protected $keyType = 'string';
     public $incrementing = false;
 
-    protected $fillable = ['email', 'token'];
+    protected $fillable = ['email', 'token', 'created_at'];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
 
 }

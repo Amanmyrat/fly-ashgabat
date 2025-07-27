@@ -49,7 +49,7 @@ class PasswordResetService
             ->where('token', $code)
             ->first();
 
-        if (!$reset || $reset->created_at->addMinutes(30) < now()) {
+        if (!$reset || $reset->created_at->addMinutes(30)->isPast()) {
             return false;
         }
 
