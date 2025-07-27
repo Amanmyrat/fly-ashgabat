@@ -101,7 +101,16 @@ class FlightProcessController
                 $this->logInfo("Завершение актуализации перелета для: $flightId. Перелет " . ($isActualized ? 'актуален' : 'не актуален'));
                 return ['operation' => 'AF', 'result' => $isActualized];
 
+            case 'GetFareRules':
+                $this->logInfo("Получение правил тарифа для перелета: $flightId");
+                $this->logInfo('Ответ: ', (array)$result);
+
+                $fareRules = $this->transformFareRulesToNormalizedFormat($result);
+
+                return ['operation' => 'GFR', 'result' => $fareRules];
+
             default:
+
                 throw new \InvalidArgumentException("Неизвестная операция: $operation");
         }
     }
@@ -135,8 +144,8 @@ class FlightProcessController
 
             // Transform fare family parameters to features
             if (isset($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter)) {
-                $parameters = is_array($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter) 
-                    ? $flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter 
+                $parameters = is_array($flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter)
+                    ? $flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter
                     : [$flight->FareFamiliesDescription->Description->UniversalParameters->FareFamilyParameter];
 
                 foreach ($parameters as $parameter) {
@@ -258,6 +267,93 @@ class FlightProcessController
 
         // If no English found, return the first available
         return $langItems[0]->Value ?? '';
+    }
+
+    /**
+     * Transform fare rules response to normalized format for frontend display
+     *
+     * @param object $result
+     * @return array
+     */
+    private function transformFareRulesToNormalizedFormat(object $result): array
+    {
+        $fareRules = [];
+
+        if (!isset($result->AdditionalOperations_1_2Result->ResponseBody->GetFareRulesResult->Rules->Rule)) {
+            return $fareRules;
+        }
+
+        $rules = $result->AdditionalOperations_1_2Result->ResponseBody->GetFareRulesResult->Rules->Rule;
+        $rules = is_array($rules) ? $rules : [$rules];
+
+        foreach ($rules as $rule) {
+            $fareRules[] = [
+                'code' => $rule->Code ?? '',
+                'tariff' => $rule->Tarrif ?? '',
+                'title' => $this->formatRuleTitle($rule->Name ?? ''),
+                'description' => $this->formatRuleDescription($rule->RuleText ?? ''),
+                'segment_refs' => $this->extractSegmentRefs($rule)
+            ];
+        }
+
+        return $fareRules;
+    }
+
+    /**
+     * Format rule title for better display
+     *
+     * @param string $name
+     * @return string
+     */
+    private function formatRuleTitle(string $name): string
+    {
+        // Remove code prefix (e.g., "RU.RULE APPLICATION" -> "Rule Application")
+        $title = preg_replace('/^[A-Z]{2}\./', '', $name);
+        
+        // Convert to title case
+        return ucwords(strtolower($title));
+    }
+
+    /**
+     * Format rule description for better readability
+     *
+     * @param string $ruleText
+     * @return string
+     */
+    private function formatRuleDescription(string $ruleText): string
+    {
+        // Remove excessive whitespace and normalize line breaks
+        $description = preg_replace('/\s+/', ' ', $ruleText);
+        $description = str_replace(["\r\n", "\r", "\n"], ' ', $description);
+        
+        // Clean up multiple spaces
+        $description = preg_replace('/\s{2,}/', ' ', $description);
+        
+        // Trim and return
+        return trim($description);
+    }
+
+    /**
+     * Extract segment references from rule
+     *
+     * @param object $rule
+     * @return array
+     */
+    private function extractSegmentRefs(object $rule): array
+    {
+        if (!isset($rule->SegmentRefs)) {
+            return [];
+        }
+
+        $refs = [];
+        if (isset($rule->SegmentRefs->Ref)) {
+            $segmentRefs = is_array($rule->SegmentRefs->Ref) ? $rule->SegmentRefs->Ref : [$rule->SegmentRefs->Ref];
+            foreach ($segmentRefs as $ref) {
+                $refs[] = $ref;
+            }
+        }
+
+        return $refs;
     }
 
     /**

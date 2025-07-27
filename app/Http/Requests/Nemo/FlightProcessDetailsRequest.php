@@ -18,7 +18,7 @@ class FlightProcessDetailsRequest extends FormRequest
     {
         return [
             'flight_id' => 'required|string',
-            'operation' => 'required|string|in:GetFareFamilies,ActualizeFlight',
+            'operation' => 'required|string|in:GetFareFamilies,ActualizeFlight,GetFareRules',
         ];
     }
 }
