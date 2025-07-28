@@ -1,9 +1,16 @@
 <?php
 
 namespace App\Services\Nemo;
+use App\Enum\FlightSupplier;
+use App\Services\FlightMarkupService;
 
 class FlightFilterService
 {
+
+    public function __construct(protected FlightMarkupService $markupService)
+    {
+    }
+
     public function getFilterValues(array $flightsData): array
     {
         $uniqueAirlines = [];
@@ -76,6 +83,16 @@ class FlightFilterService
             $totalDuration += $this->calculateStopDurations($flight->Return ?? null);
 
             $flight->TotalDuration = $totalDuration;
+
+            $airlineCode = $flight->PriceInfo->Price->ValidatingCompany;
+            $priceWithMarkup = $this->markupService->applyMarkup(
+                $flight->TotalSum->Amount,
+                $flight->TotalSum->Currency,
+                FlightSupplier::NEMO,
+                $airlineCode
+            );
+
+            $flight->TotalSum = $priceWithMarkup;
         }
 
         return array_filter($flightsData, function ($flight) use ($filters) {

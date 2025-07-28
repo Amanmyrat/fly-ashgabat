@@ -2,18 +2,21 @@
 
 namespace App\Services\XMLAgency;
 
+use App\Enum\FlightSupplier;
 use App\Enum\FlightType;
+use App\Services\FlightMarkupService;
 use App\Services\XMLAgency\RequestBuilder\AeroSearchRequestBuilder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class FlightSearchService
 {
-    protected XMLAgencyService $xmlAgencyService;
 
-    public function __construct(XMLAgencyService $xmlAgencyService)
+    public function __construct(
+        protected XMLAgencyService $xmlAgencyService,
+        protected FlightMarkupService $markupService
+    )
     {
-        $this->xmlAgencyService = $xmlAgencyService;
     }
 
     /**
@@ -84,7 +87,7 @@ class FlightSearchService
                 foreach ($segments as $segment) {
                     $segmentRph = $segment['Rph']['value'] ?? null;
                     $offerRph = $offer['Rph']['value'] ?? null;
-                    
+
                     // Only outward if both segment=1 AND offer=1, otherwise return
                     if ($segmentRph && $offerRph) {
                         // Both exist - outward only if both are 1
@@ -115,15 +118,27 @@ class FlightSearchService
         $origin = $outwardSegments[0]['Departure']['Iata']['value'];
         $destination = end($outwardSegments)['Arrival']['Iata']['value'];
 
+        $offerInfo = $flight['Offers']['OfferInfo'];
+        $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
+
+        $originalAmount = floatval($flight['TotalPrice']['value']);
+        $priceWithMarkup = $this->markupService->applyMarkup(
+            $originalAmount,
+            'USD',
+            FlightSupplier::XMLAGENCY,
+            $offerInfo[0]['ValidatingAirline']['value']
+        );
+
         // Build the transformed flight
         $transformedFlight = [
             'OfferCode' => $flight['OfferCode']['value'],
             'Origin' => $this->getAirportInfo($origin, $airportsData),
             'Destination' => $this->getAirportInfo($destination, $airportsData),
-            'TotalSum' => [
-                'Amount' => floatval($flight['TotalPrice']['value']),
-                'Currency' => 'USD' // You may want to get this from config or response
-            ],
+//            'TotalSum' => [
+//                'Amount' => floatval($flight['TotalPrice']['value']),
+//                'Currency' => 'USD'
+//            ],
+            'TotalSum' => $priceWithMarkup,
             'Outward' => $this->buildJourneyData($outwardSegments, $airportsData, $airlinesData),
         ];
 
@@ -268,7 +283,7 @@ class FlightSearchService
 
         return match (strtolower($type)) {
             'unknown' => $isRussian ? 'Информация о багаже неизвестна' : 'Baggage information unknown',
-            'nil','nilselect' => $isRussian ? 'Весь багаж за доплату' : 'All baggage for a fee',
+            'nil', 'nilselect' => $isRussian ? 'Весь багаж за доплату' : 'All baggage for a fee',
             'kilos' => $count . ($isRussian ? ' кг' : ' kg'),
             'pounds' => $count . ($isRussian ? ' фунт' . $this->getRussianPluralEnding($count, 'ов', '', 'а') : ' lbs'),
             'pieces' => $isRussian
