@@ -25,8 +25,6 @@ class FlightMarkupResource extends Resource
     protected static ?string $navigationLabel = 'Flight Markups';
     
     protected static ?string $navigationGroup = 'Flight Management';
-    
-    protected static ?string $recordTitleAttribute = 'supplier';
 
     public static function form(Form $form): Form
     {
