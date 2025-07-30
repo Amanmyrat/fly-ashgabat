@@ -7,6 +7,7 @@ use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
+use App\Services\FlightMarkupService;
 use App\Services\XMLAgency\RequestBuilder\AeroBookRequestBuilder;
 use Carbon\Carbon;
 use Exception;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\Log;
 class FlightBookService
 {
     public function __construct(
-        protected XMLAgencyService $xmlAgencyService
+        protected XMLAgencyService $xmlAgencyService,
+        protected FlightMarkupService $markupService
     ) {
     }
 
@@ -42,10 +44,20 @@ class FlightBookService
 
         $bookingResult = $aeroBookResponse;
 
-        $actualPrice = [
-            'Amount' => $bookingResult['FullPrice']['value'],
-            'Currency' => config('xmlagency.currency', 'EUR')
-        ];
+        $offerInfo = $bookingResult['Offers']['OfferInfo'];
+        $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
+
+        $actualPrice = $this->markupService->applyMarkup(
+            $bookingResult['FullPrice']['value'],
+            config('xmlagency.currency', 'EUR'),
+            FlightSupplier::XMLAGENCY,
+            $offerInfo[0]['ValidatingAirline']['value']
+        );
+
+//        $actualPrice = [
+//            'Amount' => $bookingResult['FullPrice']['value'],
+//            'Currency' => config('xmlagency.currency', 'EUR')
+//        ];
 
         if ($validatedData['payment_type'] === PaymentType::BALANCE->value && (!$user || $user->balance < $actualPrice['Amount'])) {
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $actualPrice ['Amount']];

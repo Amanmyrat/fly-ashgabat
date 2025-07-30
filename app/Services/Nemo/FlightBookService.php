@@ -7,6 +7,7 @@ use App\Enum\FlightSupplier;
 use App\Enum\PaymentType;
 use App\Models\FlightBooking;
 use App\Models\User;
+use App\Services\FlightMarkupService;
 use App\Services\Nemo\RequestGenerate\AdditionalOperationsRequestGenerateService;
 use App\Services\Nemo\RequestGenerate\BookFlightRequestGenerateService;
 use App\Services\Nemo\RequestGenerate\UpdateBookRequestGenerateService;
@@ -22,6 +23,7 @@ class FlightBookService
         protected BookFlightRequestGenerateService $bookFlightRequestGenerateService,
         protected AdditionalOperationsRequestGenerateService $additionalOperationsRequestGenerateService,
         protected UpdateBookRequestGenerateService $updateBookRequestGenerateService,
+        protected FlightMarkupService $markupService
     )
     {
     }
@@ -29,17 +31,15 @@ class FlightBookService
     /**
      * @throws \Exception
      */
-    public function processBooking(array $requestData, ?User $user): array
+    public function processBooking(array $validatedData, ?User $user): array
     {
-        $validationResult = $this->validateExistingBookings($requestData);
+        $validationResult = $this->validateExistingBookings($validatedData);
 
         if (!$validationResult['success']) {
             return $validationResult;
         }
 
-        $validatedData = $requestData;
-
-        $generatedRequest = $this->bookFlightRequestGenerateService->generateBookFlightRequest($requestData, $validationResult['actualizedFlightId']);
+        $generatedRequest = $this->bookFlightRequestGenerateService->generateBookFlightRequest($validatedData, $validationResult['actualizedFlightId']);
 
         $result = $this->soapService->callSoap($generatedRequest, 'BookFlight_2_2');
 
@@ -52,7 +52,14 @@ class FlightBookService
 
         $responseBody = $result['BookFlight_2_2Result']['ResponseBody'];
 
-        $actualPrice = $responseBody['Price']['TotalPrice'];
+        $airlineCode = $responseBody['Price']['PriceBreakdown']['PricePart']['ValidatingCompany'];
+
+        $actualPrice = $this->markupService->applyMarkup(
+            $responseBody['Price']['TotalPrice']['Amount'],
+            $responseBody['Price']['TotalPrice']['Currency'],
+            FlightSupplier::NEMO,
+            $airlineCode
+        );
 
         if ($validatedData['payment_type'] === PaymentType::BALANCE->value && (!$user || $user->balance < $actualPrice['Amount'])) {
             return ['success' => false, 'message' => 'Insufficient balance.', 'balance' => $user->balance, 'price' => $actualPrice ['Amount']];
