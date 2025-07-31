@@ -4,10 +4,12 @@ namespace App\Filament\Resources;
 
 use App;
 use App\Enum\BookingStatus;
+use App\Enum\FlightSupplier;
 use App\Filament\Resources\BookingResource\Pages;
 use App\Jobs\TFusion\CheckBookingStatusJob;
 use App\Jobs\TFusion\GenerateTicketJob;
 use App\Jobs\TFusion\StartBookingJob;
+use App\Jobs\XmlAgency\ConfirmBookingJob;
 use App\Services\AirportLocatorService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -54,14 +56,17 @@ class FlightBookingResource extends Resource
                 TextColumn::make('id')
                     ->label('ID'),
 
+                TextColumn::make('flight_type')
+                    ->label('Supplier')->badge(),
+
                 TextColumn::make('booking_reference')
                     ->label('Order')
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('contactDetail.firstname')
+                TextColumn::make('contactDetail.phone')
                     ->label('Full name')
-                    ->formatStateUsing(fn($record) => " {$record->contactDetail->firstname} {$record->contactDetail->lastname}")
+                    ->formatStateUsing(fn($record) => "+{$record->contactDetail->phone['code']} {$record->contactDetail->phone['number']}")
                     ->searchable(),
 
                 TextColumn::make('contactDetail.email')
@@ -181,10 +186,18 @@ class FlightBookingResource extends Resource
                         ->icon('heroicon-o-play')
                         ->visible(fn ($record) => $record->status === BookingStatus::PENDING)
                         ->action(function ($record) {
-                            // Dispatch a job
-                            StartBookingJob::dispatch($record);
                             $record->update(['status' => BookingStatus::BOOKING_IN_PROGRESS]);
-                            CheckBookingStatusJob::dispatch($record);
+                            switch ($record->flight_type) {
+                                case FlightSupplier::TFUSION:
+                                    StartBookingJob::dispatch($record);
+                                    CheckBookingStatusJob::dispatch($record);
+                                    break;
+                                case FlightSupplier::XMLAGENCY:
+                                    ConfirmBookingJob::dispatch($record);
+                                    break;
+                                case FlightSupplier::NEMO:
+                                    \App\Jobs\Nemo\GenerateTicketJob::dispatch($record);
+                            }
 
                             Notification::make()
                                 ->title('Booking Started')
@@ -195,24 +208,24 @@ class FlightBookingResource extends Resource
                         ->requiresConfirmation()
                         ->tooltip('Click to start the booking process'),
 
-                    Action::make('generate_tickets')
-                        ->label('Generate tickets')
-                        ->color('primary')
-                        ->icon('heroicon-o-play')
-                        ->visible(fn ($record) => $record->status === BookingStatus::SUCCEEDED && $record->tickets->isEmpty())
-                        ->action(function ($record) {
-                            // Dispatch a job
-
-                            GenerateTicketJob::dispatch($record);
-
-                            Notification::make()
-                                ->title('Generating tickets')
-                                ->body("The ticket generation for record #{$record->id} has been started successfully.")
-                                ->success()
-                                ->send();
-                        })
-                        ->requiresConfirmation()
-                        ->tooltip('Click to start the booking process'),
+//                    Action::make('generate_tickets')
+//                        ->label('Generate tickets')
+//                        ->color('primary')
+//                        ->icon('heroicon-o-play')
+//                        ->visible(fn ($record) => $record->status === BookingStatus::SUCCEEDED && $record->tickets->isEmpty())
+//                        ->action(function ($record) {
+//                            // Dispatch a job
+//
+//                            GenerateTicketJob::dispatch($record);
+//
+//                            Notification::make()
+//                                ->title('Generating tickets')
+//                                ->body("The ticket generation for record #{$record->id} has been started successfully.")
+//                                ->success()
+//                                ->send();
+//                        })
+//                        ->requiresConfirmation()
+//                        ->tooltip('Click to start the booking process'),
                 ]),
 
             ]);

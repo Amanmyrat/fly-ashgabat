@@ -23,7 +23,8 @@ enum FlightSupplier: string implements HasLabel, HasColor
     public function getColor(): string | array | null
     {
         return match ($this) {
-            self::TFUSION, self::NEMO => 'info',
+            self::TFUSION=> 'gray',
+            self::NEMO => 'success',
             self::XMLAGENCY => 'warning',
         };
     }
