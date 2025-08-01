@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('from_currency', 3)->default('RUB'); // Source currency
             $table->string('to_currency', 3)->default('USD'); // Target currency
-            $table->decimal('rate', 10, 6); // Conversion rate (e.g., 1 RUB = X USD)
+            $table->decimal('rate', 10, 6); // Conversion rate: 1 FROM_CURRENCY = X TO_CURRENCY (e.g., 83 means 1 USD = 83 RUB)
             $table->boolean('is_active')->default(true);
             $table->text('notes')->nullable(); // Optional notes about the rate
             $table->timestamps();

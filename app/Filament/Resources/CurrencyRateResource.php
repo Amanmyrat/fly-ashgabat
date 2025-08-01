@@ -19,11 +19,11 @@ class CurrencyRateResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     
-    protected static ?string $navigationLabel = 'Currency Rates';
+    protected static ?string $navigationLabel = 'USD to RUB Rates';
     
-    protected static ?string $modelLabel = 'Currency Rate';
+    protected static ?string $modelLabel = 'USD to RUB Rate';
     
-    protected static ?string $pluralModelLabel = 'Currency Rates';
+    protected static ?string $pluralModelLabel = 'USD to RUB Rates';
     
     protected static ?int $navigationSort = 4;
 
@@ -31,37 +31,37 @@ class CurrencyRateResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Currency Conversion Details')
+                Forms\Components\Section::make('USD to RUB Conversion Rate')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\Select::make('from_currency')
+                                Forms\Components\TextInput::make('from_currency')
                                     ->label('From Currency')
-                                    ->options([
-                                        'RUB' => 'Russian Ruble (RUB)',
-                                        'USD' => 'US Dollar (USD)',
-                                        'EUR' => 'Euro (EUR)',
-                                    ])
-                                    ->default('RUB')
-                                    ->required(),
-                                    
-                                Forms\Components\Select::make('to_currency')
-                                    ->label('To Currency')
-                                    ->options([
-                                        'USD' => 'US Dollar (USD)',
-                                        'EUR' => 'Euro (EUR)',
-                                        'RUB' => 'Russian Ruble (RUB)',
-                                    ])
                                     ->default('USD')
-                                    ->required(),
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->helperText('Fixed: US Dollar'),
+                                    
+                                Forms\Components\TextInput::make('to_currency')
+                                    ->label('To Currency')
+                                    ->default('RUB')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->helperText('Fixed: Russian Ruble'),
                             ]),
                             
                         Forms\Components\TextInput::make('rate')
-                            ->label('Exchange Rate')
+                            ->label('USD to RUB Exchange Rate')
                             ->numeric()
-                            ->step(0.000001)
+                            ->step(0.01)
+                            ->inputMode('decimal')
                             ->required()
-                            ->helperText('Example: If 1 RUB = 0.011 USD, enter 0.011'),
+                            ->helperText('Enter how many RUB equals 1 USD (e.g., 83 means 1 USD = 83 RUB)')
+                            ->formatStateUsing(function ($state) {
+                                if ($state === null) return null;
+                                // Remove trailing zeros for display
+                                return rtrim(rtrim(number_format($state, 6, '.', ''), '0'), '.');
+                            }),
                             
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
@@ -80,21 +80,18 @@ class CurrencyRateResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('from_currency')
-                    ->label('From')
-                    ->badge()
-                    ->color('gray')
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('to_currency')
-                    ->label('To')
-                    ->badge()
-                    ->color('primary')
-                    ->sortable(),
-                    
                 Tables\Columns\TextColumn::make('rate')
-                    ->label('Exchange Rate')
-                    ->numeric(6)
+                    ->label('USD → RUB Rate')
+                    ->numeric(
+                        decimalPlaces: 0,
+                        decimalSeparator: '.',
+                        thousandsSeparator: ',',
+                    )
+                    ->formatStateUsing(function ($state) {
+                        // Remove trailing zeros and unnecessary decimals
+                        $formatted = rtrim(rtrim(number_format($state, 6, '.', ''), '0'), '.');
+                        return '1 USD = ' . $formatted . ' RUB';
+                    })
                     ->sortable(),
                     
                 Tables\Columns\IconColumn::make('is_active')
@@ -115,22 +112,6 @@ class CurrencyRateResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('from_currency')
-                    ->label('From Currency')
-                    ->options([
-                        'RUB' => 'RUB',
-                        'USD' => 'USD',
-                        'EUR' => 'EUR',
-                    ]),
-                    
-                Tables\Filters\SelectFilter::make('to_currency')
-                    ->label('To Currency')
-                    ->options([
-                        'USD' => 'USD',
-                        'EUR' => 'EUR',
-                        'RUB' => 'RUB',
-                    ]),
-                    
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active Status'),
             ])
