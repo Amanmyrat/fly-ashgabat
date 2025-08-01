@@ -47,8 +47,8 @@ class ConfirmBookingJob implements ShouldQueue
         match ($status) {
             'Booked' => $this->handleSucceededStatus($confirmBookResponse),
             'Cancelled' => $this->handleFailedStatus(),
-            'WaitToBooking' => $this->handleBookingInProgressStatus(),
-            default => Log::warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
+            'OnBooking', 'OnCancelling', 'WaitToBooking' => $this->handleBookingInProgressStatus(),
+            default => Log::channel('xmlagency')->warning("Unknown status received: {$status} for booking: {$this->booking->booking_reference}")
         };
     }
 
