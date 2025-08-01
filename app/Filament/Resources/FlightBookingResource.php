@@ -11,6 +11,7 @@ use App\Jobs\TFusion\GenerateTicketJob;
 use App\Jobs\TFusion\StartBookingJob;
 use App\Jobs\XmlAgency\ConfirmBookingJob;
 use App\Services\AirportLocatorService;
+use App\Services\FlightMarkupService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -130,36 +131,145 @@ class FlightBookingResource extends Resource
     {
         return $infolist
             ->schema([
-                TextEntry::make('booking_reference')
-                    ->label('Order'),
+                // Price Summary at the top
+                Section::make('Booking Summary')
+                    ->schema([
+                        TextEntry::make('booking_reference')
+                            ->label('Order Reference')
+                            ->columnSpan(1),
 
-                TextEntry::make('contactDetail.name')
-                    ->label('Full name')
-                    ->formatStateUsing(fn($record) => $record->contactDetail->name)
-                    ->visible(fn ($record) => $record->contactDetail->name != null),
+                        TextEntry::make('price_display')
+                            ->label('Total Price')
+                            ->getStateUsing(function ($record) {
+                                $price = $record->price;
+                                if (!$price || !isset($price['Amount'], $price['Currency'])) {
+                                    return 'N/A';
+                                }
 
-                TextEntry::make('contactDetail.email')
-                    ->label('Email')
-                    ->formatStateUsing(fn($record) => "{$record->contactDetail->email}"),
+                                // Check if this is already processed data or original data
+                                if (isset($price['MarkupPercentage'])) {
+                                    // Already processed - just show the final amount
+                                    return number_format($price['Amount'], 2) . ' ' . $price['Currency'];
+                                } else {
+                                    // Original data - process it
+                                    $markupService = app(FlightMarkupService::class);
+                                    $processedPrice = $markupService->applyMarkup(
+                                        (float) $price['Amount'],
+                                        $price['Currency'],
+                                        $record->flight_type
+                                    );
 
-                TextEntry::make('contactDetail.phone')
-                    ->label('Phone')
-                    ->formatStateUsing(fn($record) => "{$record->contactDetail->phone['code']} {$record->contactDetail->phone['number']}"),
+                                    return number_format($processedPrice['Amount'], 2) . ' ' . $processedPrice['Currency'];
+                                }
+                            })
+                            ->badge()
+                            ->color('success')
+                            ->size('lg')
+                            ->columnSpan(1),
+                    ])
+                    ->columns(2)
+                    ->collapsible(false),
 
-                TextEntry::make('status')
-                    ->label('Статус заказа')->badge(),
+                Section::make('Contact Details')
+                    ->schema([
 
-                TextEntry::make('created_at')
-                    ->label('Дата и время заказa')
-                    ->dateTime(),
+                        TextEntry::make('contactDetail.name')
+                            ->label('Full name')
+                            ->formatStateUsing(fn($record) => $record->contactDetail->name)
+                            ->visible(fn ($record) => $record->contactDetail->name != null),
 
-                TextEntry::make('flight_directions')
-                    ->label('Directions')
-                    ->getStateUsing(fn($record) => $record->getFlightDirectionsAndType(App::make(AirportLocatorService::class)))
-                    ->columnSpanFull(),
+                        TextEntry::make('contactDetail.email')
+                            ->label('Email')
+                            ->formatStateUsing(fn($record) => "{$record->contactDetail->email}"),
+
+                        TextEntry::make('contactDetail.phone')
+                            ->label('Phone')
+                            ->formatStateUsing(fn($record) => "{$record->contactDetail->phone['code']} {$record->contactDetail->phone['number']}"),
+
+                        TextEntry::make('status')
+                            ->label('Order Status')->badge(),
+
+                        TextEntry::make('created_at')
+                            ->label('Order Date & Time')
+                            ->dateTime(),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+
+                Section::make('Flight Information')
+                    ->schema([
+
+                        TextEntry::make('flight_directions')
+                            ->label('Route')
+                            ->getStateUsing(fn($record) => $record->getFlightDirectionsAndType(App::make(AirportLocatorService::class)))
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible(),
+
+                // Price Processing Details (optional technical info)
+                Section::make('Price Details')
+                    ->schema([
+                        TextEntry::make('price_processing_info')
+                            ->label('Applied Processing')
+                            ->getStateUsing(function ($record) {
+                                $price = $record->price;
+                                if (!$price || !isset($price['Amount'], $price['Currency'])) {
+                                    return 'No price data available';
+                                }
+
+                                $details = [];
+
+                                // Handle different price formats
+                                $originalAmount = (float) $price['Amount'];
+                                $originalCurrency = $price['Currency'];
+
+                                $details[] = "Total price: " . number_format($originalAmount, 2) . ' ' . $originalCurrency;
+
+                                // Only process if this is original simple format (not already processed)
+                                if (!isset($price['MarkupPercentage'])) {
+                                    $markupService = app(FlightMarkupService::class);
+                                    $processedPrice = $markupService->applyMarkup(
+                                        $originalAmount,
+                                        $originalCurrency,
+                                        $record->flight_type
+                                    );
+
+                                    // Currency conversion info
+                                    if (isset($processedPrice['OriginalCurrency'])) {
+                                        $usdToRubRate = 1 / $processedPrice['ConversionRate']; // Show the rate they entered
+                                        $details[] = "Currency conversion: {$processedPrice['OriginalCurrency']} → {$processedPrice['Currency']} (1 USD = " . number_format($usdToRubRate, 0) . " RUB)";
+                                    }
+
+                                    // Markup info
+                                    if ($processedPrice['MarkupPercentage'] > 0) {
+                                        $details[] = "Markup applied: {$processedPrice['MarkupPercentage']}% (+" . number_format($processedPrice['MarkupAmount'], 2) . ' ' . $processedPrice['Currency'] . ')';
+                                    } else {
+                                        $details[] = "No markup applied";
+                                    }
+                                } else {
+                                    // This is already processed price data
+                                    if (isset($price['OriginalCurrency'])) {
+                                        $usdToRubRate = 1 / $price['ConversionRate'];
+                                        $details[] = "Currency conversion: {$price['OriginalCurrency']} → {$price['Currency']} (1 USD = " . number_format($usdToRubRate, 0) . " RUB)";
+                                    }
+
+                                    if ($price['MarkupPercentage'] > 0) {
+                                        $details[] = "Markup applied: {$price['MarkupPercentage']}% (+" . number_format($price['MarkupAmount'], 2) . ' ' . $price['Currency'] . ')';
+                                    } else {
+                                        $details[] = "No markup applied";
+                                    }
+                                }
+
+                                return implode('<br>', $details);
+                            })
+                            ->html()
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed(true),
 //
                 // Special Section for Tickets
-                Section::make('Билеты')
+                Section::make('Tickets')
                     ->schema([
                         TextEntry::make('tickets')
                             ->getStateUsing(function ($record) {
