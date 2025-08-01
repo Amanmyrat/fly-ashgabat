@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\CurrencyRate;
+use App\Observers\CurrencyRateObserver;
 use App\Repositories\AirportDataRepository;
 use App\Repositories\AirportDataRepositoryInterface;
 use Dedoc\Scramble\Scramble;
@@ -24,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        CurrencyRate::observe(CurrencyRateObserver::class);
+
         Scramble::extendOpenApi(function (OpenApi $openApi) {
             $openApi->secure(
                 SecurityScheme::http('bearer', 'JWT')

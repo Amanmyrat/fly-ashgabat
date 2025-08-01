@@ -4,43 +4,9 @@ namespace App\Services;
 
 use App\Enum\FlightSupplier;
 use App\Models\FlightMarkup;
+use App\Models\CurrencyRate;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * FlightMarkupService - Service for applying markup to flight prices
- * 
- * Cache Strategy:
- * - Markup percentages are cached for 24 hours for performance
- * - Cache is automatically cleared when markup data changes (create/update/delete)
- * - This allows aggressive caching with immediate updates when needed
- * 
- * Usage Examples:
- * 
- * // Basic usage:
- * $markupService = new FlightMarkupService();
- * $result = $markupService->applyMarkup(100.00, 'USD', FlightSupplier::NEMO, 'AA');
- * 
- * // In your Nemo FlightFilterService:
- * foreach ($flightsData as &$flight) {
- *     $originalSum = $flight->TotalSum;
- *     $airlineCode = $flight->Segments->Segment[0]->MarketingAirline ?? null;
- *     
- *     $priceWithMarkup = $markupService->applyMarkup(
- *         $originalSum, 'USD', FlightSupplier::NEMO, $airlineCode
- *     );
- *     
- *     $flight->TotalSum = $priceWithMarkup['Amount'];
- *     $flight->OriginalPrice = $priceWithMarkup['PriceWithoutMarkup'];
- * }
- * 
- * // In your XMLAgency FlightSearchService:
- * $originalAmount = floatval($flight['TotalPrice']['value']);
- * $priceWithMarkup = $markupService->applyMarkup(
- *     $originalAmount, 'USD', FlightSupplier::XMLAGENCY, $airlineCode
- * );
- * 
- * $transformedFlight['TotalSum']['Amount'] = $priceWithMarkup['Amount'];
- */
 class FlightMarkupService
 {
     /**
@@ -59,18 +25,41 @@ class FlightMarkupService
         FlightSupplier $supplier,
         ?string $airlineCode = null
     ): array {
+        $convertedAmount = $originalAmount;
+        $finalCurrency = $currency;
+        $conversionRate = null;
+        $originalCurrency = $currency;
+
+        if ($supplier === FlightSupplier::NEMO && strtoupper($currency) === 'RUB') {
+            $usdAmount = $this->convertRubToUsd($originalAmount);
+            if ($usdAmount !== null) {
+                $convertedAmount = $usdAmount;
+                $finalCurrency = 'USD';
+                $conversionRate = CurrencyRate::getLatestRubToUsdRate();
+            }
+        }
+
         $markupPercentage = $this->getMarkupPercentage($supplier, $airlineCode);
+        $markupAmount = $convertedAmount * ($markupPercentage / 100);
+        $finalAmount = $convertedAmount + $markupAmount;
 
-        $markupAmount = $originalAmount * ($markupPercentage / 100);
-        $finalAmount = $originalAmount + $markupAmount;
-
-        return [
+        $result = [
             'Amount' => round($finalAmount, 2),
-            'Currency' => $currency,
-            'PriceWithoutMarkup' => round($originalAmount, 2),
+            'Currency' => $finalCurrency,
+            'PriceWithoutMarkup' => round($convertedAmount, 2),
             'MarkupPercentage' => $markupPercentage,
             'MarkupAmount' => round($markupAmount, 2),
         ];
+
+        // Add conversion details if currency was converted
+        if ($conversionRate !== null) {
+            $result['OriginalAmount'] = round($originalAmount, 2);
+            $result['OriginalCurrency'] = $originalCurrency;
+            $result['ConversionRate'] = $conversionRate;
+            $result['ConvertedFrom'] = "{$originalAmount} {$originalCurrency}";
+        }
+
+        return $result;
     }
 
     /**
@@ -90,17 +79,28 @@ class FlightMarkupService
         ?string $airlineCode = null
     ): array {
         $markupPercentage = $this->getMarkupPercentage($supplier, $airlineCode);
-
         $originalAmount = $markedUpAmount / (1 + ($markupPercentage / 100));
         $markupAmount = $markedUpAmount - $originalAmount;
 
-        return [
+        $result = [
             'Amount' => round($markedUpAmount, 2),
             'Currency' => $currency,
             'PriceWithoutMarkup' => round($originalAmount, 2),
             'MarkupPercentage' => $markupPercentage,
             'MarkupAmount' => round($markupAmount, 2),
         ];
+
+        // If this was originally converted from RUB for Nemo supplier
+        if ($supplier === FlightSupplier::NEMO && strtoupper($currency) === 'USD') {
+            $conversionRate = CurrencyRate::getLatestRubToUsdRate();
+            if ($conversionRate !== null && $conversionRate > 0) {
+                $rubOriginalAmount = $originalAmount / $conversionRate;
+                $result['PossibleOriginalRubAmount'] = round($rubOriginalAmount, 2);
+                $result['ConversionRate'] = $conversionRate;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -144,8 +144,25 @@ class FlightMarkupService
     }
 
     /**
-     * Clear all cached markup percentages
-     * Called when markup data is changed
+     * Convert RUB amount to USD using the latest exchange rate
+     *
+     * @param float $rubAmount
+     * @return float|null
+     */
+    private function convertRubToUsd(float $rubAmount): ?float
+    {
+        $cacheKey = 'latest_rub_usd_rate';
+
+        $rate = Cache::tags(['currency_rates'])->remember($cacheKey, 3600, function () {
+            return CurrencyRate::getLatestRubToUsdRate();
+        });
+
+        return $rate ? CurrencyRate::convertRubToUsd($rubAmount) : null;
+    }
+
+    /**
+     * Clear all cached markup percentages and currency rates
+     * Called when markup data or currency rates are changed
      *
      * @return void
      */
@@ -153,5 +170,19 @@ class FlightMarkupService
     {
         // Clear all cache entries tagged with 'flight_markups'
         Cache::tags(['flight_markups'])->flush();
+
+        // Clear currency rate cache as well
+        Cache::tags(['currency_rates'])->flush();
+    }
+
+    /**
+     * Clear only currency rate cache
+     * Called specifically when currency rates are updated
+     *
+     * @return void
+     */
+    public function clearCurrencyRateCache(): void
+    {
+        Cache::tags(['currency_rates'])->flush();
     }
 }
