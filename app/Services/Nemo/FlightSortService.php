@@ -11,7 +11,7 @@ class FlightSortService
             $segments = is_array($segments) ? $segments : [$segments];
 
             $flight->sortCache = [
-                'price' => $flight->TotalSum->Amount,
+                'price' => $flight->TotalSum['Amount'],
                 'duration' => $flight->TotalDuration,
                 'departure_time' => strtotime($segments[0]->DepDateTime),
             ];
