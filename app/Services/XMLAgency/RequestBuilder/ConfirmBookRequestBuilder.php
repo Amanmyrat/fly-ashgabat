@@ -41,7 +41,7 @@ class ConfirmBookRequestBuilder
         return [
             'BookGuid' =>  $this->booking->supplier_reference,
             'BookId' =>  $this->booking->booking_reference,
-            'Price' =>  $this->booking->price['Amount']
+            'Price' =>  $this->booking->price['PriceWithoutMarkup'] ?? $this->booking->price['Amount']
         ];
     }
 }
