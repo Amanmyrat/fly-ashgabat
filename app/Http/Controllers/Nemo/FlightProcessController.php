@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Nemo;
 
+use App\Enum\FlightSupplier;
 use App\Http\Requests\Nemo\FlightProcessDetailsRequest;
+use App\Services\FlightMarkupService;
 use App\Services\GeoDataService;
 use App\Services\Nemo\RequestGenerate\AdditionalOperationsRequestGenerateService;
 use App\Services\Nemo\SoapService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Log;
 
@@ -16,6 +17,7 @@ class FlightProcessController
         protected SoapService                                $soapService,
         protected AdditionalOperationsRequestGenerateService $additionalOperationsRequestGenerateService,
         protected GeoDataService                             $geoDataService,
+        protected FlightMarkupService $markupService
     )
     {
     }
@@ -135,10 +137,18 @@ class FlightProcessController
                 continue;
             }
 
+            $airlineCode = $flight->PriceInfo->Price->ValidatingCompany;
+            $priceWithMarkup = $this->markupService->applyMarkup(
+                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Amount,
+                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Currency,
+                FlightSupplier::NEMO,
+                $airlineCode
+            );
+
             $tariff = [
                 'id' => $flight->ID,
                 'name' => $this->extractLocalizedFareName($flight->FareFamiliesDescription->Description, $locale),
-                'price' => (float) $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Amount / 100, // Convert from kopecks to rubles
+                'price' => $priceWithMarkup,
                 'features' => []
             ];
 
@@ -309,7 +319,7 @@ class FlightProcessController
     {
         // Remove code prefix (e.g., "RU.RULE APPLICATION" -> "Rule Application")
         $title = preg_replace('/^[A-Z]{2}\./', '', $name);
-        
+
         // Convert to title case
         return ucwords(strtolower($title));
     }
@@ -325,10 +335,10 @@ class FlightProcessController
         // Remove excessive whitespace and normalize line breaks
         $description = preg_replace('/\s+/', ' ', $ruleText);
         $description = str_replace(["\r\n", "\r", "\n"], ' ', $description);
-        
+
         // Clean up multiple spaces
         $description = preg_replace('/\s{2,}/', ' ', $description);
-        
+
         // Trim and return
         return trim($description);
     }
