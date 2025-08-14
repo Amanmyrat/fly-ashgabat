@@ -21,6 +21,15 @@ class CurrencyRate extends Model
         'is_active' => true,
     ];
 
+    /**
+     * Supported target currencies for USD conversion
+     */
+    public const SUPPORTED_CURRENCIES = [
+        'RUB' => 'Russian Ruble',
+        'KZT' => 'Kazakhstani Tenge',
+        'UZS' => 'Uzbekistani Som',
+    ];
+
     protected $casts = [
         'rate' => 'decimal:6',
         'is_active' => 'boolean',
@@ -77,5 +86,68 @@ class CurrencyRate extends Model
         $rate = static::getLatestRubToUsdRate();
         
         return $rate ? round($rubAmount * $rate, 2) : null;
+    }
+
+    /**
+     * Get the latest active rate for any currency to USD conversion
+     * Looks for USD->CURRENCY rates and converts them to CURRENCY->USD
+     */
+    public static function getLatestCurrencyToUsdRate(string $currency): ?float
+    {
+        $rate = static::active()
+            ->fromCurrency('USD')
+            ->toCurrency(strtoupper($currency))
+            ->latest()
+            ->first();
+
+        return $rate && $rate->rate > 0 ? (1 / (float) $rate->rate) : null;
+    }
+
+    /**
+     * Convert amount from any supported currency to USD using the latest rate
+     */
+    public static function convertCurrencyToUsd(float $amount, string $currency): ?float
+    {
+        $rate = static::getLatestCurrencyToUsdRate($currency);
+        
+        return $rate ? round($amount * $rate, 2) : null;
+    }
+
+    /**
+     * Get the latest active USD to currency rate
+     */
+    public static function getLatestUsdToCurrencyRate(string $currency): ?float
+    {
+        $rate = static::active()
+            ->fromCurrency('USD')
+            ->toCurrency(strtoupper($currency))
+            ->latest()
+            ->first();
+
+        return $rate ? (float) $rate->rate : null;
+    }
+
+    /**
+     * Convert amount from USD to any supported currency using the latest rate
+     */
+    public static function convertUsdToCurrency(float $usdAmount, string $currency): ?float
+    {
+        $rate = static::getLatestUsdToCurrencyRate($currency);
+        
+        return $rate ? round($usdAmount * $rate, 2) : null;
+    }
+
+    /**
+     * Get currency symbol for display purposes
+     */
+    public static function getCurrencySymbol(string $currency): string
+    {
+        return match(strtoupper($currency)) {
+            'USD' => '$',
+            'RUB' => '₽',
+            'KZT' => '₸',
+            'UZS' => 'so\'m',
+            default => $currency,
+        };
     }
 }

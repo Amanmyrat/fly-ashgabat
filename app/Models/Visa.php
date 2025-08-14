@@ -63,35 +63,5 @@ class Visa extends Model
         'necessary_documents',
     ];
 
-    /**
-     * Get necessary_documents as normalized array of strings for each locale
-     */
-    public function getNecessaryDocumentsAttribute($value)
-    {
-        // Get the raw translatable data
-        $translations = $this->getTranslations('necessary_documents');
-        
-        $normalized = [];
-        foreach ($translations as $locale => $data) {
-            $normalized[$locale] = [];
-            
-            if (is_string($data)) {
-                $data = json_decode($data, true) ?? [];
-            }
-            
-            if (is_array($data)) {
-                foreach ($data as $key => $item) {
-                    if (is_array($item) && isset($item['item'])) {
-                        // Extract just the string value
-                        $normalized[$locale][] = $item['item'];
-                    } elseif (is_string($item)) {
-                        // Handle direct string values
-                        $normalized[$locale][] = $item;
-                    }
-                }
-            }
-        }
-        
-        return $normalized;
-    }
+
 }

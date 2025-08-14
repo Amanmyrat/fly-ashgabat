@@ -23,9 +23,9 @@ class FlightMarkupService
         $finalCurrency = $currency;
         $conversionRate = null;
 
-        // Handle RUB to USD conversion for Nemo supplier
-        if ($supplier === FlightSupplier::NEMO && strtoupper($currency) === 'RUB') {
-            $rate = CurrencyRate::getLatestRubToUsdRate();
+        // Handle currency to USD conversion for Nemo supplier (supports RUB, KZT, UZS)
+        if ($supplier === FlightSupplier::NEMO && in_array(strtoupper($currency), ['RUB', 'KZT', 'UZS'])) {
+            $rate = CurrencyRate::getLatestCurrencyToUsdRate($currency);
             if ($rate && $rate > 0) {
                 $convertedAmount = round($originalAmount * $rate, 2);
                 $finalCurrency = 'USD';

@@ -19,11 +19,11 @@ class CurrencyRateResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     
-    protected static ?string $navigationLabel = 'USD to RUB Rates';
+    protected static ?string $navigationLabel = 'Currency Rates';
     
-    protected static ?string $modelLabel = 'USD to RUB Rate';
+    protected static ?string $modelLabel = 'Currency Rate';
     
-    protected static ?string $pluralModelLabel = 'USD to RUB Rates';
+    protected static ?string $pluralModelLabel = 'Currency Rates';
     
     protected static ?int $navigationSort = 4;
 
@@ -31,7 +31,7 @@ class CurrencyRateResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('USD to RUB Conversion Rate')
+                Forms\Components\Section::make('USD Currency Conversion Rate')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -42,21 +42,35 @@ class CurrencyRateResource extends Resource
                                     ->dehydrated()
                                     ->helperText('Fixed: US Dollar'),
                                     
-                                Forms\Components\TextInput::make('to_currency')
+                                Forms\Components\Select::make('to_currency')
                                     ->label('To Currency')
+                                    ->options(\App\Models\CurrencyRate::SUPPORTED_CURRENCIES)
                                     ->default('RUB')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->helperText('Fixed: Russian Ruble'),
+                                    ->required()
+                                    ->reactive()
+                                    ->helperText('Select the target currency for conversion'),
                             ]),
                             
                         Forms\Components\TextInput::make('rate')
-                            ->label('USD to RUB Exchange Rate')
+                            ->label(function (callable $get) {
+                                $toCurrency = $get('to_currency') ?? 'RUB';
+                                return "USD to {$toCurrency} Exchange Rate";
+                            })
                             ->numeric()
                             ->step(0.01)
                             ->inputMode('decimal')
                             ->required()
-                            ->helperText('Enter how many RUB equals 1 USD (e.g., 83 means 1 USD = 83 RUB)')
+                            ->helperText(function (callable $get) {
+                                $toCurrency = $get('to_currency') ?? 'RUB';
+                                $currencyName = \App\Models\CurrencyRate::SUPPORTED_CURRENCIES[$toCurrency] ?? $toCurrency;
+                                $example = match($toCurrency) {
+                                    'RUB' => '83',
+                                    'KZT' => '450',
+                                    'UZS' => '12500',
+                                    default => '100'
+                                };
+                                return "Enter how many {$toCurrency} equals 1 USD (e.g., {$example} means 1 USD = {$example} {$toCurrency})";
+                            })
                             ->formatStateUsing(function ($state) {
                                 if ($state === null) return null;
                                 // Remove trailing zeros for display
@@ -80,17 +94,34 @@ class CurrencyRateResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('to_currency')
+                    ->label('Currency Pair')
+                    ->formatStateUsing(function ($state, $record) {
+                        return "USD → {$state}";
+                    })
+                    ->badge()
+                    ->color(function ($state) {
+                        return match($state) {
+                            'RUB' => 'success',
+                            'KZT' => 'warning',
+                            'UZS' => 'info',
+                            default => 'gray'
+                        };
+                    })
+                    ->sortable(),
+                    
                 Tables\Columns\TextColumn::make('rate')
-                    ->label('USD → RUB Rate')
+                    ->label('Exchange Rate')
                     ->numeric(
                         decimalPlaces: 0,
                         decimalSeparator: '.',
                         thousandsSeparator: ',',
                     )
-                    ->formatStateUsing(function ($state) {
+                    ->formatStateUsing(function ($state, $record) {
                         // Remove trailing zeros and unnecessary decimals
                         $formatted = rtrim(rtrim(number_format($state, 6, '.', ''), '0'), '.');
-                        return '1 USD = ' . $formatted . ' RUB';
+                        $symbol = \App\Models\CurrencyRate::getCurrencySymbol($record->to_currency);
+                        return "1 USD = {$formatted} {$symbol}";
                     })
                     ->sortable(),
                     
@@ -114,6 +145,10 @@ class CurrencyRateResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active Status'),
+                    
+                Tables\Filters\SelectFilter::make('to_currency')
+                    ->label('Target Currency')
+                    ->options(\App\Models\CurrencyRate::SUPPORTED_CURRENCIES),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
