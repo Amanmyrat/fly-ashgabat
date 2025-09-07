@@ -209,28 +209,28 @@
                     </h2>
                     <div class="flex items-center gap-10">
                         <h6>
-                            <b> Номер бронирования / Reservation number:</b>
+                            <b> Номер бронирования / Reservation number: &nbsp;</b>
                         </h6>
                         <p>{{$bookingReference}}</p>
                     </div>
 
                     <div class="flex items-center gap-10">
                         <h6>
-                            <b> Номер билета / Ticket number:</b>
+                            <b> Номер билета / Ticket number: &nbsp;</b>
                         </h6>
                         <p>{{$ticketNumber}}</p>
                     </div>
 
                     <div class="flex items-center gap-10">
                         <h6>
-                            <b> AirLine ID / PNR:</b>
+                            <b> AirLine ID / PNR: &nbsp;</b>
                         </h6>
                         <p>{{$pnr}}</p>
                     </div>
 
                     <div class="flex items-center gap-10">
                         <h6>
-                            <b> Дата выписки билета / Ticket issue date:</b>
+                            <b> Дата выписки билета / Ticket issue date:&nbsp; </b>
                         </h6>
                         <p>{{ $bookingDate }}</p>
                     </div>
@@ -309,9 +309,11 @@
                                     $firstSegment = $flightData['Outward'][0];
                                     $lastSegment = end($flightData['Outward']);
                                 @endphp
-                                {{ $firstSegment['Departure']['City'] }}, {{ $firstSegment['Departure']['Airport'] }} ({{ $firstSegment['Departure']['Code'] }})
+                                {{ $firstSegment['Departure']['City'] }}, {{ $firstSegment['Departure']['Airport'] }}
+                                ({{ $firstSegment['Departure']['Code'] }})
                                 -
-                                {{ $lastSegment['Arrival']['City'] }}, {{ $lastSegment['Arrival']['Airport'] }} ({{ $lastSegment['Arrival']['Code'] }})
+                                {{ $lastSegment['Arrival']['City'] }}, {{ $lastSegment['Arrival']['Airport'] }}
+                                ({{ $lastSegment['Arrival']['Code'] }})
                             </h6>
                         </div>
                     </td>
@@ -331,7 +333,8 @@
                                 {{ $segment['Departure']['Date'] }}
                             </p>
                             <p>
-                                {{ $segment['Departure']['City'] }}, {{ $segment['Departure']['Airport'] }} ({{ $segment['Departure']['Code'] }})
+                                {{ $segment['Departure']['City'] }}, {{ $segment['Departure']['Airport'] }}
+                                ({{ $segment['Departure']['Code'] }})
                             </p>
                         </td>
                         <td>
@@ -340,7 +343,8 @@
                                 {{ $segment['Arrival']['Date'] }}
                             </p>
                             <p>
-                                {{ $segment['Arrival']['City'] }}, {{ $segment['Arrival']['Airport'] }} ({{ $segment['Arrival']['Code'] }})
+                                {{ $segment['Arrival']['City'] }}, {{ $segment['Arrival']['Airport'] }}
+                                ({{ $segment['Arrival']['Code'] }})
                             </p>
                         </td>
 
@@ -492,9 +496,13 @@
                                         $firstReturnSegment = $flightData['Return'][0];
                                         $lastReturnSegment = end($flightData['Return']);
                                     @endphp
-                                    {{ $firstReturnSegment['Departure']['City'] }}, {{ $firstReturnSegment['Departure']['Airport'] }} ({{ $firstReturnSegment['Departure']['Code'] }})
+                                    {{ $firstReturnSegment['Departure']['City'] }}
+                                    , {{ $firstReturnSegment['Departure']['Airport'] }}
+                                    ({{ $firstReturnSegment['Departure']['Code'] }})
                                     -
-                                    {{ $lastReturnSegment['Arrival']['City'] }}, {{ $lastReturnSegment['Arrival']['Airport'] }} ({{ $lastReturnSegment['Arrival']['Code'] }})
+                                    {{ $lastReturnSegment['Arrival']['City'] }}
+                                    , {{ $lastReturnSegment['Arrival']['Airport'] }}
+                                    ({{ $lastReturnSegment['Arrival']['Code'] }})
                                 </h6>
                             </div>
                         </td>
@@ -514,7 +522,8 @@
                                     {{ $segment['Departure']['Date'] }}
                                 </p>
                                 <p>
-                                    {{ $segment['Departure']['City'] }}, {{ $segment['Departure']['Airport'] }} ({{ $segment['Departure']['Code'] }})
+                                    {{ $segment['Departure']['City'] }}, {{ $segment['Departure']['Airport'] }}
+                                    ({{ $segment['Departure']['Code'] }})
                                 </p>
                             </td>
                             <td>
@@ -523,7 +532,8 @@
                                     {{ $segment['Arrival']['Date'] }}
                                 </p>
                                 <p>
-                                    {{ $segment['Arrival']['City'] }}, {{ $segment['Arrival']['Airport'] }} ({{ $segment['Arrival']['Code'] }})
+                                    {{ $segment['Arrival']['City'] }}, {{ $segment['Arrival']['Airport'] }}
+                                    ({{ $segment['Arrival']['Code'] }})
                                 </p>
                             </td>
 
