@@ -2,7 +2,6 @@
 
 namespace App\Jobs\XmlAgency;
 
-use App;
 use App\Enum\FlightSupplier;
 use App\Mail\XmlBookingTicketMail;
 use App\Models\FlightBooking;
@@ -94,6 +93,26 @@ class GenerateTicketJob implements ShouldQueue
         $offerInfo = $multiGatesInfo['OfferInfo'];
         $offerInfo = is_array($offerInfo) && isset($offerInfo[0]) ? $offerInfo : [$offerInfo];
 
+        $allPassengers = [];
+
+        foreach ($offerInfo as $offer) {
+            $pnr = $offer['PNR']['value'] ?? null;
+
+            if (!isset($offer['Passengers']['OfferPassenger'])) {
+                continue;
+            }
+
+            $passengers = $offer['Passengers']['OfferPassenger'];
+            // Normalize to a list
+            $passengers = (is_array($passengers) && isset($passengers[0])) ? $passengers : [$passengers];
+
+            foreach ($passengers as $pax) {
+                // Add PNR to each passenger
+                $pax['PNR'] = ['value' => $pnr];
+                $allPassengers[] = $pax;
+            }
+        }
+
         $allSegments = [];
 
         foreach ($offerInfo as $offer) {
@@ -130,7 +149,8 @@ class GenerateTicketJob implements ShouldQueue
 
         return [
             'Outward' => $outwardData,
-            'Return' => $returnData
+            'Return' => $returnData,
+            'Passengers' => $allPassengers,
         ];
     }
 
@@ -184,6 +204,10 @@ class GenerateTicketJob implements ShouldQueue
 
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
+        $passGuid      = $passenger['PassGuid']['value'] ?? null;
+        $ticketNumber  = $this->getTicketNumberForGuid($flightData, $passGuid);
+        $pnr  = $this->getPNRForGuid($flightData, $passGuid);
+
         // Prepare data for XML ticket template in the new format
         $ticketData = [
             'bookingReference' => $this->booking->booking_reference,
@@ -194,6 +218,8 @@ class GenerateTicketJob implements ShouldQueue
             'contactEmail' => $contactData['email'],
             'contactPhone' => $contactData['phone'],
             'flightData' => $flightData,
+            'ticketNumber'     => $ticketNumber,
+            'pnr'     => $pnr,
         ];
 
         $this->ticketData = $ticketData;
@@ -216,6 +242,43 @@ class GenerateTicketJob implements ShouldQueue
         ];
     }
 
+    /**
+     * Find the ticket number for a given passenger GUID inside the flight data.
+     */
+    function getTicketNumberForGuid(array $flightData, ?string $guid): ?string
+    {
+        if (!$guid || empty($flightData['Passengers']) || !is_array($flightData['Passengers'])) {
+            return null;
+        }
+
+        foreach ($flightData['Passengers'] as $pax) {
+            $paxGuid = $pax['Guid']['value'] ?? null;
+            if ($paxGuid && $paxGuid === $guid) {
+                return $pax['TicketNumber']['value'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find the PNR for a given passenger GUID inside the flight data.
+     */
+    function getPNRForGuid(array $flightData, ?string $guid): ?string
+    {
+        if (!$guid || empty($flightData['Passengers']) || !is_array($flightData['Passengers'])) {
+            return null;
+        }
+
+        foreach ($flightData['Passengers'] as $pax) {
+            $paxGuid = $pax['Guid']['value'] ?? null;
+            if ($paxGuid && $paxGuid === $guid) {
+                return $pax['PNR']['value'] ?? null;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Handle job failure

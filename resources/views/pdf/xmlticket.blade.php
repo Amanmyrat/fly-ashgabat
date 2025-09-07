@@ -216,6 +216,20 @@
 
                     <div class="flex items-center gap-10">
                         <h6>
+                            <b> Номер билета / Ticket number:</b>
+                        </h6>
+                        <p>{{$ticketNumber}}</p>
+                    </div>
+
+                    <div class="flex items-center gap-10">
+                        <h6>
+                            <b> AirLine ID / PNR:</b>
+                        </h6>
+                        <p>{{$pnr}}</p>
+                    </div>
+
+                    <div class="flex items-center gap-10">
+                        <h6>
                             <b> Дата выписки билета / Ticket issue date:</b>
                         </h6>
                         <p>{{ $bookingDate }}</p>
@@ -361,12 +375,12 @@
                                     // XMLAgency format - checked baggage
                                     $baggageType = $segment['Baggage']['BaggageType']['value'];
                                     $baggageCount = 0;
-                                    
+
                                     // Handle Count field - it can be empty array or array with value
                                     if (isset($segment['Baggage']['Count']['value'])) {
                                         $baggageCount = $segment['Baggage']['Count']['value'];
                                     }
-                                    
+
                                     switch (strtolower($baggageType)) {
                                         case 'nil':
                                             $baggageText = 'Платно / Paid';
@@ -393,12 +407,12 @@
                                     // XMLAgency format - cabin baggage
                                     $cabinBaggageType = $segment['CabinBaggage']['BaggageType']['value'];
                                     $cabinBaggageCount = 0;
-                                    
+
                                     // Handle Count field - it can be empty array or array with value
                                     if (isset($segment['CabinBaggage']['Count']['value'])) {
                                         $cabinBaggageCount = $segment['CabinBaggage']['Count']['value'];
                                     }
-                                    
+
                                     switch (strtolower($cabinBaggageType)) {
                                         case 'nil':
                                             $cabinBagText = 'Платно / Paid';
@@ -544,12 +558,12 @@
                                         // XMLAgency format - checked baggage
                                         $baggageType = $segment['Baggage']['BaggageType']['value'];
                                         $baggageCount = 0;
-                                        
+
                                         // Handle Count field - it can be empty array or array with value
                                         if (isset($segment['Baggage']['Count']['value'])) {
                                             $baggageCount = $segment['Baggage']['Count']['value'];
                                         }
-                                        
+
                                         switch (strtolower($baggageType)) {
                                             case 'nil':
                                                 $baggageText = 'Платно / Paid';
@@ -576,12 +590,12 @@
                                         // XMLAgency format - cabin baggage
                                         $cabinBaggageType = $segment['CabinBaggage']['BaggageType']['value'];
                                         $cabinBaggageCount = 0;
-                                        
+
                                         // Handle Count field - it can be empty array or array with value
                                         if (isset($segment['CabinBaggage']['Count']['value'])) {
                                             $cabinBaggageCount = $segment['CabinBaggage']['Count']['value'];
                                         }
-                                        
+
                                         switch (strtolower($cabinBaggageType)) {
                                             case 'nil':
                                                 $cabinBagText = 'Платно / Paid';
