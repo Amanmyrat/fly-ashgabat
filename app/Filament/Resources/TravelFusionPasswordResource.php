@@ -130,9 +130,9 @@ class TravelFusionPasswordResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTravelFusionPasswords::route('/'),
+            'index' => Pages\ListTravelFusionPassword::route('/'),
             'create' => Pages\CreateTravelFusionPassword::route('/create'),
             'edit' => Pages\EditTravelFusionPassword::route('/{record}/edit'),
         ];
     }
-} 
+}
