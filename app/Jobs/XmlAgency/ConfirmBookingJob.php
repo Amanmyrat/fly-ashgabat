@@ -33,7 +33,7 @@ class ConfirmBookingJob implements ShouldQueue
         $confirmBookResponse = $xmlAgencyService->sendRequest($confirmBookRequest, 'ConfirmBook');
 
         if ($confirmBookResponse['Success']['value'] != "true") {
-            $errorMessage = $aeroBookResponse['ConfirmBookResult']['ErrorString'] ?? 'Confirm failed';
+            $errorMessage = $confirmBookResponse['ConfirmBookResult']['ErrorString'] ?? 'Confirm failed';
 
             \Log::info($errorMessage);
 
