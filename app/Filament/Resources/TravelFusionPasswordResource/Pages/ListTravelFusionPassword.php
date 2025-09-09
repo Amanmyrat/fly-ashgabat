@@ -6,7 +6,7 @@ use App\Filament\Resources\TravelFusionPasswordResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListTravelFusionPasswords extends ListRecords
+class ListTravelFusionPassword extends ListRecords
 {
     protected static string $resource = TravelFusionPasswordResource::class;
 
