@@ -221,19 +221,24 @@
                         <p>{{$ticketNumber}}</p>
                     </div>
 
-                    <div class="flex items-center gap-10">
-                        <h6>
-                            <b> AirLine ID / PNR: &nbsp;</b>
-                        </h6>
-                        <p>{{$pnr}}</p>
-                    </div>
+                    @if(isset($pnr))
+                        <div class="flex items-center gap-10">
+                            <h6>
+                                <b> AirLine ID / PNR: &nbsp;</b>
+                            </h6>
+                            <p>{{$pnr}}</p>
+                        </div>
+                    @endif
 
+                    @if(isset($bookingDate))
                     <div class="flex items-center gap-10">
                         <h6>
                             <b> Дата выписки билета / Ticket issue date:&nbsp; </b>
                         </h6>
                         <p>{{ $bookingDate }}</p>
                     </div>
+                    @endif
+
                 </div>
             </div>
 
@@ -385,23 +390,14 @@
                                         $baggageCount = $segment['Baggage']['Count']['value'];
                                     }
 
-                                    switch (strtolower($baggageType)) {
-                                        case 'nil':
-                                            $baggageText = 'Платно / Paid';
-                                            break;
-                                        case 'kilos':
-                                            $baggageText = $baggageCount . ' кг / kg';
-                                            break;
-                                        case 'pounds':
-                                            $baggageText = $baggageCount . ' фунт / lbs';
-                                            break;
-                                        case 'pieces':
-                                            $baggageText = $baggageCount . ' место(а) / piece(s)';
-                                            break;
-                                        default:
-                                            $baggageText = $baggageCount . ' ' . $baggageType;
-                                    }
-                                } elseif (isset($segment['Baggage']) && is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
+                                    $baggageText = match (strtolower($baggageType)) {
+                                        'nil' => 'Платно / Paid',
+                                        'kilos' => $baggageCount . ' кг / kg',
+                                        'pounds' => $baggageCount . ' фунт / lbs',
+                                        'pieces' => $baggageCount . ' место(а) / piece(s)',
+                                        default => $baggageCount . ' ' . $baggageType,
+                                    };
+                                } elseif (is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
                                     // Nemo format - use the string as is (already formatted)
                                     $baggageText = $segment['Baggage'];
                                 }
@@ -417,30 +413,21 @@
                                         $cabinBaggageCount = $segment['CabinBaggage']['Count']['value'];
                                     }
 
-                                    switch (strtolower($cabinBaggageType)) {
-                                        case 'nil':
-                                            $cabinBagText = 'Платно / Paid';
-                                            break;
-                                        case 'kilos':
-                                            $cabinBagText = $cabinBaggageCount . ' кг / kg';
-                                            break;
-                                        case 'pounds':
-                                            $cabinBagText = $cabinBaggageCount . ' фунт / lbs';
-                                            break;
-                                        case 'pieces':
-                                            $cabinBagText = $cabinBaggageCount . ' место(а) / piece(s)';
-                                            break;
-                                        default:
-                                            $cabinBagText = $cabinBaggageCount . ' ' . $cabinBaggageType;
-                                    }
-                                } elseif (isset($segment['CabinBaggage']) && is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
+                                    $cabinBagText = match (strtolower($cabinBaggageType)) {
+                                        'nil' => 'Платно / Paid',
+                                        'kilos' => $cabinBaggageCount . ' кг / kg',
+                                        'pounds' => $cabinBaggageCount . ' фунт / lbs',
+                                        'pieces' => $cabinBaggageCount . ' место(а) / piece(s)',
+                                        default => $cabinBaggageCount . ' ' . $cabinBaggageType,
+                                    };
+                                } elseif (is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
                                     // Nemo format - use the string as is (already formatted)
                                     $cabinBagText = $segment['CabinBaggage'];
                                 }
                             @endphp
                             <div class="flex items-center gap-10">
                                 <h6>
-                                    Ручная кладь / Hand baggage:
+                                    Ручная кладь / Hand baggage: &nbsp;
                                 </h6>
                                 <p>
                                     {{ $cabinBagText }}
@@ -448,7 +435,7 @@
                             </div>
                             <div class="flex items-center gap-10">
                                 <h6>
-                                    Багаж / Baggage:
+                                    Багаж / Baggage: &nbsp;
                                 </h6>
                                 <p>
                                     {{ $baggageText }}
@@ -458,7 +445,7 @@
                         <td colspan="2">
                             <div class="flex items-center gap-5">
                                 <h6>
-                                    Время в пути / Flight time:
+                                    Время в пути / Flight time: &nbsp;
                                 </h6>
                                 <p>
                                     {{ $segment['FlightTime'] ?? 'N/A' }}
@@ -476,7 +463,7 @@
                 </tbody>
             </table>
 
-            @if(isset($flightData['Return']) && !empty($flightData['Return']))
+            @if(!empty($flightData['Return']))
                 <table class="mt-30">
                     <thead>
                     <tr>
@@ -574,23 +561,14 @@
                                             $baggageCount = $segment['Baggage']['Count']['value'];
                                         }
 
-                                        switch (strtolower($baggageType)) {
-                                            case 'nil':
-                                                $baggageText = 'Платно / Paid';
-                                                break;
-                                            case 'kilos':
-                                                $baggageText = $baggageCount . ' кг / kg';
-                                                break;
-                                            case 'pounds':
-                                                $baggageText = $baggageCount . ' фунт / lbs';
-                                                break;
-                                            case 'pieces':
-                                                $baggageText = $baggageCount . ' место(а) / piece(s)';
-                                                break;
-                                            default:
-                                                $baggageText = $baggageCount . ' ' . $baggageType;
-                                        }
-                                    } elseif (isset($segment['Baggage']) && is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
+                                        $baggageText = match (strtolower($baggageType)) {
+                                            'nil' => 'Платно / Paid',
+                                            'kilos' => $baggageCount . ' кг / kg',
+                                            'pounds' => $baggageCount . ' фунт / lbs',
+                                            'pieces' => $baggageCount . ' место(а) / piece(s)',
+                                            default => $baggageCount . ' ' . $baggageType,
+                                        };
+                                    } elseif (is_string($segment['Baggage']) && !empty($segment['Baggage'])) {
                                         // Nemo format - use the string as is (already formatted)
                                         $baggageText = $segment['Baggage'];
                                     }
@@ -606,30 +584,21 @@
                                             $cabinBaggageCount = $segment['CabinBaggage']['Count']['value'];
                                         }
 
-                                        switch (strtolower($cabinBaggageType)) {
-                                            case 'nil':
-                                                $cabinBagText = 'Платно / Paid';
-                                                break;
-                                            case 'kilos':
-                                                $cabinBagText = $cabinBaggageCount . ' кг / kg';
-                                                break;
-                                            case 'pounds':
-                                                $cabinBagText = $cabinBaggageCount . ' фунт / lbs';
-                                                break;
-                                            case 'pieces':
-                                                $cabinBagText = $cabinBaggageCount . ' место(а) / piece(s)';
-                                                break;
-                                            default:
-                                                $cabinBagText = $cabinBaggageCount . ' ' . $cabinBaggageType;
-                                        }
-                                    } elseif (isset($segment['CabinBaggage']) && is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
+                                        $cabinBagText = match (strtolower($cabinBaggageType)) {
+                                            'nil' => 'Платно / Paid',
+                                            'kilos' => $cabinBaggageCount . ' кг / kg',
+                                            'pounds' => $cabinBaggageCount . ' фунт / lbs',
+                                            'pieces' => $cabinBaggageCount . ' место(а) / piece(s)',
+                                            default => $cabinBaggageCount . ' ' . $cabinBaggageType,
+                                        };
+                                    } elseif (is_string($segment['CabinBaggage']) && !empty($segment['CabinBaggage'])) {
                                         // Nemo format - use the string as is (already formatted)
                                         $cabinBagText = $segment['CabinBaggage'];
                                     }
                                 @endphp
                                 <div class="flex items-center gap-10">
                                     <h6>
-                                        Ручная кладь / Hand baggage:
+                                        Ручная кладь / Hand baggage: &nbsp;
                                     </h6>
                                     <p>
                                         {{ $cabinBagText }}
@@ -637,7 +606,7 @@
                                 </div>
                                 <div class="flex items-center gap-10">
                                     <h6>
-                                        Багаж / Baggage:
+                                        Багаж / Baggage: &nbsp;
                                     </h6>
                                     <p>
                                         {{ $baggageText }}
@@ -647,7 +616,7 @@
                             <td colspan="2">
                                 <div class="flex items-center gap-5">
                                     <h6>
-                                        Время в пути / Flight time:
+                                        Время в пути / Flight time: &nbsp;
                                     </h6>
                                     <p>
                                         {{ $segment['FlightTime'] ?? 'N/A' }}

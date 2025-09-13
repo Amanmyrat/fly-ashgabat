@@ -96,7 +96,7 @@ class GenerateTicketJob implements ShouldQueue
         $allPassengers = [];
 
         foreach ($offerInfo as $offer) {
-            $pnr = $offer['PNR']['value'] ?? null;
+            $pnr = $offer['OriginPnr']['value'] ?? $offer['PNR']['value'];
 
             if (!isset($offer['Passengers']['OfferPassenger'])) {
                 continue;
