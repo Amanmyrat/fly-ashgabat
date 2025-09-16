@@ -1,59 +1,468 @@
 {
-    "ANK":{"name":{"ru":"Анкара","en":"Ankara"},"country":"TR"},
-    "BAK":{"name":{"ru":"Баку","en":"Baku"},"country":"AZ"},
-    "BEG":{"name":{"ru":"Белград","en":"Belgrade"},"country":"RS"},
-    "BER":{"name":{"ru":"Берлин","en":"Berlin"},"country":"DE"},
-    "BFS":{"name":{"ru":"Белфаст","en":"Belfast"},"country":"GB"},
-    "BHZ":{"name":{"ru":"Белу-Оризонте","en":"Belo Horizonte"},"country":"BR"},
-    "BJS":{"name":{"ru":"Пекин","en":"Beijing"},"country":"CN"},
-    "BUE":{"name":{"ru":"Буэнос-Айрес","en":"Buenos Aires"},"country":"AR"},
-    "BUH":{"name":{"ru":"Бухарест","en":"Bucharest"},"country":"RO"},
-    "CAS":{"name":{"ru":"Касабланка","en":"Casablanca"},"country":"MA"},
-    "CHI":{"name":{"ru":"Чикаго","en":"Chicago"},"country":"US"},
-    "DFW":{"name":{"ru":"Даллас","en":"Dallas"},"country":"US"},
-    "DKR":{"name":{"ru":"Дакар","en":"Dakar"},"country":"SN"},
-    "DTT":{"name":{"ru":"Детройт","en":"Detroit"},"country":"US"},
-    "DXB":{"name":{"ru":"Дубай","en":"Dubai"},"country":"AE"},
-    "EAP":{"name":{"ru":"Базель","en":"Basel"},"country":"CH"},
-    "HOU":{"name":{"ru":"Хьюстон","en":"Houston"},"country":"US"},
-    "IEV":{"name":{"ru":"Киев","en":"Kiev"},"country":"UA"},
-    "IST":{"name":{"ru":"Стамбул","en":"Istanbul"},"country":"TR"},
-    "IZM":{"name":{"ru":"Измир","en":"Izmir"},"country":"TR"},
-    "JKT":{"name":{"ru":"Джакарта","en":"Jakarta"},"country":"ID"},
-    "LHW":{"name":{"ru":"Ланьчжоу","en":"Lanzhou"},"country":"CN"},
-    "LON":{"name":{"ru":"Лондон","en":"London"},"country":"GB"},
-    "MIA":{"name":{"ru":"Майами (FL)","en":"Miami (FL)"},"country":"US"},
-    "MIL":{"name":{"ru":"Милан","en":"Milano"},"country":"IT"},
-    "MKO":{"name":{"ru":"Маскоги","en":"Muskogee"},"country":"US"},
-    "MLW":{"name":{"ru":"Монровия","en":"Monrovia"},"country":"LR"},
-    "MOW":{"name":{"ru":"Москва","en":"Moscow"},"country":"RU"},
-    "NGO":{"name":{"ru":"Нагоя","en":"Nagoya-shi"},"country":"JP"},
-    "NHA":{"name":{"ru":"Нячанг","en":"Nha Trang"},"country":"VN"},
-    "NYC":{"name":{"ru":"Нью-Йорк","en":"New York City"},"country":"US"},
-    "ODM":{"name":{"ru":"Окленд","en":"Oakland"},"country":"US"},
-    "ORL":{"name":{"ru":"Орландо","en":"Orlando"},"country":"US"},
-    "OSA":{"name":{"ru":"Осака","en":"Osaka-shi"},"country":"JP"},
-    "PAR":{"name":{"ru":"Париж","en":"Paris"},"country":"FR"},
-    "REK":{"name":{"ru":"Рейкьявик","en":"Reykjavik"},"country":"IS"},
-    "RIO":{"name":{"ru":"Рио-де-Жанейро","en":"Rio de Janeiro"},"country":"BR"},
-    "ROM":{"name":{"ru":"Рим","en":"Rome"},"country":"IT"},
-    "SAO":{"name":{"ru":"Сан-Паулу","en":"Sao Paulo"},"country":"BR"},
-    "SDZ":{"name":{"ru":"Шетлендские острова","en":"Shetland"},"country":"GB"},
-    "SEL":{"name":{"ru":"Сеул","en":"Seoul"},"country":"KR"},
-    "SHA":{"name":{"ru":"Шанхай","en":"Shanghai"},"country":"CN"},
-    "SIA":{"name":{"ru":"Сиань","en":"Xi'an"},"country":"CN"},
-    "SPK":{"name":{"ru":"Саппоро","en":"Sapporo"},"country":"JP"},
-    "STO":{"name":{"ru":"Стокгольм","en":"Stockholm"},"country":"SE"},
-    "SZF":{"name":{"ru":"Самсун","en":"Samsun"},"country":"TR"},
-    "TCI":{"name":{"ru":"Тенерифе","en":"Santa Cruz de Tenerife"},"country":"ES"},
-    "THR":{"name":{"ru":"Тегеран","en":"Tehran"},"country":"IR"},
-    "TLV":{"name":{"ru":"Тель-Авив","en":"Tel Aviv"},"country":"IL"},
-    "TYO":{"name":{"ru":"Токио","en":"Tokyo"},"country":"JP"},
-    "VCE":{"name":{"ru":"Венеция","en":"Venice"},"country":"IT"},
-    "WAS":{"name":{"ru":"Вашингтон","en":"Washington, D.C."},"country":"US"},
-    "YEA":{"name":{"ru":"Эдмонтон","en":"Edmonton"},"country":"CA"},
-    "YMQ":{"name":{"ru":"Монреаль","en":"Montreal"},"country":"CA"},
-    "YTO":{"name":{"ru":"Торонто","en":"Toronto"},"country":"CA"},
-    "YVA":{"name":{"ru":"Морони","en":"Moroni"},"country":"KM"},
-    "TAS":{"name":{"ru":"Ташкент","en":"Tashkent"},"country":"UZ"}
+    "ANK": {
+        "name": {
+            "ru": "Анкара",
+            "en": "Ankara",
+            "uz": "Anqara"
+        },
+        "country": "TR"
+    },
+    "BAK": {
+        "name": {
+            "ru": "Баку",
+            "en": "Baku",
+            "uz": "Boku"
+        },
+        "country": "AZ"
+    },
+    "BEG": {
+        "name": {
+            "ru": "Белград",
+            "en": "Belgrade",
+            "uz": "Belgrad"
+        },
+        "country": "RS"
+    },
+    "BER": {
+        "name": {
+            "ru": "Берлин",
+            "en": "Berlin",
+            "uz": "Berlin"
+        },
+        "country": "DE"
+    },
+    "BFS": {
+        "name": {
+            "ru": "Белфаст",
+            "en": "Belfast",
+            "uz": "Belfast"
+        },
+        "country": "GB"
+    },
+    "BHZ": {
+        "name": {
+            "ru": "Белу-Оризонте",
+            "en": "Belo Horizonte",
+            "uz": "Belu-Orizonti"
+        },
+        "country": "BR"
+    },
+    "BJS": {
+        "name": {
+            "ru": "Пекин",
+            "en": "Beijing",
+            "uz": "Pekin"
+        },
+        "country": "CN"
+    },
+    "BUE": {
+        "name": {
+            "ru": "Буэнос-Айрес",
+            "en": "Buenos Aires",
+            "uz": "Buenos Ayres"
+        },
+        "country": "AR"
+    },
+    "BUH": {
+        "name": {
+            "ru": "Бухарест",
+            "en": "Bucharest",
+            "uz": "Buxarest"
+        },
+        "country": "RO"
+    },
+    "CHI": {
+        "name": {
+            "ru": "Чикаго",
+            "en": "Chicago",
+            "uz": "Chikago"
+        },
+        "country": "US"
+    },
+    "CMN": {
+        "name": {
+            "ru": "Касабланка",
+            "en": "Casablanca",
+            "uz": "Kasablanka"
+        },
+        "country": "MA"
+    },
+    "DFW": {
+        "name": {
+            "ru": "Даллас",
+            "en": "Dallas",
+            "uz": "Dallas"
+        },
+        "country": "US"
+    },
+    "DKR": {
+        "name": {
+            "ru": "Дакар",
+            "en": "Dakar",
+            "uz": "Dakar"
+        },
+        "country": "SN"
+    },
+    "DTT": {
+        "name": {
+            "ru": "Детройт",
+            "en": "Detroit",
+            "uz": "Detroit"
+        },
+        "country": "US"
+    },
+    "DXB": {
+        "name": {
+            "ru": "Дубай",
+            "en": "Dubai",
+            "uz": "Dubay"
+        },
+        "country": "AE"
+    },
+    "EAP": {
+        "name": {
+            "ru": "Базель",
+            "en": "Basel",
+            "uz": "Bazel"
+        },
+        "country": "CH"
+    },
+    "HOU": {
+        "name": {
+            "ru": "Хьюстон",
+            "en": "Houston",
+            "uz": "Houston"
+        },
+        "country": "US"
+    },
+    "IEV": {
+        "name": {
+            "ru": "Киев",
+            "en": "Kiev",
+            "uz": "Kiyev"
+        },
+        "country": "UA"
+    },
+    "IST": {
+        "name": {
+            "ru": "Стамбул",
+            "en": "Istanbul",
+            "uz": "Istanbul"
+        },
+        "country": "TR"
+    },
+    "IZM": {
+        "name": {
+            "ru": "Измир",
+            "en": "Izmir",
+            "uz": "Izmir"
+        },
+        "country": "TR"
+    },
+    "JKT": {
+        "name": {
+            "ru": "Джакарта",
+            "en": "Jakarta",
+            "uz": "Jakarta"
+        },
+        "country": "ID"
+    },
+    "KVD": {
+        "name": {
+            "ru": "Гянджа",
+            "en": "Ganja",
+            "uz": "Ganja"
+        },
+        "country": "AZ"
+    },
+    "LHW": {
+        "name": {
+            "ru": "Ланьчжоу",
+            "en": "Lanzhou",
+            "uz": "Lanchjou"
+        },
+        "country": "CN"
+    },
+    "LON": {
+        "name": {
+            "ru": "Лондон",
+            "en": "London",
+            "uz": "London"
+        },
+        "country": "GB"
+    },
+    "MIA": {
+        "name": {
+            "ru": "Майами (FL)",
+            "en": "Miami (FL)",
+            "uz": "Mayami (FL)"
+        },
+        "country": "US"
+    },
+    "MIL": {
+        "name": {
+            "ru": "Милан",
+            "en": "Milano",
+            "uz": "Milan"
+        },
+        "country": "IT"
+    },
+    "MKO": {
+        "name": {
+            "ru": "Маскоги",
+            "en": "Muskogee",
+            "uz": "Maskogi"
+        },
+        "country": "US"
+    },
+    "MLW": {
+        "name": {
+            "ru": "Монровия",
+            "en": "Monrovia",
+            "uz": "Monroviya"
+        },
+        "country": "LR"
+    },
+    "MOW": {
+        "name": {
+            "ru": "Москва",
+            "en": "Moscow",
+            "uz": "Moskva"
+        },
+        "country": "RU"
+    },
+    "NGO": {
+        "name": {
+            "ru": "Нагоя",
+            "en": "Nagoya-shi",
+            "uz": "Nagoya"
+        },
+        "country": "JP"
+    },
+    "NHA": {
+        "name": {
+            "ru": "Нячанг",
+            "en": "Nha Trang",
+            "uz": "Nyachang"
+        },
+        "country": "VN"
+    },
+    "NYC": {
+        "name": {
+            "ru": "Нью-Йорк",
+            "en": "New York City",
+            "uz": "Nyu-York"
+        },
+        "country": "US"
+    },
+    "ODM": {
+        "name": {
+            "ru": "Окленд",
+            "en": "Oakland",
+            "uz": "Oklend"
+        },
+        "country": "US"
+    },
+    "ORL": {
+        "name": {
+            "ru": "Орландо",
+            "en": "Orlando",
+            "uz": "Orlando"
+        },
+        "country": "US"
+    },
+    "OSA": {
+        "name": {
+            "ru": "Осака",
+            "en": "Osaka-shi",
+            "uz": "Osaka"
+        },
+        "country": "JP"
+    },
+    "PAR": {
+        "name": {
+            "ru": "Париж",
+            "en": "Paris",
+            "uz": "Parij"
+        },
+        "country": "FR"
+    },
+    "REK": {
+        "name": {
+            "ru": "Рейкьявик",
+            "en": "Reykjavik",
+            "uz": "Reykyavik"
+        },
+        "country": "IS"
+    },
+    "RIO": {
+        "name": {
+            "ru": "Рио-де-Жанейро",
+            "en": "Rio de Janeiro",
+            "uz": "Rio-de-Janeyro"
+        },
+        "country": "BR"
+    },
+    "ROM": {
+        "name": {
+            "ru": "Рим",
+            "en": "Rome",
+            "uz": "Rim"
+        },
+        "country": "IT"
+    },
+    "SAO": {
+        "name": {
+            "ru": "Сан-Паулу",
+            "en": "Sao Paulo",
+            "uz": "San-Paulu"
+        },
+        "country": "BR"
+    },
+    "SDZ": {
+        "name": {
+            "ru": "Шетлендские острова",
+            "en": "Shetland",
+            "uz": "Shetlend orollari"
+        },
+        "country": "GB"
+    },
+    "SEL": {
+        "name": {
+            "ru": "Сеул",
+            "en": "Seoul",
+            "uz": "Seul"
+        },
+        "country": "KR"
+    },
+    "SHA": {
+        "name": {
+            "ru": "Шанхай",
+            "en": "Shanghai",
+            "uz": "Shanxay"
+        },
+        "country": "CN"
+    },
+    "SIA": {
+        "name": {
+            "ru": "Сиань",
+            "en": "Xi\u0027an",
+            "uz": "Sian"
+        },
+        "country": "CN"
+    },
+    "SPK": {
+        "name": {
+            "ru": "Саппоро",
+            "en": "Sapporo",
+            "uz": "Sapporo"
+        },
+        "country": "JP"
+    },
+    "STO": {
+        "name": {
+            "ru": "Стокгольм",
+            "en": "Stockholm",
+            "uz": "Stokgolm"
+        },
+        "country": "SE"
+    },
+    "SZF": {
+        "name": {
+            "ru": "Самсун",
+            "en": "Samsun",
+            "uz": "Samsun"
+        },
+        "country": "TR"
+    },
+    "TCI": {
+        "name": {
+            "ru": "Тенерифе",
+            "en": "Santa Cruz de Tenerife",
+            "uz": "Santa Cruz de Tenerife"
+        },
+        "country": "ES"
+    },
+    "THR": {
+        "name": {
+            "ru": "Тегеран",
+            "en": "Tehran",
+            "uz": "Tehron"
+        },
+        "country": "IR"
+    },
+    "TLV": {
+        "name": {
+            "ru": "Тель-Авив",
+            "en": "Tel Aviv",
+            "uz": "Tel-Aviv"
+        },
+        "country": "IL"
+    },
+    "TYO": {
+        "name": {
+            "ru": "Токио",
+            "en": "Tokyo",
+            "uz": "Tokio"
+        },
+        "country": "JP"
+    },
+    "VCE": {
+        "name": {
+            "ru": "Венеция",
+            "en": "Venice",
+            "uz": "Venetsiya"
+        },
+        "country": "IT"
+    },
+    "WAS": {
+        "name": {
+            "ru": "Вашингтон",
+            "en": "Washington, D.C.",
+            "uz": "Washington"
+        },
+        "country": "US"
+    },
+    "YEA": {
+        "name": {
+            "ru": "Эдмонтон",
+            "en": "Edmonton",
+            "uz": "Edmonton"
+        },
+        "country": "CA"
+    },
+    "YMQ": {
+        "name": {
+            "ru": "Монреаль",
+            "en": "Montreal",
+            "uz": "Montreal"
+        },
+        "country": "CA"
+    },
+    "YTO": {
+        "name": {
+            "ru": "Торонто",
+            "en": "Toronto",
+            "uz": "Toronto"
+        },
+        "country": "CA"
+    },
+    "YVA": {
+        "name": {
+            "ru": "Морони",
+            "en": "Moroni",
+            "uz": "Moroni"
+        },
+        "country": "KM"
+    },
+    "TAS": {
+        "name": {
+            "ru": "Ташкент",
+            "en": "Tashkent",
+            "uz": "Toshkent"
+        },
+        "country": "UZ"
+    }
 }
+
+

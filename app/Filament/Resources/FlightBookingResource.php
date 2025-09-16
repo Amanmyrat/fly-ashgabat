@@ -6,8 +6,8 @@ use App;
 use App\Enum\BookingStatus;
 use App\Enum\FlightSupplier;
 use App\Filament\Resources\BookingResource\Pages;
+use App\Jobs\Nemo\GenerateTicketJob;
 use App\Jobs\TFusion\CheckBookingStatusJob;
-use App\Jobs\TFusion\GenerateTicketJob;
 use App\Jobs\TFusion\StartBookingJob;
 use App\Jobs\XmlAgency\ConfirmBookingJob;
 use App\Services\AirportLocatorService;
@@ -306,7 +306,7 @@ class FlightBookingResource extends Resource
                                     ConfirmBookingJob::dispatch($record);
                                     break;
                                 case FlightSupplier::NEMO:
-                                    \App\Jobs\Nemo\GenerateTicketJob::dispatch($record);
+                                    GenerateTicketJob::dispatch($record);
                             }
 
                             Notification::make()
