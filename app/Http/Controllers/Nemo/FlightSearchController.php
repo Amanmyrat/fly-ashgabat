@@ -36,22 +36,32 @@ class FlightSearchController extends Controller
         $queryParams = $request->except(['filters', 'sort']);
         $cacheKey = $this->getCacheKey($queryParams);
 
-        $result = Cache::remember($cacheKey, 60 * 5, function () use ($request) {
-            return $this->searchFlightService->search($request->all());
-        });
-//        $result = $this->searchFlightService->search($request->all());
+        // Try cache first
+        $result = Cache::get($cacheKey);
+
+        // If not cached or cached result has no flights -> fetch fresh
+        if (!$result) {
+            $result = $this->searchFlightService->search($request->all());
+
+            $flightsData = $result['data']->Search_1_2Result->ResponseBody->PlaneFlights->Flight ?? [];
+            $flightsData = is_array($flightsData) ? $flightsData : [$flightsData];
+
+            // Only cache if flights are not empty
+            if (!empty($flightsData)) {
+                Cache::put($cacheKey, $result, 60 * 5);
+            }
+        }
 
         if (isset($result['error']) && $result['error']) {
             return response()->json(['data' => $result['result']], 400);
         }
 
         $flightsData = $result['data']->Search_1_2Result->ResponseBody->PlaneFlights->Flight ?? [];
-
         $flightsData = is_array($flightsData) ? $flightsData : [$flightsData];
 
         $data = $this->flightFilterService->filterFlights($flightsData, $filters);
-
         $data = array_values($data);
+
         $filterValues = $this->flightFilterService->getFilterValues($flightsData);
 
         if ($sort != 'default') {
@@ -60,17 +70,16 @@ class FlightSearchController extends Controller
 
         $transformedFareFamilies = $this->transformFareFamilies($result['fare_families_description']);
 
-        return response()->json(
-            [
-                'data' => [
-                    'flights' => $data,
-                    'filters' => $filterValues,
-                    'fare_families_description' => $transformedFareFamilies,
-                    'requested_values' => $request->all()
-                ]
-            ]
-        );
+        return response()->json([
+            'data' => [
+                'flights' => $data,
+                'filters' => $filterValues,
+                'fare_families_description' => $transformedFareFamilies,
+                'requested_values' => $request->all(),
+            ],
+        ]);
     }
+
 
     /**
      * Generate a unique cache key based on the search query parameters.
