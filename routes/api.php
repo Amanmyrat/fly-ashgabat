@@ -75,6 +75,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 Route::prefix('charter-flights')->group(function () {
     Route::get('/departure-cities', [CharterFlightController::class, 'getDepartureCities']);
     Route::get('/destination-cities', [CharterFlightController::class, 'getDestinationCities']);
-    Route::get('/available-dates', [CharterFlightController::class, 'getAvailableDates']);
+    Route::get('/available-schedules', [CharterFlightController::class, 'getAvailableDates']); // Renamed for clarity
     Route::get('/available-flights', [CharterFlightController::class, 'getAvailableFlights']);
 });

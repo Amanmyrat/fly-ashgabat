@@ -12,12 +12,13 @@ class CharterFlight extends Model
     protected $fillable = [
         'city_from_id',
         'city_to_id',
-        'departure_datetime',
+        'departure_weekday',
+        'departure_time',
         'price',
     ];
 
     protected $casts = [
-        'departure_datetime' => 'datetime',
+        'departure_time' => 'datetime:H:i',
         'price' => 'decimal:2',
     ];
 
@@ -29,5 +30,29 @@ class CharterFlight extends Model
     public function cityTo()
     {
         return $this->belongsTo(City::class, 'city_to_id');
+    }
+
+    /**
+     * Get available weekdays for charter flights
+     */
+    public static function getWeekdays(): array
+    {
+        return [
+            'Monday' => 'Monday',
+            'Tuesday' => 'Tuesday',
+            'Wednesday' => 'Wednesday',
+            'Thursday' => 'Thursday',
+            'Friday' => 'Friday',
+            'Saturday' => 'Saturday',
+            'Sunday' => 'Sunday',
+        ];
+    }
+
+    /**
+     * Get formatted departure time and weekday
+     */
+    public function getFormattedDepartureAttribute(): string
+    {
+        return $this->departure_weekday . ' at ' . $this->departure_time->format('H:i');
     }
 } 

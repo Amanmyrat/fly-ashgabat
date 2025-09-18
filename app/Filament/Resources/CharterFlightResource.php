@@ -33,8 +33,13 @@ class CharterFlightResource extends Resource
                     ->options(City::all()->pluck('name', 'id'))
                     ->searchable()
                     ->required(),
-                Forms\Components\DateTimePicker::make('departure_datetime')
-                    ->label('Departure Date & Time')
+                Forms\Components\Select::make('departure_weekday')
+                    ->label('Departure Weekday')
+                    ->options(\App\Models\CharterFlight::getWeekdays())
+                    ->required(),
+                Forms\Components\TimePicker::make('departure_time')
+                    ->label('Departure Time')
+                    ->seconds(false)
                     ->required(),
                 Forms\Components\TextInput::make('price')
                     ->label('Price')
@@ -60,9 +65,12 @@ class CharterFlightResource extends Resource
                     ->label('To')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('departure_datetime')
-                    ->label('Departure')
-                    ->dateTime()
+                Tables\Columns\TextColumn::make('departure_weekday')
+                    ->label('Weekday')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('departure_time')
+                    ->label('Time')
+                    ->time('H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
@@ -80,6 +88,9 @@ class CharterFlightResource extends Resource
                 Tables\Filters\SelectFilter::make('city_to_id')
                     ->label('Destination City')
                     ->options(City::all()->pluck('name', 'id')),
+                Tables\Filters\SelectFilter::make('departure_weekday')
+                    ->label('Weekday')
+                    ->options(\App\Models\CharterFlight::getWeekdays()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -90,7 +101,7 @@ class CharterFlightResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('departure_datetime', 'desc');
+            ->defaultSort('departure_weekday', 'asc');
     }
 
     public static function getPages(): array
