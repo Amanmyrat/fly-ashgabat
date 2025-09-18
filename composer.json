@@ -17,6 +17,7 @@
         "barryvdh/laravel-snappy": "^1.0",
         "codedredd/laravel-soap": "*",
         "dedoc/scramble": "*",
+        "doctrine/dbal": "*",
         "filament/filament": "^3.2",
         "filament/spatie-laravel-translatable-plugin": "^3.2",
         "laravel/cashier": "^15.6",

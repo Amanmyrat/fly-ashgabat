@@ -14,7 +14,7 @@ class CurrencyRate extends Model
         'is_active',
         'notes',
     ];
-    
+
     protected $attributes = [
         'from_currency' => 'USD',
         'to_currency' => 'RUB',
@@ -31,7 +31,7 @@ class CurrencyRate extends Model
     ];
 
     protected $casts = [
-        'rate' => 'decimal:6',
+        'rate' => 'float',
         'is_active' => 'boolean',
     ];
 
@@ -84,7 +84,7 @@ class CurrencyRate extends Model
     public static function convertRubToUsd(float $rubAmount): ?float
     {
         $rate = static::getLatestRubToUsdRate();
-        
+
         return $rate ? round($rubAmount * $rate, 2) : null;
     }
 
@@ -109,7 +109,7 @@ class CurrencyRate extends Model
     public static function convertCurrencyToUsd(float $amount, string $currency): ?float
     {
         $rate = static::getLatestCurrencyToUsdRate($currency);
-        
+
         return $rate ? round($amount * $rate, 2) : null;
     }
 
@@ -133,7 +133,7 @@ class CurrencyRate extends Model
     public static function convertUsdToCurrency(float $usdAmount, string $currency): ?float
     {
         $rate = static::getLatestUsdToCurrencyRate($currency);
-        
+
         return $rate ? round($usdAmount * $rate, 2) : null;
     }
 

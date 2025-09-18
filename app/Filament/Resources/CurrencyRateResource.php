@@ -18,13 +18,13 @@ class CurrencyRateResource extends Resource
     protected static ?string $model = CurrencyRate::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    
+
     protected static ?string $navigationLabel = 'Currency Rates';
-    
+
     protected static ?string $modelLabel = 'Currency Rate';
-    
+
     protected static ?string $pluralModelLabel = 'Currency Rates';
-    
+
     protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
@@ -41,7 +41,7 @@ class CurrencyRateResource extends Resource
                                     ->disabled()
                                     ->dehydrated()
                                     ->helperText('Fixed: US Dollar'),
-                                    
+
                                 Forms\Components\Select::make('to_currency')
                                     ->label('To Currency')
                                     ->options(\App\Models\CurrencyRate::SUPPORTED_CURRENCIES)
@@ -50,14 +50,14 @@ class CurrencyRateResource extends Resource
                                     ->reactive()
                                     ->helperText('Select the target currency for conversion'),
                             ]),
-                            
+
                         Forms\Components\TextInput::make('rate')
                             ->label(function (callable $get) {
                                 $toCurrency = $get('to_currency') ?? 'RUB';
                                 return "USD to {$toCurrency} Exchange Rate";
                             })
                             ->numeric()
-                            ->step(0.01)
+                            ->step('any')
                             ->inputMode('decimal')
                             ->required()
                             ->helperText(function (callable $get) {
@@ -76,12 +76,12 @@ class CurrencyRateResource extends Resource
                                 // Remove trailing zeros for display
                                 return rtrim(rtrim(number_format($state, 6, '.', ''), '0'), '.');
                             }),
-                            
+
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
                             ->default(true)
                             ->helperText('Only active rates will be used for conversions'),
-                            
+
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->rows(3)
@@ -109,7 +109,7 @@ class CurrencyRateResource extends Resource
                         };
                     })
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('rate')
                     ->label('Exchange Rate')
                     ->numeric(
@@ -124,18 +124,18 @@ class CurrencyRateResource extends Resource
                         return "1 USD = {$formatted} {$symbol}";
                     })
                     ->sortable(),
-                    
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
-                    
+
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes')
                     ->limit(50)
@@ -145,7 +145,7 @@ class CurrencyRateResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active Status'),
-                    
+
                 Tables\Filters\SelectFilter::make('to_currency')
                     ->label('Target Currency')
                     ->options(\App\Models\CurrencyRate::SUPPORTED_CURRENCIES),
