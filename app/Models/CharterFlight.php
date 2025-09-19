@@ -14,11 +14,18 @@ class CharterFlight extends Model
         'city_to_id',
         'departure_weekday',
         'departure_time',
+        'layover_hours',
+        'layover_minutes',
+        'arrival_weekday',
+        'arrival_time',
         'price',
     ];
 
     protected $casts = [
         'departure_time' => 'datetime:H:i',
+        'arrival_time' => 'datetime:H:i',
+        'layover_hours' => 'integer',
+        'layover_minutes' => 'integer',
         'price' => 'decimal:2',
     ];
 
@@ -54,5 +61,32 @@ class CharterFlight extends Model
     public function getFormattedDepartureAttribute(): string
     {
         return $this->departure_weekday . ' at ' . $this->departure_time->format('H:i');
+    }
+
+    /**
+     * Get formatted arrival time and weekday
+     */
+    public function getFormattedArrivalAttribute(): string
+    {
+        return $this->arrival_weekday . ' at ' . $this->arrival_time->format('H:i');
+    }
+
+    /**
+     * Get formatted layover duration
+     */
+    public function getFormattedLayoverAttribute(): string
+    {
+        $hours = $this->layover_hours;
+        $minutes = $this->layover_minutes;
+        
+        if ($hours > 0 && $minutes > 0) {
+            return "{$hours}h {$minutes}m";
+        } elseif ($hours > 0) {
+            return "{$hours}h";
+        } elseif ($minutes > 0) {
+            return "{$minutes}m";
+        }
+        
+        return '0m';
     }
 } 

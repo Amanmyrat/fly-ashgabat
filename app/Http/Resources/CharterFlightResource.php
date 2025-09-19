@@ -21,6 +21,12 @@ class CharterFlightResource extends JsonResource
             'departure_weekday' => $this->resource->departure_weekday,
             'departure_time' => $this->resource->departure_time?->format('H:i'),
             'departure_formatted' => $this->resource->departure_weekday . ' at ' . $this->resource->departure_time?->format('H:i'),
+            'layover_hours' => $this->resource->layover_hours,
+            'layover_minutes' => $this->resource->layover_minutes,
+            'layover_formatted' => $this->resource->formatted_layover,
+            'arrival_weekday' => $this->resource->arrival_weekday,
+            'arrival_time' => $this->resource->arrival_time?->format('H:i'),
+            'arrival_formatted' => $this->resource->arrival_weekday . ' at ' . $this->resource->arrival_time?->format('H:i'),
             'price' => $this->resource->price,
         ];
     }

@@ -23,30 +23,75 @@ class CharterFlightResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('city_from_id')
-                    ->label('Departure City')
-                    ->options(City::all()->pluck('name', 'id'))
-                    ->searchable()
-                    ->required(),
-                Forms\Components\Select::make('city_to_id')
-                    ->label('Destination City')
-                    ->options(City::all()->pluck('name', 'id'))
-                    ->searchable()
-                    ->required(),
-                Forms\Components\Select::make('departure_weekday')
-                    ->label('Departure Weekday')
-                    ->options(\App\Models\CharterFlight::getWeekdays())
-                    ->required(),
-                Forms\Components\TimePicker::make('departure_time')
-                    ->label('Departure Time')
-                    ->seconds(false)
-                    ->required(),
-                Forms\Components\TextInput::make('price')
-                    ->label('Price')
-                    ->numeric()
-                    ->prefix('$')
-                    ->step(0.01)
-                    ->required(),
+                Forms\Components\Section::make('Route Information')
+                    ->schema([
+                        Forms\Components\Select::make('city_from_id')
+                            ->label('Departure City')
+                            ->options(City::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\Select::make('city_to_id')
+                            ->label('Destination City')
+                            ->options(City::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Departure Information')
+                    ->schema([
+                        Forms\Components\Select::make('departure_weekday')
+                            ->label('Departure Weekday')
+                            ->options(\App\Models\CharterFlight::getWeekdays())
+                            ->required(),
+                        Forms\Components\TimePicker::make('departure_time')
+                            ->label('Departure Time')
+                            ->seconds(false)
+                            ->required(),
+                    ])
+                    ->columns(2),
+                
+                Forms\Components\Section::make('Layover Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('layover_hours')
+                            ->label('Layover Hours')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->maxValue(48)
+                            ->required(),
+                        Forms\Components\TextInput::make('layover_minutes')
+                            ->label('Layover Minutes')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->maxValue(59)
+                            ->required(),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Arrival Information')
+                    ->schema([
+                        Forms\Components\Select::make('arrival_weekday')
+                            ->label('Arrival Weekday')
+                            ->options(\App\Models\CharterFlight::getWeekdays())
+                            ->required(),
+                        Forms\Components\TimePicker::make('arrival_time')
+                            ->label('Arrival Time')
+                            ->seconds(false)
+                            ->required(),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Pricing Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('price')
+                            ->label('Price')
+                            ->numeric()
+                            ->prefix('$')
+                            ->step(0.01)
+                            ->required(),
+                    ]),
             ]);
     }
 
@@ -69,9 +114,21 @@ class CharterFlightResource extends Resource
                     ->label('Weekday')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('departure_time')
-                    ->label('Time')
+                    ->label('Dep. Time')
                     ->time('H:i')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('formatted_layover')
+                    ->label('Layover')
+                    ->sortable(false),
+                Tables\Columns\TextColumn::make('arrival_weekday')
+                    ->label('Arr. Day')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('arrival_time')
+                    ->label('Arr. Time')
+                    ->time('H:i')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
                     ->money('USD')
