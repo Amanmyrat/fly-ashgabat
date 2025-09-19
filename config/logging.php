@@ -152,7 +152,7 @@ return [
 
         'nemo' => [
             'driver' => 'daily',
-            'path' => storage_path('logs/nemo/xmlagency.log'),
+            'path' => storage_path('logs/nemo/nemo.log'),
             'level' => 'debug',
             'days' => 30,
             'formatter' => Monolog\Formatter\LineFormatter::class,
