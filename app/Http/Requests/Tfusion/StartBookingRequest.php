@@ -19,7 +19,6 @@ class StartBookingRequest extends FormRequest
         return [
             'booking_reference' => [
                 'required',
-                'string',
                 Rule::exists('flight_bookings', 'booking_reference'),
             ],
             'session_id' => 'nullable|string', // Required for Stripe payments
