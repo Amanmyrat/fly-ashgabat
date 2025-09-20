@@ -229,12 +229,6 @@ class GenerateTicketJob implements ShouldQueue
     private function separateSegmentsByDirection(array $segmentList, string $directionType): array
     {
         switch ($directionType) {
-            case 'OW':
-                return [
-                    'Outward' => $segmentList,
-                    'Return' => null
-                ];
-
             case 'RT':
             case 'SingleOJ':
             case 'DoubleOJ':
@@ -385,19 +379,15 @@ class GenerateTicketJob implements ShouldQueue
      */
     private function processNemoPassenger(object $traveller, array $flightData, array $contactData, object $responseBody): array
     {
-
         $firstName = $traveller->Name;
         $lastName = $traveller->LastName;
         $fullName = trim($firstName . ' ' . $lastName);
 
         $ticketPath = 'tickets/' . Str::slug($fullName) . '__' . now()->getTimestamp() . '.pdf';
 
-
         $passportNumber = $this->extractPassportNumber($responseBody->DataItems->DataItem, $traveller->ID);
 
-
         $bookingDate = Carbon::parse($responseBody->DateInfo->Created);
-
 
         $ticketData = [
             'bookingReference' => $this->booking->booking_reference,

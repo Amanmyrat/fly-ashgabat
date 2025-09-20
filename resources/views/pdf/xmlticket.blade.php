@@ -214,12 +214,14 @@
                         <p>{{$bookingReference}}</p>
                     </div>
 
-                    <div class="flex items-center gap-10">
-                        <h6>
-                            <b> Номер билета / Ticket number: &nbsp;</b>
-                        </h6>
-                        <p>{{$ticketNumber}}</p>
-                    </div>
+                    @if(isset($ticketNumber))
+                        <div class="flex items-center gap-10">
+                            <h6>
+                                <b> Номер билета / Ticket number: &nbsp;</b>
+                            </h6>
+                            <p>{{$ticketNumber}}</p>
+                        </div>
+                    @endif
 
                     @if(isset($pnr))
                         <div class="flex items-center gap-10">
@@ -230,14 +232,12 @@
                         </div>
                     @endif
 
-                    @if(isset($bookingDate))
                     <div class="flex items-center gap-10">
                         <h6>
                             <b> Дата выписки билета / Ticket issue date:&nbsp; </b>
                         </h6>
                         <p>{{ $bookingDate }}</p>
                     </div>
-                    @endif
 
                 </div>
             </div>
@@ -248,14 +248,14 @@
                 <tr>
                     <td colspan="5">
                         <div class="flex items-center">
-                                    <span class="icon">
-                                        <svg width="30" height="37" viewBox="0 0 30 37" fill="none"
-                                             xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                                  d="M30 37H0L0.0220008 32.2871C0.03143 30.4528 0.699324 28.8494 1.9958 27.5617C10.4458 19.171 19.5183 19.1381 28.0029 27.4973C29.3182 28.7929 29.9971 30.4135 29.9987 32.2665L30 37ZM15 19.5481C17.7014 19.5481 20.1467 18.4535 21.9161 16.6853C23.6856 14.917 24.7809 12.4733 24.7809 9.77406C24.7809 7.07455 23.6856 4.63257 21.9161 2.86286C20.1465 1.09459 17.7011 0 15 0C12.2989 0 9.8549 1.09459 8.08515 2.86286C6.31565 4.63112 5.22029 7.07487 5.22029 9.77406C5.22029 12.4736 6.31565 14.9156 8.08515 16.6853C9.85466 18.4535 12.3001 19.5481 15 19.5481Z"
-                                                  fill="#85919D"/>
-                                        </svg>
-                                    </span>
+                            <span class="icon">
+                                <svg width="30" height="37" viewBox="0 0 30 37" fill="none"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                          d="M30 37H0L0.0220008 32.2871C0.03143 30.4528 0.699324 28.8494 1.9958 27.5617C10.4458 19.171 19.5183 19.1381 28.0029 27.4973C29.3182 28.7929 29.9971 30.4135 29.9987 32.2665L30 37ZM15 19.5481C17.7014 19.5481 20.1467 18.4535 21.9161 16.6853C23.6856 14.917 24.7809 12.4733 24.7809 9.77406C24.7809 7.07455 23.6856 4.63257 21.9161 2.86286C20.1465 1.09459 17.7011 0 15 0C12.2989 0 9.8549 1.09459 8.08515 2.86286C6.31565 4.63112 5.22029 7.07487 5.22029 9.77406C5.22029 12.4736 6.31565 14.9156 8.08515 16.6853C9.85466 18.4535 12.3001 19.5481 15 19.5481Z"
+                                          fill="#85919D"/>
+                                </svg>
+                            </span>
 
                             <h6>
                                 Информация о пассажире / Passenger information
