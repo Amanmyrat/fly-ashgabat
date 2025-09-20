@@ -214,23 +214,23 @@
                         <p>{{$bookingReference}}</p>
                     </div>
 
-                    @if(isset($ticketNumber))
+                    @isset($ticketNumber)
                         <div class="flex items-center gap-10">
                             <h6>
                                 <b> Номер билета / Ticket number: &nbsp;</b>
                             </h6>
                             <p>{{$ticketNumber}}</p>
                         </div>
-                    @endif
+                    @endisset
 
-                    @if(isset($pnr))
+                    @isset($pnr)
                         <div class="flex items-center gap-10">
                             <h6>
                                 <b> AirLine ID / PNR: &nbsp;</b>
                             </h6>
                             <p>{{$pnr}}</p>
                         </div>
-                    @endif
+                    @endisset
 
                     <div class="flex items-center gap-10">
                         <h6>

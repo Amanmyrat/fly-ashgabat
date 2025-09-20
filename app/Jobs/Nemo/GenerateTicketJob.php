@@ -398,6 +398,8 @@ class GenerateTicketJob implements ShouldQueue
             'contactEmail' => $contactData['email'],
             'contactPhone' => $contactData['phone'],
             'flightData' => $flightData,
+            'ticketNumber' => null,
+            'pnr' => null,
         ];
 
         $this->ticketData = $ticketData;
