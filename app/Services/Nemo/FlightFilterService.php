@@ -135,6 +135,8 @@ class FlightFilterService
                 $totalAmount += (float) ($fare->TotalFare->Amount * $fare->Quantity);
                 $currency = $fare->TotalFare->Currency;
             }
+
+            $totalAmount += (float) ($price->AgencyMarkup->Amount);
         }
 
         return (object)[

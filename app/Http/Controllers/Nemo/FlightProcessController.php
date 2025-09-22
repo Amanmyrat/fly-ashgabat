@@ -139,15 +139,17 @@ class FlightProcessController
 
             $airlineCode = $flight->PriceInfo->Price->ValidatingCompany;
             $priceWithMarkup = $this->markupService->applyMarkup(
-                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Amount,
+                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Amount + $flight->PriceInfo->Price->AgencyMarkup->Amount,
                 $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Currency,
                 FlightSupplier::NEMO,
                 $airlineCode
             );
 
+            $fareFamilies = is_array($flight->FareFamiliesDescription->Description) ? $flight->FareFamiliesDescription->Description[0] : $flight->FareFamiliesDescription->Description;
+
             $tariff = [
                 'id' => $flight->ID,
-                'name' => $this->extractLocalizedFareName($flight->FareFamiliesDescription->Description, $locale),
+                'name' => $this->extractLocalizedFareName($fareFamilies, $locale),
                 'price' => $priceWithMarkup,
                 'features' => []
             ];
