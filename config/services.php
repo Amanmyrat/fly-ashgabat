@@ -41,4 +41,15 @@ return [
         'password' => env('TRAVELFUSION_PASSWORD'),
     ],
 
+    'etg' => [
+        'base_url'        => env('ETG_BASE_URL', 'https://api.worldota.net'),
+        'username'        => env('ETG_USERNAME'),
+        'password'        => env('ETG_PASSWORD'),
+        'delete_archives' => env('ETG_DELETE_ARCHIVES', false),
+        // Use LOAD DATA LOCAL INFILE for base imports (hotels/regions).
+        // Requires local_infile=ON on the MySQL server. Typically 10-50x faster
+        // for the DB write step. Keep false locally; enable on the server.
+        'use_load_data'   => env('ETG_USE_LOAD_DATA', false),
+    ],
+
 ];

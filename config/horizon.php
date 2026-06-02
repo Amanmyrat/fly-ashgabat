@@ -85,6 +85,7 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:etg'     => 120,
     ],
 
     /*
@@ -182,16 +183,31 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            'queue' => ['high', 'default', 'low'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
-            'maxProcesses' => 1,
+            'maxProcesses' => 10,
+            'balanceMaxShift' => 1,
+            'balanceCooldown' => 3,
             'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 128,
             'tries' => 1,
             'timeout' => 60,
             'nice' => 0,
+        ],
+
+        'supervisor-etg' => [
+            'connection' => 'redis',
+            'queue' => ['etg'],
+            'balance' => 'simple',
+            'processes' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 2048,
+            'tries' => 3,
+            'timeout' => 14400,
+            'nice' => 5,
         ],
     ],
 
@@ -205,6 +221,15 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-etg' => [
+                'connection' => 'redis',
+                'queue' => ['etg'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 14400,
+                'memory' => 2048,
+            ],
         ],
 
         'local' => [
@@ -215,6 +240,36 @@ return [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
+            ],
+            'supervisor-etg' => [
+                'connection' => 'redis',
+                'queue' => ['etg'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 14400,
+                'memory' => 2048,
+            ],
+        ],
+
+        // If APP_ENV is not listed here, Horizon deploys no supervisors — all queues (including etg) stay pending.
+        'staging' => [
+            'supervisor-1' => [
+                'connection' => 'redis',
+                'queue' => ['high', 'default', 'low'],
+                'balance' => 'auto',
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+            'supervisor-etg' => [
+                'connection' => 'redis',
+                'queue' => ['etg'],
+                'balance' => 'simple',
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 14400,
+                'memory' => 2048,
             ],
         ],
     ],

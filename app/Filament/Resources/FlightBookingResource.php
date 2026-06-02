@@ -27,6 +27,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use App\Jobs\MyAgent\PayBookingJob as MyAgentPayBookingJob;
 
 
 class FlightBookingResource extends Resource
@@ -65,10 +66,22 @@ class FlightBookingResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('contactDetail.phone')
+                TextColumn::make('contactDetail.name')
                     ->label('Full name')
-                    ->formatStateUsing(fn($record) => "+{$record->contactDetail->phone['code']} {$record->contactDetail->phone['number']}")
+                    ->formatStateUsing(fn ($record) => $record->contactDetail?->name ?? '-')
                     ->searchable(),
+
+                TextColumn::make('contactDetail.phone')
+                    ->label('Phone')
+                    ->formatStateUsing(function ($record) {
+                        $phone = $record->contactDetail?->phone;
+
+                        if (!is_array($phone)) {
+                            return '-';
+                        }
+
+                        return '+' . ($phone['code'] ?? '') . ' ' . ($phone['number'] ?? '');
+                    }),
 
                 TextColumn::make('contactDetail.email')
                     ->label('Email')
@@ -307,6 +320,9 @@ class FlightBookingResource extends Resource
                                     break;
                                 case FlightSupplier::NEMO:
                                     GenerateTicketJob::dispatch($record);
+                                case FlightSupplier::MYAGENT:
+                                    MyAgentPayBookingJob::dispatch($record);
+                                    break;
                             }
 
                             Notification::make()

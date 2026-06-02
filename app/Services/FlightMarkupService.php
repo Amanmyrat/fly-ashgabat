@@ -3,29 +3,47 @@
 namespace App\Services;
 
 use App\Enum\FlightSupplier;
-use App\Models\FlightMarkup;
 use App\Models\CurrencyRate;
+use App\Models\FlightMarkup;
 use Illuminate\Support\Facades\Cache;
 
 class FlightMarkupService
 {
-    private const CACHE_TTL = 86400; // 24 hours
+    private const CACHE_TTL = 86400;
     private const CACHE_TAGS_MARKUP = ['flight_markups'];
     private const CACHE_TAGS_CURRENCY = ['currency_rates'];
+
+    private const USD_CONVERTIBLE_SUPPLIERS = [
+        FlightSupplier::NEMO,
+        FlightSupplier::MYAGENT,
+    ];
+
+    private const USD_CONVERTIBLE_CURRENCIES = [
+        'RUB',
+        'KZT',
+        'UZS',
+    ];
 
     public function applyMarkup(
         float $originalAmount,
         string $currency,
         FlightSupplier $supplier,
-        ?string $airlineCode = null
+        ?string $airlineCode = null,
+        ?string $departureCode = null,
+        ?string $arrivalCode = null
     ): array {
+        $currency = strtoupper($currency);
+        $airlineCode = $airlineCode ? strtoupper($airlineCode) : null;
+        $departureCode = $departureCode ? strtoupper($departureCode) : null;
+        $arrivalCode = $arrivalCode ? strtoupper($arrivalCode) : null;
+
         $convertedAmount = $originalAmount;
         $finalCurrency = $currency;
         $conversionRate = null;
 
-        // Handle currency to USD conversion for Nemo supplier (supports RUB, KZT, UZS)
-        if ($supplier === FlightSupplier::NEMO && in_array(strtoupper($currency), ['RUB', 'KZT', 'UZS'])) {
+        if ($this->shouldConvertToUsd($supplier, $currency)) {
             $rate = CurrencyRate::getLatestCurrencyToUsdRate($currency);
+
             if ($rate && $rate > 0) {
                 $convertedAmount = round($originalAmount * $rate, 2);
                 $finalCurrency = 'USD';
@@ -33,7 +51,13 @@ class FlightMarkupService
             }
         }
 
-        $markupPercentage = $this->getMarkupPercentage($supplier, $airlineCode);
+        $markupPercentage = $this->getMarkupPercentage(
+            $supplier,
+            $airlineCode,
+            $departureCode,
+            $arrivalCode
+        );
+
         $markupAmount = $convertedAmount * ($markupPercentage / 100);
         $finalAmount = $convertedAmount + $markupAmount;
 
@@ -55,21 +79,93 @@ class FlightMarkupService
         return $result;
     }
 
-    private function getMarkupPercentage(FlightSupplier $supplier, ?string $airlineCode = null): float
+    private function shouldConvertToUsd(FlightSupplier $supplier, string $currency): bool
     {
-        $cacheKey = "flight_markup_{$supplier->value}_" . ($airlineCode ?? 'all');
+        return in_array($supplier, self::USD_CONVERTIBLE_SUPPLIERS, true)
+            && in_array($currency, self::USD_CONVERTIBLE_CURRENCIES, true);
+    }
 
-        return Cache::tags(self::CACHE_TAGS_MARKUP)->remember($cacheKey, self::CACHE_TTL, function () use ($supplier, $airlineCode) {
-            if ($airlineCode) {
-                $markup = FlightMarkup::active()->forSupplier($supplier)->forAirline($airlineCode)->first();
-                if ($markup) {
-                    return (float) $markup->markup_percentage;
-                }
+    private function getMarkupPercentage(
+        FlightSupplier $supplier,
+        ?string $airlineCode = null,
+        ?string $departureCode = null,
+        ?string $arrivalCode = null
+    ): float {
+        $cacheKey = implode('_', [
+            'flight_markup',
+            $supplier->value,
+            $airlineCode ?: 'all_airlines',
+            $departureCode ?: 'all_departures',
+            $arrivalCode ?: 'all_arrivals',
+        ]);
+
+        return Cache::tags(self::CACHE_TAGS_MARKUP)->remember(
+            $cacheKey,
+            self::CACHE_TTL,
+            function () use ($supplier, $airlineCode, $departureCode, $arrivalCode) {
+                return $this->resolveMarkupPercentage(
+                    $supplier,
+                    $airlineCode,
+                    $departureCode,
+                    $arrivalCode
+                );
             }
+        );
+    }
 
-            $markup = FlightMarkup::active()->forSupplier($supplier)->forAirline(null)->first();
-            return $markup ? (float) $markup->markup_percentage : 0.0;
-        });
+    private function resolveMarkupPercentage(
+        FlightSupplier $supplier,
+        ?string $airlineCode = null,
+        ?string $departureCode = null,
+        ?string $arrivalCode = null
+    ): float {
+        // 1. Supplier + direction + airline
+        if ($departureCode && $arrivalCode && $airlineCode) {
+            $markup = FlightMarkup::active()
+                ->forSupplier($supplier)
+                ->forAirline($airlineCode)
+                ->forRoute($departureCode, $arrivalCode)
+                ->first();
+
+            if ($markup) {
+                return (float) $markup->markup_percentage;
+            }
+        }
+
+        // 2. Supplier + direction only
+        if ($departureCode && $arrivalCode) {
+            $markup = FlightMarkup::active()
+                ->forSupplier($supplier)
+                ->forAirline(null)
+                ->forRoute($departureCode, $arrivalCode)
+                ->first();
+
+            if ($markup) {
+                return (float) $markup->markup_percentage;
+            }
+        }
+
+        // 3. Supplier + airline only
+        if ($airlineCode) {
+            $markup = FlightMarkup::active()
+                ->forSupplier($supplier)
+                ->forAirline($airlineCode)
+                ->defaultRoute()
+                ->first();
+
+            if ($markup) {
+                return (float) $markup->markup_percentage;
+            }
+        }
+
+        // 4. Supplier default
+        $markup = FlightMarkup::active()
+            ->forSupplier($supplier)
+            ->forAirline(null)
+            ->defaultRoute()
+            ->first();
+
+        return $markup ? (float) $markup->markup_percentage : 0.0;
     }
 
     public function clearCache(): void

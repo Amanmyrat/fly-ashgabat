@@ -126,7 +126,9 @@ class FlightSearchService
             $originalAmount,
             'USD',
             FlightSupplier::XMLAGENCY,
-            $offerInfo[0]['ValidatingAirline']['value']
+            $offerInfo[0]['ValidatingAirline']['value'],
+            $origin,
+            $destination
         );
 
         // Build the transformed flight

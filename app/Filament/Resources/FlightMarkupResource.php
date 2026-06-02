@@ -21,9 +21,9 @@ class FlightMarkupResource extends Resource
     protected static ?string $model = FlightMarkup::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-    
+
     protected static ?string $navigationLabel = 'Flight Markups';
-    
+
     protected static ?string $navigationGroup = 'Flight Management';
 
     public static function form(Form $form): Form
@@ -35,13 +35,30 @@ class FlightMarkupResource extends Resource
                     ->options(FlightSupplier::class)
                     ->required()
                     ->native(false),
-                    
+
                 Forms\Components\TextInput::make('airline_code')
                     ->label('Airline Code')
                     ->placeholder('e.g., AA, BA, EK (leave empty for all airlines)')
                     ->maxLength(2)
-                    ->helperText('2-digit airline code. Leave empty to apply to all airlines for this supplier.'),
-                    
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : null)
+                    ->helperText('2-letter airline code. Leave empty to apply to all airlines for this supplier.'),
+
+                Forms\Components\TextInput::make('departure_code')
+                    ->label('Departure Code')
+                    ->placeholder('e.g., FRA')
+                    ->maxLength(3)
+                    ->minLength(3)
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : null)
+                    ->helperText('Optional. Use with Arrival Code for direction-specific markup.'),
+
+                Forms\Components\TextInput::make('arrival_code')
+                    ->label('Arrival Code')
+                    ->placeholder('e.g., IST')
+                    ->maxLength(3)
+                    ->minLength(3)
+                    ->dehydrateStateUsing(fn (?string $state) => $state ? strtoupper($state) : null)
+                    ->helperText('Optional. Use with Departure Code for direction-specific markup.'),
+
                 Forms\Components\TextInput::make('markup_percentage')
                     ->label('Markup Percentage')
                     ->numeric()
@@ -49,7 +66,7 @@ class FlightMarkupResource extends Resource
                     ->step(0.01)
                     ->required()
                     ->helperText('The percentage markup to apply to the base price'),
-                    
+
                 Forms\Components\Toggle::make('is_active')
                     ->label('Active')
                     ->default(true)
@@ -65,28 +82,40 @@ class FlightMarkupResource extends Resource
                     ->badge()
                     ->sortable()
                     ->searchable(),
-                    
+
                 Tables\Columns\TextColumn::make('airline_code')
                     ->label('Airline Code')
                     ->placeholder('All Airlines')
                     ->sortable()
                     ->searchable(),
-                    
+
+                Tables\Columns\TextColumn::make('departure_code')
+                    ->label('From')
+                    ->placeholder('Any')
+                    ->sortable()
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('arrival_code')
+                    ->label('To')
+                    ->placeholder('Any')
+                    ->sortable()
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('markup_percentage')
                     ->label('Markup %')
                     ->suffix('%')
                     ->sortable()
                     ->alignEnd(),
-                    
+
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label('Active')
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -95,11 +124,11 @@ class FlightMarkupResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('supplier')
                     ->options(FlightSupplier::class),
-                    
+
                 Tables\Filters\Filter::make('is_active')
                     ->query(fn (Builder $query): Builder => $query->where('is_active', true))
                     ->label('Active Only'),
-                    
+
                 Tables\Filters\Filter::make('has_airline_code')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('airline_code'))
                     ->label('Specific Airlines Only'),

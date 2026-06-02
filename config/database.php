@@ -58,7 +58,9 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_SSL_CA       => env('MYSQL_ATTR_SSL_CA'),
+                // Required for ETG_USE_LOAD_DATA=true. MySQL server must also have local_infile=ON.
+                PDO::MYSQL_ATTR_LOCAL_INFILE => env('ETG_USE_LOAD_DATA', false) ? true : null,
             ]) : [],
         ],
 
@@ -78,7 +80,8 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_SSL_CA       => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_LOCAL_INFILE => env('ETG_USE_LOAD_DATA', false) ? true : null,
             ]) : [],
         ],
 

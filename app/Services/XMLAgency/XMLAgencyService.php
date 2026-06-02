@@ -14,11 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class XMLAgencyService
 {
-    public function __construct()
-    {
-        // No longer storing a single base URL - we'll determine it dynamically
-    }
-
     /**
      * @throws Exception
      */
@@ -318,6 +313,7 @@ class XMLAgencyService
             ->send('POST', $endpoint, [
                 'body' => $xmlContent
             ]);
+
 
 //        Log::info('XML Agency Response', ['body' => $response->body()]);
 

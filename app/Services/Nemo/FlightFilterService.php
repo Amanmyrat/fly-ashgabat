@@ -85,11 +85,26 @@ class FlightFilterService
             $flight->TotalDuration = $totalDuration;
 
             $airlineCode = $flight->PriceInfo->Price->ValidatingCompany;
+
+            $outwardSegments = $flight->Outward->Segments ?? [];
+            $firstOutwardSegment = $outwardSegments[0] ?? null;
+            $lastOutwardSegment = !empty($outwardSegments) ? end($outwardSegments) : null;
+
+            $departureCode = is_array($firstOutwardSegment?->DepAirp->AirportCode ?? null)
+                ? ($firstOutwardSegment->DepAirp->AirportCode['code'] ?? null)
+                : ($firstOutwardSegment?->DepAirp->AirportCode ?? null);
+
+            $arrivalCode = is_array($lastOutwardSegment?->ArrAirp->AirportCode ?? null)
+                ? ($lastOutwardSegment->ArrAirp->AirportCode['code'] ?? null)
+                : ($lastOutwardSegment?->ArrAirp->AirportCode ?? null);
+
             $priceWithMarkup = $this->markupService->applyMarkup(
                 $flight->TotalSum->Amount,
                 $flight->TotalSum->Currency,
                 FlightSupplier::NEMO,
-                $airlineCode
+                $airlineCode,
+                $departureCode,
+                $arrivalCode
             );
 
             $flight->TotalSum = $priceWithMarkup;

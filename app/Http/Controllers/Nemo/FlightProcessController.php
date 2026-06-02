@@ -138,11 +138,22 @@ class FlightProcessController
             }
 
             $airlineCode = $flight->PriceInfo->Price->ValidatingCompany;
+
+            $departureCode = is_array($firstOutwardSegment?->DepAirp->AirportCode ?? null)
+                ? ($firstOutwardSegment->DepAirp->AirportCode['code'] ?? null)
+                : ($firstOutwardSegment?->DepAirp->AirportCode ?? null);
+
+            $arrivalCode = is_array($lastOutwardSegment?->ArrAirp->AirportCode ?? null)
+                ? ($lastOutwardSegment->ArrAirp->AirportCode['code'] ?? null)
+                : ($lastOutwardSegment?->ArrAirp->AirportCode ?? null);
+
             $priceWithMarkup = $this->markupService->applyMarkup(
-                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Amount + $flight->PriceInfo->Price->AgencyMarkup->Amount,
-                $flight->PriceInfo->Price->PassengerFares->PassengerFare->TotalFare->Currency,
+                $flight->TotalSum->Amount,
+                $flight->TotalSum->Currency,
                 FlightSupplier::NEMO,
-                $airlineCode
+                $airlineCode,
+                $departureCode,
+                $arrivalCode
             );
 
             $fareFamilies = is_array($flight->FareFamiliesDescription->Description) ? $flight->FareFamiliesDescription->Description[0] : $flight->FareFamiliesDescription->Description;

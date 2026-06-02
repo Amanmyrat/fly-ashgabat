@@ -10,6 +10,7 @@ enum FlightSupplier: string implements HasLabel, HasColor
     case TFUSION = 'TFusion';
     case XMLAGENCY = 'XMLAgency';
     case NEMO = 'Nemo';
+    case MYAGENT = 'MyAgent';
 
     public function getLabel(): ?string
     {
@@ -17,6 +18,7 @@ enum FlightSupplier: string implements HasLabel, HasColor
             self::TFUSION => 'Travel Fusion',
             self::XMLAGENCY => 'XML Agency',
             self::NEMO => 'Nemo',
+            self::MYAGENT => 'MyAgent',
         };
     }
 
@@ -26,6 +28,7 @@ enum FlightSupplier: string implements HasLabel, HasColor
             self::TFUSION=> 'gray',
             self::NEMO => 'success',
             self::XMLAGENCY => 'warning',
+            self::MYAGENT => 'info',
         };
     }
 }

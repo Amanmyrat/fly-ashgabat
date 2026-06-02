@@ -1,6 +1,13 @@
 <?php
 
+use App\Http\Controllers\API\HotelBookController;
+use App\Http\Controllers\API\HotelProcessController;
+use App\Http\Controllers\API\HotelController as ApiHotelController;
+use App\Http\Controllers\API\HotelNearbyController;
+use App\Http\Controllers\API\HotelReviewsController;
+use App\Http\Controllers\API\HotelSearchController as ApiHotelSearchController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Hotel\SearchController as HotelSearchController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CharterFlightController;
@@ -15,10 +22,24 @@ use App\Http\Controllers\XMLAgency\FlightBookController as XMLAgencyFlightBookCo
 use App\Http\Controllers\Nemo\FlightSearchController as NemoFlightSearchController;
 use App\Http\Controllers\Nemo\FlightProcessController as NemoFlightProcessController;
 use App\Http\Controllers\Nemo\FlightBookController as NemoFlightBookController;
+use App\Http\Controllers\MyAgent\FlightSearchController as MyAgentFlightSearchController;
+use App\Http\Controllers\MyAgent\FlightProcessController as MyAgentFlightProcessController;
+use App\Http\Controllers\MyAgent\FlightBookController as MyAgentFlightBookController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
 use Illuminate\Support\Facades\Route;
+
+Route::group(['prefix' => 'hotels'], function () {
+    Route::get('/autocomplete', [HotelSearchController::class, 'autocomplete']);
+    Route::post('/search', [ApiHotelSearchController::class, 'searchByRegion']);
+    Route::post('/process/details', [HotelProcessController::class, 'processDetails']);
+    Route::post('/bookings/confirm', [HotelBookController::class, 'startBooking']);
+    Route::get('/bookings/{partnerOrderId}/status', [HotelBookController::class, 'status']);
+    Route::get('/{hid}/reviews', [HotelReviewsController::class, 'index'])->whereNumber('hid');
+    Route::post('/details', [ApiHotelController::class, 'show']);
+    Route::get('{hotel}/nearby', [HotelNearbyController::class, 'show']);
+});
 
 Route::get('nationalities', [GeoDataController::class, 'getNationality']);
 Route::get('search/airports', [GeoDataController::class, 'getAirports']);
@@ -49,6 +70,12 @@ Route::group(['prefix' => 'nemo'], function () {
     Route::post('bookings/process', [NemoFlightBookController::class, 'processBooking']);
 });
 
+Route::group(['prefix' => 'myagent'], function () {
+    Route::get('search/flights', [MyAgentFlightSearchController::class, 'search']);
+    Route::post('process/flights', [MyAgentFlightProcessController::class, 'processDetails']);
+    Route::post('bookings/process', [MyAgentFlightBookController::class, 'processBooking']);
+});
+
 Route::group(['prefix' => 'bookings'], function () {
     Route::post('stripe/checkout', [BookController::class, 'createStripePaymentIntent']);
     Route::post('start', [BookController::class, 'startBooking']);
@@ -69,6 +96,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/user', [UserController::class, 'update']);
 
     Route::get('bookings', GetBookingsController::class);
+    Route::get('hotels/bookings', [HotelBookController::class, 'getUserBookings']);
 });
 
 // Charter Flights API Routes

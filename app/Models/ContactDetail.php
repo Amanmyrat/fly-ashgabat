@@ -61,4 +61,11 @@ class ContactDetail extends Model
     {
         return $this->belongsTo(FlightBooking::class);
     }
+
+    public function getNameAttribute(): ?string
+    {
+        $name = trim(($this->firstname ?? '') . ' ' . ($this->lastname ?? ''));
+
+        return $name !== '' ? $name : null;
+    }
 }

@@ -22,12 +22,28 @@ class GetBookingsController extends Controller
      */
     public function __invoke(): JsonResponse
     {
-        $bookings = Auth::user()->flightBookings()
+        $user = Auth::user();
+
+        $flights = $user->flightBookings()
             ->with('tickets')
             ->latest()
             ->get()
-            ->map(fn($booking) => $this->flightBookingFormatter->formatBooking($booking));
+            ->map(function ($booking) {
+                $row = $this->flightBookingFormatter->formatBooking($booking);
 
-        return response()->json(['data' => $bookings]);
+                return array_merge($row, [
+                    'type'       => 'flight',
+                    'created_at' => $booking->created_at->toIso8601String(),
+                ]);
+            });
+
+        $hotels = $user->hotelBookings()
+            ->latest()
+            ->get()
+            ->map(fn ($h) => $h->toApiArray());
+
+        $data = $flights->concat($hotels)->sortByDesc(fn (array $r) => $r['created_at'] ?? '')->values();
+
+        return response()->json(['data' => $data]);
     }
 } 

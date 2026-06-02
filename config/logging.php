@@ -149,10 +149,20 @@ return [
             ],
         ],
 
-
         'nemo' => [
             'driver' => 'daily',
             'path' => storage_path('logs/nemo/nemo.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
+        'myagent' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/myagent/myagent.log'),
             'level' => 'debug',
             'days' => 30,
             'formatter' => Monolog\Formatter\LineFormatter::class,
@@ -169,6 +179,17 @@ return [
             'formatter' => Monolog\Formatter\LineFormatter::class,
             'formatter_with' => [
                 'format' => "[%datetime%] %message%\n",
+            ],
+        ],
+
+        'etg' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/etg/etg.log'),
+            'level' => 'debug',
+            'days' => 30,
+            'formatter' => Monolog\Formatter\LineFormatter::class,
+            'formatter_with' => [
+                'format' => "[%datetime%] %channel%.%level_name%: %message% %context%\n",
             ],
         ],
 

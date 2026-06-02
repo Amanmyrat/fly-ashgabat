@@ -48,6 +48,8 @@ use Laravel\Cashier\Billable;
  * @property string $balance
  * @property-read Collection<int, FlightBooking> $flightBookings
  * @property-read int|null $flight_bookings_count
+ * @property-read Collection<int, HotelBooking> $hotelBookings
+ * @property-read int|null $hotel_bookings_count
  * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
  * @method static Builder<static>|User whereBalance($value)
@@ -102,5 +104,10 @@ class User extends Authenticatable
     public function flightBookings(): HasMany
     {
         return $this->hasMany(FlightBooking::class);
+    }
+
+    public function hotelBookings(): HasMany
+    {
+        return $this->hasMany(HotelBooking::class);
     }
 }

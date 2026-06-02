@@ -11,6 +11,8 @@ class FlightMarkup extends Model
     protected $fillable = [
         'supplier',
         'airline_code',
+        'departure_code',
+        'arrival_code',
         'markup_percentage',
         'is_active',
     ];
@@ -23,7 +25,20 @@ class FlightMarkup extends Model
 
     protected static function booted()
     {
-        // Clear cache whenever markup data is changed
+        static::saving(function (FlightMarkup $markup) {
+            $markup->airline_code = $markup->airline_code
+                ? strtoupper($markup->airline_code)
+                : null;
+
+            $markup->departure_code = $markup->departure_code
+                ? strtoupper($markup->departure_code)
+                : null;
+
+            $markup->arrival_code = $markup->arrival_code
+                ? strtoupper($markup->arrival_code)
+                : null;
+        });
+
         static::created(function () {
             app(FlightMarkupService::class)->clearCache();
         });
@@ -47,8 +62,22 @@ class FlightMarkup extends Model
         return $query->where('supplier', $supplier);
     }
 
-    public function scopeForAirline($query, string $airlineCode = null)
+    public function scopeForAirline($query, ?string $airlineCode = null)
     {
         return $query->where('airline_code', $airlineCode);
+    }
+
+    public function scopeForRoute($query, ?string $departureCode = null, ?string $arrivalCode = null)
+    {
+        return $query
+            ->where('departure_code', $departureCode)
+            ->where('arrival_code', $arrivalCode);
+    }
+
+    public function scopeDefaultRoute($query)
+    {
+        return $query
+            ->whereNull('departure_code')
+            ->whereNull('arrival_code');
     }
 }

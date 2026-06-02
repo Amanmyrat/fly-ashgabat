@@ -19,18 +19,33 @@ class StripePaymentService
     /**
      * Create a Stripe Checkout session for the booking
      *
-     * @param FlightBooking $booking
+     * @param FlightBooking|HotelBooking $booking
      * @param User|null $user
      * @return array
      */
-    public function createCheckoutSession(FlightBooking $booking, ?User $user = null): array
+    public function createCheckoutSession($booking, ?User $user = null): array
     {
         try {
-            $amount = $booking->price['Amount'] * 100; // Convert to cents
-            $currency = strtolower($booking->price['Currency']);
+            // Handle both FlightBooking (price is array) and HotelBooking (amount/currency are direct)
+            if (isset($booking->price) && is_array($booking->price)) {
+                // FlightBooking
+                $amount = $booking->price['Amount'] * 100;
+                $currency = strtolower($booking->price['Currency']);
+                $bookingRef = $booking->booking_reference;
+                $description = "Booking Reference: {$booking->booking_reference}";
+            } else {
+                // HotelBooking
+                $amount = $booking->amount * 100;
+                $currency = strtolower($booking->currency);
+                $bookingRef = $booking->partner_order_id;
+                $description = "Hotel Booking: {$booking->partner_order_id}";
+            }
+
+            $bookingType = $booking::class;
 
             Log::channel('stripe')->info('Creating checkout session', [
-                'booking_reference' => $booking->booking_reference,
+                'booking_ref' => $bookingRef,
+                'booking_type' => $bookingType,
                 'user_id' => $user?->id ?? 'anonymous',
                 'amount' => $amount,
                 'currency' => $currency
@@ -42,18 +57,19 @@ class StripePaymentService
                     'price_data' => [
                         'currency' => $currency,
                         'product_data' => [
-                            'name' => 'Flight Booking',
-                            'description' => "Booking Reference: {$booking->booking_reference}",
+                            'name' => strpos($bookingType, 'Flight') ? 'Flight Booking' : 'Hotel Booking',
+                            'description' => $description,
                         ],
                         'unit_amount' => $amount,
                     ],
                     'quantity' => 1,
                 ]],
                 'mode' => 'payment',
-                'success_url' => config('app.frontend_url') . "/flight/book/{$booking->booking_reference}?payment=success&session_id={CHECKOUT_SESSION_ID}",
-                'cancel_url' => config('app.frontend_url') . "/flight/book?payment=cancelled&booking_reference={$booking->booking_reference}",
+                'success_url' => config('app.frontend_url') . $this->getSuccessUrl($booking, $bookingRef),
+                'cancel_url' => config('app.frontend_url') . $this->getCancelUrl($booking, $bookingRef),
                 'metadata' => [
-                    'booking_reference' => $booking->booking_reference,
+                    'booking_ref' => $bookingRef,
+                    'booking_type' => strpos($bookingType, 'Flight') ? 'flight' : 'hotel',
                     'user_id' => $user?->id ?? 'anonymous',
                 ],
             ];
@@ -66,14 +82,17 @@ class StripePaymentService
                 $sessionData['customer_creation'] = 'always';
                 
                 // Pre-fill customer email from contact details
-                $sessionData['customer_email'] = $booking->contactDetail->email;
+                $email = $booking->contact_email ?? ($booking->contactDetail->email ?? null);
+                if ($email) {
+                    $sessionData['customer_email'] = $email;
+                }
             }
 
             $session = Session::create($sessionData);
 
             Log::channel('stripe')->info('Checkout session created successfully', [
                 'session_id' => $session->id,
-                'booking_reference' => $booking->booking_reference,
+                'booking_ref' => $bookingRef,
                 'checkout_url' => $session->url,
                 'customer_type' => $user ? 'registered' : 'anonymous'
             ]);
@@ -85,8 +104,10 @@ class StripePaymentService
             ];
 
         } catch (ApiErrorException $e) {
+            $ref = $booking->booking_reference ?? $booking->partner_order_id ?? 'unknown';
+            
             Log::channel('stripe')->error('Failed to create checkout session', [
-                'booking_reference' => $booking->booking_reference,
+                'booking_ref' => $ref,
                 'user_id' => $user?->id ?? 'anonymous',
                 'error' => $e->getMessage(),
                 'error_code' => $e->getStripeCode(),
@@ -97,6 +118,34 @@ class StripePaymentService
                 'success' => false,
                 'message' => 'Failed to create checkout session: ' . $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Get the success URL based on booking type
+     */
+    private function getSuccessUrl($booking, string $bookingRef): string
+    {
+        $bookingType = $booking::class;
+        
+        if (strpos($bookingType, 'Flight')) {
+            return "/flight/book/{$bookingRef}?payment=success&session_id={CHECKOUT_SESSION_ID}";
+        } else {
+            return "/hotel/book/{$bookingRef}?payment=success&session_id={CHECKOUT_SESSION_ID}";
+        }
+    }
+
+    /**
+     * Get the cancel URL based on booking type
+     */
+    private function getCancelUrl($booking, string $bookingRef): string
+    {
+        $bookingType = $booking::class;
+        
+        if (strpos($bookingType, 'Flight')) {
+            return "/flight/book?payment=cancelled&booking_reference={$bookingRef}";
+        } else {
+            return "/hotel/book?payment=cancelled&partner_order_id={$bookingRef}";
         }
     }
 

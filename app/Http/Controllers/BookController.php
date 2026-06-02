@@ -16,9 +16,8 @@ use App\Services\TravelFusion\FlightBookService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\MyAgent\PayBookingJob as MyAgentPayBookingJob;
 
 class BookController extends BaseController
 {
@@ -40,6 +39,7 @@ class BookController extends BaseController
             $request->validate([
                 'booking_reference' => 'required|exists:flight_bookings,booking_reference'
             ]);
+
 
             $booking = FlightBooking::where('booking_reference', $request->booking_reference)
                 ->with('contactDetail')
@@ -148,6 +148,10 @@ class BookController extends BaseController
                         break;
                     case FlightSupplier::NEMO:
                         GenerateTicketJob::dispatch($booking);
+                        break;
+                    case FlightSupplier::MYAGENT:
+                        MyAgentPayBookingJob::dispatch($booking);
+                        break;
                 }
             }
             return response()->json([
@@ -170,9 +174,5 @@ class BookController extends BaseController
     {
         return response()->json($this->flightBookService->getBookingDetails($bookId));
     }
-
-
-
-
 
 }
