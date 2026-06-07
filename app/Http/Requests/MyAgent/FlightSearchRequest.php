@@ -115,6 +115,18 @@ class FlightSearchRequest extends FormRequest
                 'nullable',
                 'boolean',
             ],
+
+            'page' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
         ];
     }
 }

@@ -9,10 +9,13 @@ use App\Services\MyAgent\FlightSearchService;
 use App\Services\MyAgent\FlightSortService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FlightSearchController extends Controller
 {
+    private const CACHE_TTL_SECONDS = 300;
+
     public function __construct(
         protected FlightSearchService $flightSearchService,
         protected FlightFilterService $flightFilterService,
@@ -32,26 +35,51 @@ class FlightSearchController extends Controller
         try {
             $filters = $request->input('filters', []);
             $sort = $request->input('sort', 'default');
+            $perPage = min(max((int) $request->input('per_page', 25), 1), 100);
+            $page = max((int) $request->input('page', 1), 1);
 
-            $result = $this->flightSearchService->search($request->validated());
+            $searchParams = $request->except(['filters', 'sort', 'page', 'per_page']);
+            $cacheKey = 'myagent_flights_search_' . md5(serialize($searchParams));
 
-            $flights = $result['flights'];
+            $result = Cache::get($cacheKey);
 
-            $filterValues = $this->flightFilterService->getFilterValues($flights);
+            if (!$result) {
+                $result = $this->flightSearchService->search($request->validated());
 
-            $flights = $this->flightFilterService->filterFlights($flights, $filters);
+                if (!empty($result['flights'])) {
+                    Cache::put($cacheKey, $result, self::CACHE_TTL_SECONDS);
+                }
+            }
+
+            $allFlights = $result['flights'];
+
+            $filterValues = $this->flightFilterService->getFilterValues($allFlights);
+
+            $flights = $this->flightFilterService->filterFlights($allFlights, $filters);
 
             if ($sort !== 'default') {
                 $this->flightSortService->sortFlights($flights, $sort);
             }
 
-            $flights = $this->flightFilterService->removeInternalFields($flights);
+            $total = count($flights);
+            $lastPage = (int) max(1, (int) ceil($total / $perPage));
+            $page = min($page, $lastPage);
+            $offset = ($page - 1) * $perPage;
+            $pageFlights = array_slice($flights, $offset, $perPage);
+
+            $pageFlights = $this->flightFilterService->removeInternalFields($pageFlights);
 
             return response()->json([
                 'data' => [
                     'success' => $result['success'],
-                    'flights' => array_values($flights),
+                    'flights' => array_values($pageFlights),
                     'filters' => $filterValues,
+                    'pagination' => [
+                        'current_page' => $page,
+                        'last_page' => $lastPage,
+                        'per_page' => $perPage,
+                        'total' => $total,
+                    ],
                     'requested_values' => $request->all(),
                     'meta' => $result['raw_meta'] ?? [],
                 ],
