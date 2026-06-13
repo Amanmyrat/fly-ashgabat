@@ -31,7 +31,11 @@ class FlightBookService
     {
         $requestData = (new BookRequestBuilder($validatedData))->build();
 
-        $response = $this->myAgentService->get('/avia/book', $requestData);
+        $response = $this->myAgentService->postForm(
+            '/avia/book',
+            $requestData,
+            (int) config('myagent.book_timeout', 120)
+        );
 
         $book = $response['data']['book'] ?? null;
 

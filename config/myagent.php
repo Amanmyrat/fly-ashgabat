@@ -17,6 +17,10 @@ return [
 
     'timeout' => (int) env('MYAGENT_TIMEOUT', 60),
 
+    'connect_timeout' => (int) env('MYAGENT_CONNECT_TIMEOUT', 30),
+
+    'book_timeout' => (int) env('MYAGENT_BOOK_TIMEOUT', 120),
+
     'user_agent' => $isLocalEnvironment
         ? env('MYAGENT_USER_AGENT', 'PetekBackend/1.0')
         : env('MYAGENT_USER_AGENT_PRODUCTION', 'PetekBackend/1.0'),

@@ -33,6 +33,20 @@ class MyAgentService
     }
 
     /**
+     * POST with application/x-www-form-urlencoded body.
+     * Required for endpoints like /avia/book where tid and passenger data exceed safe GET URL limits.
+     *
+     * @throws Exception
+     */
+    public function postForm(string $uri, array $payload = [], ?int $timeout = null): array
+    {
+        return $this->sendWithAuthRetry('POST', $uri, [
+            'form' => $payload,
+            'timeout' => $timeout,
+        ]);
+    }
+
+    /**
      * @throws Exception
      */
     private function sendWithAuthRetry(string $method, string $uri, array $options): array
@@ -102,6 +116,11 @@ class MyAgentService
 
         if (isset($options['json'])) {
             $options['json']['auth_key'] = $token;
+            return $options;
+        }
+
+        if (isset($options['form'])) {
+            $options['form']['auth_key'] = $token;
             return $options;
         }
 
@@ -216,9 +235,13 @@ class MyAgentService
             'options' => $this->maskSensitiveOptions($options),
         ]);
 
+        $client = $this->baseClient($options['timeout'] ?? null);
+
         $response = match (strtoupper($method)) {
-            'GET' => $this->baseClient()->get($url, $options['query'] ?? []),
-            'POST' => $this->baseClient()->asJson()->post($url, $options['json'] ?? []),
+            'GET' => $client->get($url, $options['query'] ?? []),
+            'POST' => isset($options['form'])
+                ? $client->asForm()->post($url, $options['form'])
+                : $client->asJson()->post($url, $options['json'] ?? []),
             default => throw new InvalidArgumentException("Unsupported MyAgent HTTP method: {$method}"),
         };
 
@@ -232,9 +255,10 @@ class MyAgentService
         return $response;
     }
 
-    private function baseClient(): PendingRequest
+    private function baseClient(?int $timeout = null): PendingRequest
     {
-        return Http::timeout((int) config('myagent.timeout'))
+        return Http::timeout($timeout ?? (int) config('myagent.timeout'))
+            ->connectTimeout((int) config('myagent.connect_timeout', 30))
             ->acceptJson()
             ->withHeaders([
                 'Accept-Encoding' => 'gzip',
@@ -286,7 +310,7 @@ class MyAgentService
     {
         $masked = $options;
 
-        foreach (['query', 'json'] as $key) {
+        foreach (['query', 'json', 'form'] as $key) {
             if (isset($masked[$key]['auth_key'])) {
                 $masked[$key]['auth_key'] = '***';
             }
