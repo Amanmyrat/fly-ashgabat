@@ -172,6 +172,8 @@ class FlightMarkupService
     {
         Cache::tags(self::CACHE_TAGS_MARKUP)->flush();
         Cache::tags(self::CACHE_TAGS_CURRENCY)->flush();
+
+        app(FlightSearchCacheService::class)->clear();
     }
 
     public function clearCurrencyRateCache(): void

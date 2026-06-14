@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Models\CurrencyRate;
 use App\Services\FlightMarkupService;
-use Illuminate\Support\Facades\Cache;
 
 class CurrencyRateObserver
 {
@@ -45,16 +44,10 @@ class CurrencyRateObserver
      */
     private function clearCurrencyCache(): void
     {
-        // Clear currency rate cache
-        Cache::tags(['currency_rates'])->flush();
-        
-        // Clear the FlightMarkupService cache as well since it depends on currency rates
         try {
-            $markupService = app(FlightMarkupService::class);
-            $markupService->clearCurrencyRateCache();
+            app(FlightMarkupService::class)->clearCache();
         } catch (\Exception $e) {
-            // Log error but don't fail the operation
-            logger()->error('Failed to clear FlightMarkupService cache: ' . $e->getMessage());
+            logger()->error('Failed to clear pricing cache: ' . $e->getMessage());
         }
     }
 }

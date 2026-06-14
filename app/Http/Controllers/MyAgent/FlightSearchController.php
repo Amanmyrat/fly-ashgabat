@@ -4,12 +4,12 @@ namespace App\Http\Controllers\MyAgent;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MyAgent\FlightSearchRequest;
+use App\Services\FlightSearchCacheService;
 use App\Services\MyAgent\FlightFilterService;
 use App\Services\MyAgent\FlightSearchService;
 use App\Services\MyAgent\FlightSortService;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FlightSearchController extends Controller
@@ -19,7 +19,8 @@ class FlightSearchController extends Controller
     public function __construct(
         protected FlightSearchService $flightSearchService,
         protected FlightFilterService $flightFilterService,
-        protected FlightSortService $flightSortService
+        protected FlightSortService $flightSortService,
+        protected FlightSearchCacheService $flightSearchCacheService
     ) {
     }
 
@@ -41,13 +42,13 @@ class FlightSearchController extends Controller
             $searchParams = $request->except(['filters', 'sort', 'page', 'per_page']);
             $cacheKey = 'myagent_flights_search_' . md5(serialize($searchParams));
 
-            $result = Cache::get($cacheKey);
+            $result = $this->flightSearchCacheService->get($cacheKey);
 
             if (!$result) {
                 $result = $this->flightSearchService->search($request->validated());
 
                 if (!empty($result['flights'])) {
-                    Cache::put($cacheKey, $result, self::CACHE_TTL_SECONDS);
+                    $this->flightSearchCacheService->put($cacheKey, $result, self::CACHE_TTL_SECONDS);
                 }
             }
 

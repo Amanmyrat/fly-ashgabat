@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Nemo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Nemo\FlightSearchRequest;
+use App\Services\FlightSearchCacheService;
 use App\Services\Nemo\FlightFilterService;
 use App\Services\Nemo\FlightSearchService;
 use App\Services\Nemo\FlightSortService;
-use Cache;
 use Exception;
 use Illuminate\Http\JsonResponse;
 
@@ -16,7 +16,8 @@ class FlightSearchController extends Controller
     public function __construct(
         protected FlightSearchService $searchFlightService,
         protected FlightFilterService $flightFilterService,
-        protected FlightSortService   $flightSortService
+        protected FlightSortService $flightSortService,
+        protected FlightSearchCacheService $flightSearchCacheService
     )
     {
     }
@@ -36,19 +37,16 @@ class FlightSearchController extends Controller
         $queryParams = $request->except(['filters', 'sort']);
         $cacheKey = $this->getCacheKey($queryParams);
 
-        // Try cache first
-        $result = Cache::get($cacheKey);
+        $result = $this->flightSearchCacheService->get($cacheKey);
 
-        // If not cached or cached result has no flights -> fetch fresh
         if (!$result) {
             $result = $this->searchFlightService->search($request->all());
 
             $flightsData = $result['data']->Search_1_2Result->ResponseBody->PlaneFlights->Flight ?? [];
             $flightsData = is_array($flightsData) ? $flightsData : [$flightsData];
 
-            // Only cache if flights are not empty
             if (!empty($flightsData)) {
-                Cache::put($cacheKey, $result, 60 * 5);
+                $this->flightSearchCacheService->put($cacheKey, $result, 60 * 5);
             }
         }
 
