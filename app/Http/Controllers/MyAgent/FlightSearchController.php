@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MyAgent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MyAgent\FlightSearchRequest;
 use App\Services\FlightSearchCacheService;
+use App\Support\MyAgentLanguage;
 use App\Services\MyAgent\FlightFilterService;
 use App\Services\MyAgent\FlightSearchService;
 use App\Services\MyAgent\FlightSortService;
@@ -27,6 +28,7 @@ class FlightSearchController extends Controller
     /**
      * Search for myagent flights
      *
+     * @localizationHeader
      *
      * @param FlightSearchRequest $request
      * @return JsonResponse
@@ -40,7 +42,7 @@ class FlightSearchController extends Controller
             $page = max((int) $request->input('page', 1), 1);
 
             $searchParams = $request->except(['filters', 'sort', 'page', 'per_page']);
-            $cacheKey = 'myagent_flights_search_' . md5(serialize($searchParams));
+            $cacheKey = 'myagent_flights_search_' . MyAgentLanguage::resolve() . '_' . md5(serialize($searchParams));
 
             $result = $this->flightSearchCacheService->get($cacheKey);
 

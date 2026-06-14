@@ -2,6 +2,7 @@
 
 namespace App\Services\MyAgent\RequestBuilder;
 
+use App\Support\MyAgentLanguage;
 use Carbon\Carbon;
 use InvalidArgumentException;
 
@@ -44,7 +45,7 @@ class BookRequestBuilder
             'client_phone' => $phone,
             'payer_name' => $contact['firstname'] . ' ' . $contact['lastname'],
             'passengers' => $passengers,
-            'lang' => strtoupper(config('myagent.lang', 'ru')),
+            'lang' => strtoupper(MyAgentLanguage::resolve()),
         ];
     }
 

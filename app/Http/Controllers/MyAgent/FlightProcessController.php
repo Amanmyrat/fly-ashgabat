@@ -19,6 +19,8 @@ class FlightProcessController extends Controller
     /**
      * Process details of flight
      *
+     * @localizationHeader
+     *
      * @param FlightProcessDetailsRequest $request
      * @return JsonResponse
      */

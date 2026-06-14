@@ -3,6 +3,7 @@
 namespace App\Services\MyAgent\RequestBuilder;
 
 use App\Enum\FlightType;
+use App\Support\MyAgentLanguage;
 
 class SearchRecommendationsRequestBuilder
 {
@@ -40,7 +41,7 @@ class SearchRecommendationsRequestBuilder
             'yth' => 0,
             'class' => $this->mapClass($this->data['class_type'] ?? 'economy'),
             'segments' => $segments,
-            'lang' => config('myagent.lang', 'ru'),
+            'lang' => MyAgentLanguage::resolve(),
         ];
 
         if (!empty($this->data['count'])) {

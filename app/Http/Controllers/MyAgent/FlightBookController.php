@@ -20,6 +20,8 @@ class FlightBookController extends BaseController
     /**
      * Process flight booking and create initial booking record
      *
+     * @localizationHeader
+     *
      * @param FlightBookRequest $request
      * @return JsonResponse
      * @throws Exception

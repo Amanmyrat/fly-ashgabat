@@ -2,6 +2,8 @@
 
 namespace App\Services\MyAgent\RequestBuilder;
 
+use App\Support\MyAgentLanguage;
+
 class FlightDetailsRequestBuilder
 {
     public function __construct(protected array $data)
@@ -12,7 +14,7 @@ class FlightDetailsRequestBuilder
     {
         return [
             'tid' => $this->data['id'],
-            'lang' => config('myagent.lang', 'ru'),
+            'lang' => MyAgentLanguage::resolve(),
         ];
     }
 
@@ -20,7 +22,7 @@ class FlightDetailsRequestBuilder
     {
         return [
             'tid' => $this->data['id'],
-            'lang' => config('myagent.lang', 'ru'),
+            'lang' => MyAgentLanguage::resolve(),
         ];
     }
 }
