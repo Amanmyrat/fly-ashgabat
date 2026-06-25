@@ -81,10 +81,11 @@ class FlightRecommendationTransformer
                 'Name' => $recommendation['provider']['name'] ?? null,
                 'Supplier' => $recommendation['provider']['supplier'] ?? null,
             ],
+            'Type' => $recommendation['type'] ?? null,
             'FareFamily' => [
                 'Type' => $recommendation['fare_family_type'] ?? null,
                 'Name' => $recommendation['fare_family_marketing_name'] ?? null,
-                'Flag' => $recommendation['fare_family_flag'] ?? null,
+                'Flag' => (bool) ($recommendation['fare_family_flag'] ?? false),
             ],
             'Rules' => [
                 'Refundable' => (bool) ($recommendation['is_refund'] ?? false),

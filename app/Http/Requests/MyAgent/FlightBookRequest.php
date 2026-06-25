@@ -19,6 +19,10 @@ class FlightBookRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'health_declaration_accepted' => [
+                'nullable',
+                'boolean',
+            ],
             'payment_type' => [
                 'required',
                 'string',

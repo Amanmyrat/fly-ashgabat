@@ -25,6 +25,7 @@ use App\Http\Controllers\Nemo\FlightBookController as NemoFlightBookController;
 use App\Http\Controllers\MyAgent\FlightSearchController as MyAgentFlightSearchController;
 use App\Http\Controllers\MyAgent\FlightProcessController as MyAgentFlightProcessController;
 use App\Http\Controllers\MyAgent\FlightBookController as MyAgentFlightBookController;
+use App\Http\Controllers\MyAgent\FlightPickController as MyAgentFlightPickController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -72,6 +73,7 @@ Route::group(['prefix' => 'nemo'], function () {
 
 Route::group(['prefix' => 'myagent'], function () {
     Route::get('search/flights', [MyAgentFlightSearchController::class, 'search']);
+    Route::post('pick/flight', [MyAgentFlightPickController::class, 'pick']);
     Route::post('process/flights', [MyAgentFlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [MyAgentFlightBookController::class, 'processBooking']);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services\MyAgent\RequestBuilder;
 
+use App\Support\MyAgentFlightPickCache;
 use App\Support\MyAgentLanguage;
 use Carbon\Carbon;
 use InvalidArgumentException;
@@ -14,6 +15,9 @@ class BookRequestBuilder
 
     public function build(): array
     {
+        $flightId = (string) ($this->data['selected_tariff'] ?? $this->data['flight_id']);
+        $pickCache = MyAgentFlightPickCache::get($flightId);
+
         $contact = $this->data['contact_details'];
         $phone = $this->formatPhone($contact['phone']['code'], $contact['phone']['number']);
 
@@ -39,14 +43,33 @@ class BookRequestBuilder
 
         $this->ensureNotChildOnly($passengers);
 
-        return [
-            'tid' => $this->data['selected_tariff'] ?? $this->data['flight_id'],
+        $payload = [
+            'tid' => $flightId,
             'client_email' => $contact['email'],
             'client_phone' => $phone,
             'payer_name' => $contact['firstname'] . ' ' . $contact['lastname'],
             'passengers' => $passengers,
             'lang' => strtoupper(MyAgentLanguage::resolve()),
         ];
+
+        if ($pickCache) {
+            $this->applyPickCacheRequirements($payload, $pickCache);
+        }
+
+        return $payload;
+    }
+
+    private function applyPickCacheRequirements(array &$payload, array $pickCache): void
+    {
+        if (!($pickCache['is_health_declaration_required'] ?? false)) {
+            return;
+        }
+
+        if (!filter_var($this->data['health_declaration_accepted'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            throw new InvalidArgumentException('Health declaration must be accepted before booking.');
+        }
+
+        $payload['is_health_declaration_checked'] = 1;
     }
 
     private function formatPhone(string $code, string $number): string

@@ -25,4 +25,12 @@ class FlightDetailsRequestBuilder
             'lang' => MyAgentLanguage::resolve(),
         ];
     }
+
+    public function buildFlightInfoQuery(): array
+    {
+        return [
+            'tid' => $this->data['id'],
+            'lang' => MyAgentLanguage::resolve(),
+        ];
+    }
 }
