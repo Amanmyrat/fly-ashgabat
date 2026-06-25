@@ -119,11 +119,11 @@ class FlightPickService
 
     private function isHealthDeclarationRequired(array $data, array $flight, ?string $healthText): bool
     {
-        if ((bool) ($this->resolveField($data, $flight, 'is_health_declaration_checked') ?? false)) {
-            return true;
-        }
-
-        return $healthText !== null;
+        return (bool) ($this->resolveField(
+            $data,
+            $flight,
+            'is_health_declaration_checked'
+        ) ?? false);
     }
 
     private function buildBookingCache(string $flightId, array $checks): array
