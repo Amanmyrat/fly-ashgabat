@@ -29,6 +29,8 @@ return [
 
     'currency' => env('MYAGENT_CURRENCY', 'USD'),
 
+    'min_seats' => (int) env('MYAGENT_MIN_SEATS', 5),
+
     'cache' => [
         'auth_token_key' => $isLocalEnvironment
             ? 'myagent_auth_token_local'
