@@ -14,13 +14,22 @@ class FlightSortService
             $field = ltrim($sort, '-');
 
             $result = match ($field) {
-                'price' => ($a['TotalSum']['Amount'] ?? 0) <=> ($b['TotalSum']['Amount'] ?? 0),
-                'duration' => ($a['_sort']['duration'] ?? 0) <=> ($b['_sort']['duration'] ?? 0),
-                'departure_time' => ($a['_sort']['departure_time'] ?? 0) <=> ($b['_sort']['departure_time'] ?? 0),
+                'price' => $this->priceValue($a) <=> $this->priceValue($b),
+                'duration' => (int) ($a['_sort']['duration'] ?? 0) <=> (int) ($b['_sort']['duration'] ?? 0),
+                'departure_time' => (int) ($a['_sort']['departure_time'] ?? 0) <=> (int) ($b['_sort']['departure_time'] ?? 0),
                 default => 0,
             };
 
             return str_starts_with($sort, '-') ? -$result : $result;
         });
+    }
+
+    private function priceValue(array $flight): float
+    {
+        if (isset($flight['_sort']['price'])) {
+            return (float) $flight['_sort']['price'];
+        }
+
+        return (float) ($flight['TotalSum']['Amount'] ?? 0);
     }
 }

@@ -13,6 +13,7 @@ enum BookingStatus: string implements HasLabel, HasColor
     case FAILED = 'Failed';
     case UNCONFIRMED = 'Unconfirmed';
     case UNCONFIRMED_BY_SUPPLIER = 'UnconfirmedBySupplier';
+    case CANCELLED = 'Cancelled';
     case DUPLICATE = 'Duplicate';
 
     public function getLabel(): ?string
@@ -24,6 +25,7 @@ enum BookingStatus: string implements HasLabel, HasColor
             self::FAILED   => 'Неудача',
             self::UNCONFIRMED => 'Отменено',
             self::UNCONFIRMED_BY_SUPPLIER => 'Отменено поставщиком',
+            self::CANCELLED => 'Отменено пользователем',
             self::DUPLICATE => 'Дубликат',
         };
     }
@@ -34,7 +36,7 @@ enum BookingStatus: string implements HasLabel, HasColor
             self::PENDING, self::BOOKING_IN_PROGRESS => 'gray',
             self::SUCCEEDED => 'success',
             self::FAILED   => 'danger',
-            self::UNCONFIRMED, self::UNCONFIRMED_BY_SUPPLIER => 'warning',
+            self::UNCONFIRMED, self::UNCONFIRMED_BY_SUPPLIER, self::CANCELLED => 'warning',
             self::DUPLICATE => 'info',
         };
     }

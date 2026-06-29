@@ -9,10 +9,13 @@ use Illuminate\Support\Str;
 
 class FlightSearchService
 {
+    protected int $minSeats;
+
     public function __construct(
         protected MyAgentService $myAgentService,
         protected FlightRecommendationTransformer $transformer
     ) {
+        $this->minSeats = (int) config('myagent.min_seats', 5);
     }
 
     /**
@@ -25,7 +28,9 @@ class FlightSearchService
 
         $rawResponse = $this->myAgentService->get('/avia/search-recommendations', $query);
 
-        $recommendations = $rawResponse['data']['flights'] ?? [];
+        $recommendations = $this->filterByMinimumSeats(
+            $rawResponse['data']['flights'] ?? []
+        );
         $searchData = $rawResponse['data']['search'] ?? [];
 
         $searchGuid = $searchData['token']
@@ -47,5 +52,36 @@ class FlightSearchService
                 'execution' => $rawResponse['time']['execution'] ?? null,
             ],
         ];
+    }
+
+    private function filterByMinimumSeats(array $recommendations): array
+    {
+        if ($this->minSeats <= 0) {
+            return $recommendations;
+        }
+
+        return array_values(array_filter(
+            $recommendations,
+            fn (array $recommendation) => $this->meetsMinimumSeats($recommendation)
+        ));
+    }
+
+    private function meetsMinimumSeats(array $recommendation): bool
+    {
+        $segments = $recommendation['segments'] ?? [];
+
+        if ($segments === []) {
+            return false;
+        }
+
+        foreach ($segments as $segment) {
+            $seats = $segment['seats'] ?? null;
+
+            if ($seats === null || (int) $seats < $this->minSeats) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

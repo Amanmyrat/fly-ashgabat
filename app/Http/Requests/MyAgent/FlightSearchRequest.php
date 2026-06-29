@@ -82,6 +82,24 @@ class FlightSearchRequest extends FormRequest
                 'size:2',
                 'uppercase',
             ],
+            'filters.departure_airports' => [
+                'nullable',
+                'array',
+            ],
+            'filters.departure_airports.*' => [
+                'string',
+                'size:3',
+                'uppercase',
+            ],
+            'filters.arrival_airports' => [
+                'nullable',
+                'array',
+            ],
+            'filters.arrival_airports.*' => [
+                'string',
+                'size:3',
+                'uppercase',
+            ],
             'filters.stops' => [
                 'nullable',
                 'integer',
@@ -89,6 +107,14 @@ class FlightSearchRequest extends FormRequest
                 'max:5',
             ],
             'filters.baggage_included' => [
+                'nullable',
+                'boolean',
+            ],
+            'filters.night_layover' => [
+                'nullable',
+                'boolean',
+            ],
+            'filters.baggage_recheck' => [
                 'nullable',
                 'boolean',
             ],

@@ -134,6 +134,7 @@ class FlightBookingResource extends Resource
                         BookingStatus::FAILED->value   => 'Failed',
                         BookingStatus::UNCONFIRMED->value => 'Unconfirmed',
                         BookingStatus::UNCONFIRMED_BY_SUPPLIER->value => 'Unconfirmed by supplier',
+                        BookingStatus::CANCELLED->value => 'Cancelled',
                         BookingStatus::DUPLICATE->value => 'Duplicate',
                     ])->native(false),
             ])

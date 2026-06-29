@@ -95,16 +95,21 @@ class FlightRecommendationTransformer
 
             // Needed for backend sorting/filtering.
             '_sort' => [
+                'price' => (float) $priceWithMarkup['Amount'],
                 'duration' => (int) ($recommendation['duration'] ?? $this->calculateJourneyMinutes($outwardSegments) + $this->calculateJourneyMinutes($returnSegments)),
                 'departure_time' => $this->departureTimestamp($firstOutward),
             ],
             '_filter' => [
                 'airlines' => $this->extractAirlineCodes($segments),
+                'departure_airports' => array_values(array_filter([$departureCode])),
+                'arrival_airports' => array_values(array_filter([$arrivalCode])),
                 'stops' => [
                     'outward' => max(count($outwardSegments) - 1, 0),
                     'return' => !empty($returnSegments) ? max(count($returnSegments) - 1, 0) : null,
                 ],
                 'baggage_included' => (bool) ($recommendation['is_baggage'] ?? false),
+                'night_layover' => $this->hasNightLayover($outwardSegments, $returnSegments),
+                'baggage_recheck' => $this->hasBaggageRecheck($segments),
             ],
         ];
     }
@@ -402,6 +407,63 @@ class FlightRecommendationTransformer
     private function departureTimestamp(?array $segment): int
     {
         return (int) ($segment['dep']['ts'] ?? 0);
+    }
+
+    private function hasNightLayover(array $outwardSegments, array $returnSegments): bool
+    {
+        return $this->hasNightLayoverInDirection($outwardSegments)
+            || $this->hasNightLayoverInDirection($returnSegments);
+    }
+
+    private function hasNightLayoverInDirection(array $segments): bool
+    {
+        if (count($segments) <= 1) {
+            return false;
+        }
+
+        for ($i = 0; $i < count($segments) - 1; $i++) {
+            $arrival = $this->parseMyAgentDateTime($segments[$i]['arr']['datetime'] ?? null);
+            $departure = $this->parseMyAgentDateTime($segments[$i + 1]['dep']['datetime'] ?? null);
+
+            if ($arrival && $departure && $this->layoverOverlapsNight($arrival, $departure)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function layoverOverlapsNight(Carbon $arrival, Carbon $departure): bool
+    {
+        if (!$departure->gt($arrival)) {
+            return false;
+        }
+
+        $day = $arrival->copy()->startOfDay()->subDay();
+
+        while ($day->lte($departure)) {
+            $nightStart = $day->copy()->setTime(23, 0, 0);
+            $nightEnd = $day->copy()->addDay()->setTime(6, 0, 0);
+
+            if ($arrival->lt($nightEnd) && $nightStart->lt($departure)) {
+                return true;
+            }
+
+            $day->addDay();
+        }
+
+        return false;
+    }
+
+    private function hasBaggageRecheck(array $segments): bool
+    {
+        foreach ($segments as $segment) {
+            if (($segment['baggage_recheck'] ?? false) === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function parseMyAgentDateTime(?string $dateTime): ?Carbon

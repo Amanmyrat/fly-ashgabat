@@ -24,8 +24,9 @@ use App\Http\Controllers\Nemo\FlightProcessController as NemoFlightProcessContro
 use App\Http\Controllers\Nemo\FlightBookController as NemoFlightBookController;
 use App\Http\Controllers\MyAgent\FlightSearchController as MyAgentFlightSearchController;
 use App\Http\Controllers\MyAgent\FlightProcessController as MyAgentFlightProcessController;
-use App\Http\Controllers\MyAgent\FlightBookController as MyAgentFlightBookController;
 use App\Http\Controllers\MyAgent\FlightPickController as MyAgentFlightPickController;
+use App\Http\Controllers\MyAgent\FlightBookController as MyAgentFlightBookController;
+use App\Http\Controllers\MyAgent\FlightBookingCancelController as MyAgentFlightBookingCancelController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisaController;
@@ -76,6 +77,7 @@ Route::group(['prefix' => 'myagent'], function () {
     Route::post('pick/flight', [MyAgentFlightPickController::class, 'pick']);
     Route::post('process/flights', [MyAgentFlightProcessController::class, 'processDetails']);
     Route::post('bookings/process', [MyAgentFlightBookController::class, 'processBooking']);
+    Route::post('bookings/cancel', [MyAgentFlightBookingCancelController::class, 'cancel']);
 });
 
 Route::group(['prefix' => 'bookings'], function () {
